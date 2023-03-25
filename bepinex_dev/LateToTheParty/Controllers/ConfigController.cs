@@ -17,5 +17,10 @@ namespace LateToTheParty.Controllers
             Configuration.ModConfig config = JsonConvert.DeserializeObject<Configuration.ModConfig>(json);
             return config;
         }
+
+        public static void SetLootMultipliers(double factor)
+        {
+            RequestHandler.GetJson("/LateToTheParty/SetLootMultiplier/" + factor);
+        }
     }
 }

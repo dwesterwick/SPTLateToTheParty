@@ -21,8 +21,11 @@ namespace LateToTheParty
             Logger.LogDebug("Loading LateToThePartyPlugin...getting configuration data...");
             ModConfig = Controllers.ConfigController.GetConfig();
 
-            Logger.LogDebug("Loading LateToThePartyPlugin...enabling patches...");
-            new Patches.ReadyToPlayPatch().Enable();
+            if (ModConfig.Enabled)
+            {
+                Logger.LogDebug("Loading LateToThePartyPlugin...enabling patches...");
+                new Patches.ReadyToPlayPatch().Enable();
+            }
             
             Logger.LogDebug("Loading LateToThePartyPlugin...done.");
         }

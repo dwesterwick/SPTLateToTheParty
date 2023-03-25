@@ -15,6 +15,15 @@ namespace LateToTheParty.Configuration
         [JsonProperty("debug")]
         public bool Debug { get; set; }
 
+        [JsonProperty("scav")]
+        public EscapeTimeConfig Scav { get; set; } = new EscapeTimeConfig();
+
+        [JsonProperty("pmc")]
+        public EscapeTimeConfig PMC { get; set; } = new EscapeTimeConfig();
+
+        [JsonProperty("loot_multipliers")]
+        public double[][] LootMultipliers { get; set; } = new double[0][];
+
         public ModConfig()
         {
 
