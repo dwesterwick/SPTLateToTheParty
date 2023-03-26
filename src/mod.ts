@@ -60,14 +60,56 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.configServer = container.resolve<ConfigServer>("ConfigServer");
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
 
-        this.originalLooseLootMultipliers = this.locationConfig.looseLootMultiplier;
-        this.originalStaticLootMultipliers = this.locationConfig.staticLootMultiplier;
+        this.getLootMultipliers();
     }
 
     private logInfo(message: string): void
     {
         if (modConfig.debug)
             this.logger.info("[" + modName + "] " + message);
+    }
+
+    private getLootMultipliers(): void
+    {
+        this.originalLooseLootMultipliers = 
+        {
+            bigmap: this.locationConfig.looseLootMultiplier.bigmap,
+            develop: this.locationConfig.looseLootMultiplier.develop,
+            factory4_day: this.locationConfig.looseLootMultiplier.factory4_day,
+            factory4_night: this.locationConfig.looseLootMultiplier.factory4_night,
+            hideout: this.locationConfig.looseLootMultiplier.hideout,
+            interchange: this.locationConfig.looseLootMultiplier.interchange,
+            laboratory: this.locationConfig.looseLootMultiplier.laboratory,
+            lighthouse: this.locationConfig.looseLootMultiplier.lighthouse,
+            privatearea: this.locationConfig.looseLootMultiplier.privatearea,
+            rezervbase: this.locationConfig.looseLootMultiplier.rezervbase,
+            shoreline: this.locationConfig.looseLootMultiplier.shoreline,
+            suburbs: this.locationConfig.looseLootMultiplier.suburbs,
+            tarkovstreets: this.locationConfig.looseLootMultiplier.tarkovstreets,
+            terminal: this.locationConfig.looseLootMultiplier.terminal,
+            town: this.locationConfig.looseLootMultiplier.town,
+            woods: this.locationConfig.looseLootMultiplier.woods
+        }
+
+        this.originalStaticLootMultipliers = 
+        {
+            bigmap: this.locationConfig.staticLootMultiplier.bigmap,
+            develop: this.locationConfig.staticLootMultiplier.develop,
+            factory4_day: this.locationConfig.staticLootMultiplier.factory4_day,
+            factory4_night: this.locationConfig.staticLootMultiplier.factory4_night,
+            hideout: this.locationConfig.staticLootMultiplier.hideout,
+            interchange: this.locationConfig.staticLootMultiplier.interchange,
+            laboratory: this.locationConfig.staticLootMultiplier.laboratory,
+            lighthouse: this.locationConfig.staticLootMultiplier.lighthouse,
+            privatearea: this.locationConfig.staticLootMultiplier.privatearea,
+            rezervbase: this.locationConfig.staticLootMultiplier.rezervbase,
+            shoreline: this.locationConfig.staticLootMultiplier.shoreline,
+            suburbs: this.locationConfig.staticLootMultiplier.suburbs,
+            tarkovstreets: this.locationConfig.staticLootMultiplier.tarkovstreets,
+            terminal: this.locationConfig.staticLootMultiplier.terminal,
+            town: this.locationConfig.staticLootMultiplier.town,
+            woods: this.locationConfig.staticLootMultiplier.woods
+        }
     }
 
     private setLootMultipliers(factor: number): void
@@ -107,6 +149,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.locationConfig.staticLootMultiplier.terminal = this.originalStaticLootMultipliers.terminal * factor;
         this.locationConfig.staticLootMultiplier.town = this.originalStaticLootMultipliers.town * factor;
         this.locationConfig.staticLootMultiplier.woods = this.originalStaticLootMultipliers.woods * factor;
+
+        this.logInfo(`Multiplier: ${this.locationConfig.looseLootMultiplier.bigmap}, ${this.locationConfig.staticLootMultiplier.bigmap}`);
     }
 }
 module.exports = {mod: new LateToTheParty()}
