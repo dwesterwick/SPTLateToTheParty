@@ -10,6 +10,7 @@ import type {DynamicRouterModService} from "@spt-aki/services/mod/dynamicRouter/
 import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
+import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
@@ -20,6 +21,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
 {
     private logger: ILogger;
     private locationConfig: ILocationConfig;
+    private inRaidConfig: IInRaidConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -44,6 +46,17 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
             }], "GetConfig"
         );
 
+        // Get an array of all car extract names
+        staticRouterModService.registerStaticRouter(`StaticGetCarExtractNames${modName}`,
+            [{
+                url: "/LateToTheParty/GetCarExtractNames",
+                action: () => 
+                {
+                    return JSON.stringify(this.inRaidConfig.carExtracts);
+                }
+            }], "GetCarExtractNames"
+        );
+
         // Hook up a new dynamic route
         dynamicRouterModService.registerDynamicRouter(`DynamicSetLootMultipliers${modName}`,
             [{
@@ -66,6 +79,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
+        this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
+        this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.databaseTables = this.databaseServer.getTables();
 
         this.getLootMultipliers();

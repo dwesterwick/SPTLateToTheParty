@@ -13,21 +13,26 @@ namespace LateToTheParty
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static Configuration.ModConfig ModConfig { get; set; } = null;
+        public static string[] CarExtractNames { get; set; } = new string[0];
 
         private void Awake()
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
 
-            Logger.LogDebug("Loading LateToThePartyPlugin...getting configuration data...");
+            Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ModConfig = Controllers.ConfigController.GetConfig();
 
             if (ModConfig.Enabled)
             {
-                Logger.LogDebug("Loading LateToThePartyPlugin...enabling patches...");
+                Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
+
+                Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names...");
+                CarExtractNames = Controllers.ConfigController.GetCarExtractNames();
+                Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names..." + string.Join(",",CarExtractNames));
             }
             
-            Logger.LogDebug("Loading LateToThePartyPlugin...done.");
+            Logger.LogInfo("Loading LateToThePartyPlugin...done.");
         }
     }
 }

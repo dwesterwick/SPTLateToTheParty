@@ -22,5 +22,12 @@ namespace LateToTheParty.Controllers
         {
             RequestHandler.GetJson("/LateToTheParty/SetLootMultiplier/" + factor);
         }
+
+        public static string[] GetCarExtractNames()
+        {
+            string json = RequestHandler.GetJson("/LateToTheParty/GetCarExtractNames");
+            string[] names = JsonConvert.DeserializeObject<string[]>(json);
+            return names;
+        }
     }
 }

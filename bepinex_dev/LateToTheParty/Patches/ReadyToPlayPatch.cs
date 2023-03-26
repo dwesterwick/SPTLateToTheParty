@@ -65,7 +65,7 @@ namespace LateToTheParty.Patches
                         exit.MaxTime = OriginalSettings[location.Id].TrainMaxTime;
                     }
 
-                    if (exit.PlayersCount == 4)
+                    if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
                     {
                         exit.Chance = OriginalSettings[location.Id].VExChance;
                     }
@@ -83,7 +83,7 @@ namespace LateToTheParty.Patches
                         settings.TrainMaxTime = exit.MaxTime;
                     }
 
-                    if (exit.PlayersCount == 4)
+                    if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
                     {
                         settings.VExChance = exit.Chance;
                     }
@@ -177,7 +177,7 @@ namespace LateToTheParty.Patches
         {
             foreach (GClass1195 exit in location.exits)
             {
-                if (exit.PlayersCount == 4)
+                if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
                 {
                     exit.Chance *= (float)reductionFactor;
                     Logger.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + exit.Chance);
