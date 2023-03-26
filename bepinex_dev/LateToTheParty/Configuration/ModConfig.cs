@@ -10,10 +10,13 @@ namespace LateToTheParty.Configuration
     public class ModConfig
     {
         [JsonProperty("enabled")]
-        public bool Enabled { get; set; }
+        public bool Enabled { get; set; } = true;
 
         [JsonProperty("debug")]
-        public bool Debug { get; set; }
+        public bool Debug { get; set; } = false;
+
+        [JsonProperty("adjust_bot_waves")]
+        public bool AdjustBotWaves { get; set; } = false;
 
         [JsonProperty("scav")]
         public EscapeTimeConfig Scav { get; set; } = new EscapeTimeConfig();

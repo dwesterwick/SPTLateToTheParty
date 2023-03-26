@@ -49,6 +49,8 @@ namespace LateToTheParty.Patches
 
             double vexChanceFactor = Interpolate(LateToThePartyPlugin.ModConfig.VExChanceReductions, timeReductionFactor);
             AdjustVExChance(location, vexChanceFactor);
+
+            AdjustBotWaveTimes(location);
         }
 
         private static void RestoreSettings(LocationSettingsClass.Location location)
@@ -182,6 +184,30 @@ namespace LateToTheParty.Patches
                     exit.Chance *= (float)reductionFactor;
                     Logger.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + exit.Chance);
                 }
+            }
+        }
+
+        private static void AdjustBotWaveTimes(LocationSettingsClass.Location location)
+        {
+            int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
+
+            foreach (WildSpawnWave wave in location.waves)
+            {
+                wave.time_max -= timeReduction;
+                wave.time_min -= timeReduction;
+
+                if (wave.time_max < 60)
+                {
+                    wave.time_min += (60 - wave.time_max);
+                    wave.time_max = 60;
+                }
+
+                if (wave.time_min >= wave.time_max)
+                {
+                    wave.time_min = wave.time_max - 1;
+                }
+
+                Logger.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
             }
         }
     }
