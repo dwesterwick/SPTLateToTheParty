@@ -44,6 +44,11 @@ namespace LateToTheParty.Patches
             double lootMultiplierFactor = CalculateLootMultiplier(timeReductionFactor);
             Logger.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
             Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
+
+            AdjustTrainTimes(location);
+
+            double vexChanceFactor = Interpolate(LateToThePartyPlugin.ModConfig.VExChanceReductions, timeReductionFactor);
+            AdjustVExChance(location, vexChanceFactor);
         }
 
         private static void RestoreSettings(LocationSettingsClass.Location location)
@@ -51,10 +56,39 @@ namespace LateToTheParty.Patches
             if (OriginalSettings.ContainsKey(location.Id))
             {
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+                foreach (GClass1195 exit in location.exits)
+                {
+                    if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
+                    {
+                        exit.Count = OriginalSettings[location.Id].TrainWaitTime;
+                        exit.MinTime = OriginalSettings[location.Id].TrainMinTime;
+                        exit.MaxTime = OriginalSettings[location.Id].TrainMaxTime;
+                    }
+
+                    if (exit.PlayersCount == 4)
+                    {
+                        exit.Chance = OriginalSettings[location.Id].VExChance;
+                    }
+                }
             }
             else
             {
-                OriginalSettings.Add(location.Id, new LocationSettings(location.EscapeTimeLimit));
+                LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
+                foreach (GClass1195 exit in location.exits)
+                {
+                    if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
+                    {
+                        settings.TrainWaitTime = exit.Count;
+                        settings.TrainMinTime = exit.MinTime;
+                        settings.TrainMaxTime = exit.MaxTime;
+                    }
+
+                    if (exit.PlayersCount == 4)
+                    {
+                        settings.VExChance = exit.Chance;
+                    }
+                }
+                OriginalSettings.Add(location.Id, settings);
             }
         }
 
@@ -79,31 +113,76 @@ namespace LateToTheParty.Patches
                 return 1;
             }
 
-            if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length == 1)
+            return Interpolate(LateToThePartyPlugin.ModConfig.LootMultipliers, timeReductionFactor);
+        }
+
+        private static double Interpolate(double[][] array, double value)
+        {
+            if (array.Length == 1)
             {
-                return LateToThePartyPlugin.ModConfig.LootMultipliers.Last()[1];
+                return array.Last()[1];
             }
 
-            if (timeReductionFactor <= LateToThePartyPlugin.ModConfig.LootMultipliers[0][0])
+            if (value <= array[0][0])
             {
-                return LateToThePartyPlugin.ModConfig.LootMultipliers[0][1];
+                return array[0][1];
             }
 
-            double[][] factors = LateToThePartyPlugin.ModConfig.LootMultipliers;
-            for (int i = 1; i < factors.Length; i++)
+            for (int i = 1; i < array.Length; i++)
             {
-                if (factors[i][0] >= timeReductionFactor)
+                if (array[i][0] >= value)
                 {
-                    if (factors[i][0] - factors[i - 1][0] == 0)
+                    if (array[i][0] - array[i - 1][0] == 0)
                     {
-                        return factors[i][1];
+                        return array[i][1];
                     }
 
-                    return factors[i - 1][1] + (timeReductionFactor - factors[i - 1][0]) * (factors[i][1] - factors[i - 1][1]) / (factors[i][0] - factors[i - 1][0]);
+                    return array[i - 1][1] + (value - array[i - 1][0]) * (array[i][1] - array[i - 1][1]) / (array[i][0] - array[i - 1][0]);
                 }
             }
 
-            return LateToThePartyPlugin.ModConfig.LootMultipliers.Last()[1];
+            return array.Last()[1];
+        }
+
+        private static void AdjustTrainTimes(LocationSettingsClass.Location location)
+        {
+            int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
+
+            foreach(GClass1195 exit in location.exits)
+            {
+                if (exit.PassageRequirement != EFT.Interactive.ERequirementState.Train)
+                {
+                    continue;
+                }
+
+                exit.MaxTime -= timeReduction;
+                exit.MinTime -= timeReduction;
+
+                if (exit.MaxTime < 60)
+                {
+                    exit.MinTime += (60 - exit.MaxTime);
+                    exit.MaxTime = 60;
+                }
+
+                if (exit.MinTime >= exit.MaxTime)
+                {
+                    exit.MinTime = exit.MaxTime - 1;
+                }
+
+                Logger.LogInfo("Train extract " + exit.Name + ": MaxTime=" + exit.MaxTime + ", MinTime=" + exit.MinTime);
+            }
+        }
+
+        private static void AdjustVExChance(LocationSettingsClass.Location location, double reductionFactor)
+        {
+            foreach (GClass1195 exit in location.exits)
+            {
+                if (exit.PlayersCount == 4)
+                {
+                    exit.Chance *= (float)reductionFactor;
+                    Logger.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + exit.Chance);
+                }
+            }
         }
     }
 }

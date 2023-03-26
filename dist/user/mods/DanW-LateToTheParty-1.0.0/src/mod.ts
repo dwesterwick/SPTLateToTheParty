@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import modConfig from "../config/config.json";
 
 import { DependencyContainer } from "tsyringe";
@@ -10,6 +11,8 @@ import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
+import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 
 const modName = "LateToTheParty";
 
@@ -18,6 +21,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     private logger: ILogger;
     private locationConfig: ILocationConfig;
     private configServer: ConfigServer;
+    private databaseServer: DatabaseServer;
+    private databaseTables: IDatabaseTables;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -58,9 +63,15 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     public postDBLoad(container: DependencyContainer): void
     {
         this.configServer = container.resolve<ConfigServer>("ConfigServer");
+        this.databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
+
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
+        this.databaseTables = this.databaseServer.getTables();
 
         this.getLootMultipliers();
+
+        if (modConfig.debug)
+            this.databaseTables.globals.config.SavagePlayCooldown = 1;
     }
 
     private logInfo(message: string): void
