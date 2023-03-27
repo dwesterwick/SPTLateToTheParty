@@ -23,11 +23,13 @@ namespace LateToTheParty.Patches
         [PatchPostfix]
         private static void PatchPostfix(bool __result, RaidSettings ___raidSettings_0)
         {
+            // Don't bother running the code if the game wouldn't allow you into a raid anyway
             if (!__result)
             {
                 return;
             }
 
+            // Restore the orginal settings for the selected location before modifying them (or factors will be applied multiple times)
             LocationSettingsClass.Location location = ___raidSettings_0.SelectedLocation;
             RestoreSettings(location);
 
@@ -41,84 +43,25 @@ namespace LateToTheParty.Patches
             location.EscapeTimeLimit = (int)(location.EscapeTimeLimit * timeReductionFactor);
             Logger.LogInfo("Changed escape time to " + location.EscapeTimeLimit);
 
-            double lootMultiplierFactor = CalculateLootMultiplier(timeReductionFactor);
-            Logger.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
-            Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
+            if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
+            {
+                double lootMultiplierFactor = Interpolate(LateToThePartyPlugin.ModConfig.LootMultipliers, timeReductionFactor);
+                Logger.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
+                Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
+            }
 
             AdjustTrainTimes(location);
 
-            double vexChanceFactor = Interpolate(LateToThePartyPlugin.ModConfig.VExChanceReductions, timeReductionFactor);
-            AdjustVExChance(location, vexChanceFactor);
-
+            if (LateToThePartyPlugin.ModConfig.VExChanceReductions.Length > 0)
+            {
+                double vexChanceFactor = Interpolate(LateToThePartyPlugin.ModConfig.VExChanceReductions, timeReductionFactor);
+                AdjustVExChance(location, vexChanceFactor);
+            }
+            
             AdjustBotWaveTimes(location);
         }
 
-        private static void RestoreSettings(LocationSettingsClass.Location location)
-        {
-            if (OriginalSettings.ContainsKey(location.Id))
-            {
-                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
-                foreach (GClass1195 exit in location.exits)
-                {
-                    if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
-                    {
-                        exit.Count = OriginalSettings[location.Id].TrainWaitTime;
-                        exit.MinTime = OriginalSettings[location.Id].TrainMinTime;
-                        exit.MaxTime = OriginalSettings[location.Id].TrainMaxTime;
-                    }
-
-                    if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
-                    {
-                        exit.Chance = OriginalSettings[location.Id].VExChance;
-                    }
-                }
-            }
-            else
-            {
-                LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
-                foreach (GClass1195 exit in location.exits)
-                {
-                    if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
-                    {
-                        settings.TrainWaitTime = exit.Count;
-                        settings.TrainMinTime = exit.MinTime;
-                        settings.TrainMaxTime = exit.MaxTime;
-                    }
-
-                    if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
-                    {
-                        settings.VExChance = exit.Chance;
-                    }
-                }
-                OriginalSettings.Add(location.Id, settings);
-            }
-        }
-
-        private static double GenerateTimeReductionFactor(bool isScav)
-        {
-            Random random = new Random();
-
-            Configuration.EscapeTimeConfig config = isScav ? LateToThePartyPlugin.ModConfig.Scav : LateToThePartyPlugin.ModConfig.PMC;
-
-            if (random.NextDouble() > config.Chance)
-            {
-                return 1;
-            }
-
-            return (config.TimeFactorMax - config.TimeFactorMin) * random.NextDouble() + config.TimeFactorMin;
-        }
-
-        private static double CalculateLootMultiplier(double timeReductionFactor)
-        {
-            if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length == 0)
-            {
-                return 1;
-            }
-
-            return Interpolate(LateToThePartyPlugin.ModConfig.LootMultipliers, timeReductionFactor);
-        }
-
-        private static double Interpolate(double[][] array, double value)
+        public static double Interpolate(double[][] array, double value)
         {
             if (array.Length == 1)
             {
@@ -146,29 +89,92 @@ namespace LateToTheParty.Patches
             return array.Last()[1];
         }
 
+        private static void RestoreSettings(LocationSettingsClass.Location location)
+        {
+            if (OriginalSettings.ContainsKey(location.Id))
+            {
+                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+                foreach (GClass1195 exit in location.exits)
+                {
+                    if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
+                    {
+                        exit.Count = OriginalSettings[location.Id].TrainWaitTime;
+                        exit.MinTime = OriginalSettings[location.Id].TrainMinTime;
+                        exit.MaxTime = OriginalSettings[location.Id].TrainMaxTime;
+                    }
+
+                    if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
+                    {
+                        exit.Chance = OriginalSettings[location.Id].VExChance;
+                    }
+                }
+
+                return;
+            }
+
+            LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
+            foreach (GClass1195 exit in location.exits)
+            {
+                if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
+                {
+                    settings.TrainWaitTime = exit.Count;
+                    settings.TrainMinTime = exit.MinTime;
+                    settings.TrainMaxTime = exit.MaxTime;
+                }
+
+                if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
+                {
+                    settings.VExChance = exit.Chance;
+                }
+            }
+            OriginalSettings.Add(location.Id, settings);
+        }
+
+        private static double GenerateTimeReductionFactor(bool isScav)
+        {
+            Random random = new Random();
+
+            Configuration.EscapeTimeConfig config = isScav ? LateToThePartyPlugin.ModConfig.Scav : LateToThePartyPlugin.ModConfig.PMC;
+
+            if (random.NextDouble() > config.Chance)
+            {
+                return 1;
+            }
+
+            return (config.TimeFactorMax - config.TimeFactorMin) * random.NextDouble() + config.TimeFactorMin;
+        }
+
         private static void AdjustTrainTimes(LocationSettingsClass.Location location)
         {
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
-
-            foreach(GClass1195 exit in location.exits)
+            int minTimeBeforeActivation = 60;
+            
+            foreach (GClass1195 exit in location.exits)
             {
                 if (exit.PassageRequirement != EFT.Interactive.ERequirementState.Train)
                 {
                     continue;
                 }
 
+                int maxTimebeforeActivation = (location.EscapeTimeLimit * 60) - (int)Math.Ceiling(exit.ExfiltrationTime) - exit.Count - 60;
+
                 exit.MaxTime -= timeReduction;
                 exit.MinTime -= timeReduction;
 
-                if (exit.MaxTime < 60)
+                if (exit.MinTime < minTimeBeforeActivation)
                 {
-                    exit.MinTime += (60 - exit.MaxTime);
-                    exit.MaxTime = 60;
+                    exit.MaxTime += (minTimeBeforeActivation - exit.MinTime);
+                    exit.MinTime = minTimeBeforeActivation;
                 }
 
-                if (exit.MinTime >= exit.MaxTime)
+                if (exit.MaxTime >= maxTimebeforeActivation)
                 {
-                    exit.MinTime = exit.MaxTime - 1;
+                    exit.MaxTime = maxTimebeforeActivation;
+                }
+
+                if (exit.MaxTime <= exit.MinTime)
+                {
+                    exit.MaxTime = exit.MinTime + 1;
                 }
 
                 Logger.LogInfo("Train extract " + exit.Name + ": MaxTime=" + exit.MaxTime + ", MinTime=" + exit.MinTime);
@@ -190,21 +196,22 @@ namespace LateToTheParty.Patches
         private static void AdjustBotWaveTimes(LocationSettingsClass.Location location)
         {
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
+            int minTimeBeforeActivation = 20;
 
             foreach (WildSpawnWave wave in location.waves)
             {
                 wave.time_max -= timeReduction;
                 wave.time_min -= timeReduction;
 
-                if (wave.time_max < 60)
+                if (wave.time_min < minTimeBeforeActivation)
                 {
-                    wave.time_min += (60 - wave.time_max);
-                    wave.time_max = 60;
+                    wave.time_max += (minTimeBeforeActivation - wave.time_min);
+                    wave.time_min = minTimeBeforeActivation;
                 }
 
-                if (wave.time_min >= wave.time_max)
+                if (wave.time_max <= wave.time_min)
                 {
-                    wave.time_min = wave.time_max - 1;
+                    wave.time_max = wave.time_min + 1;
                 }
 
                 Logger.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);

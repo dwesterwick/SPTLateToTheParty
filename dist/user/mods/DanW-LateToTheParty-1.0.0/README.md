@@ -1,64 +1,21 @@
+Ever notice that as a Scav you get access to the same loot as your PMC along with the same raid times? Not anymore!
 
-This project was created to automate most parts of building and setting up an environment.
+Just like in live Tarkov, your Scav character will no longer spawn into the map at the start of the raid. Instead, you will have an unknown amount of time remaining in it. If you think that's bad enough, there are other consequences too:
+* The amount of loot remaining in the map will scale with the remaining raid time. If you spawn into a raid that's nearly over, don't expect much left for you to grab.
+* The chance that car extracts will still be available also scales with the remaining raid time. The later you spawn into the raid, the less likely it is that a car will be left for you use for extraction.
 
-## **NodeJS:**
+To make things even more interesting, your PMC character also has a small chance of spawning into the raid late (although not by much).
 
-The first step would be to install nodejs on your pc, the version you NEED is **16.17.1**
+Optionally, you can also have all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option is disabled by default because it may require a lot of CPU power. I also left it disabled in case you'd rather use a mod like SWAG to manage bot spawning. 
 
-That version is the one that has been used to test the mod templates and build scripts.
+This mod is highly customizable by modifying the *config.json* file. You can change:
+* The odds of spawning into the raid late (as either a PMC or Scav)
+* The range of time in which you'll spawn into a raid late (defined as a fraction of the original raid time)
+* The reduction of loot quantity available (defined as a fraction of the original loot quantity)
+* The reduction in the chance that a vehicle extract will be available (defined as a fraction of the original chance)
 
-It can be downloaded from here: https://nodejs.org/dist/v16.17.1/node-v16.17.1-x64.msi
+The arrays for **loot_multipliers** and **vex_chance_reduction** are defined using pairs of [time_remaining_factor, reduction_factor] pairs. You can have as many pairs as you'd like in the arrays; the mod will just interpolate between them. 
 
-A system reboot may be needed after install.
+**If you have suggestions to modify the arrays in *config.json* to better match your experience in live Tarkov, please let me know! I only have ~100 hours of live experience, so I based my initial settings on that. I'd love to get feedback from the veteran players of live Tarkov!**
 
-## **IDE:**
-
-The second step is having an IDE ready. We've setup a VSCodium workspace file to help with this.
-
-You CAN use Visual Studio Code if you so desire, just keep in mind that our dev tests on the mod files was done using VSCodium.
-
-You can get VSCodium here: https://vscodium.com/#install
-
-## **Workspace:**
-
-Once you have NodeJS and VSCodium ready, open the mod.code-workspace file with VSCodium (File->Open Workspace from File...).
-
-Once the project loads into VSCodium you will be recommended to install the ESLint plugin. This is HIGHLY recommended.
-
-## **Environment Setup:**
-
-There is a task that will automatically setup your environment to use typescript.
-
-To run it, you just need to go to: 
-
-> Terminal->Run Task...->Show All Tasks...->npm: install
-
-After running this task, your environment will be ready to start coding.
-
-DO NOT remove the node_modules folder, this is an auto generated directory that has the required dependencies to be able to use typescript and more.
-
-## **IMPORTANT:**
-
-Before starting to work on your mod, we suggest you read about Dependency Injection and Inversion of Control as this is the adopted architecture SPT-AKI has adopted.
-
-It will be difficult to understand some of the problems you may be having if you dont understand the basics of it.
-
-A guide explaining all the essentials will be available on the hub on release for you to read about.
-
-## **Coding:**
-
-All your work should be centered around the mod.ts file as an entry point.
-You can ONLY change the following properties from the package.json file: `"name"`, `"version"`, `"license"`: `"MIT"`, `"author"`, `"akiVersion"`.
-
-If you have never used typescript before, you can read about it here: https://www.typescriptlang.org/docs/
-
-## **Distributing your mod:**
-
-The project has been set up with an automatic task that will copy and zip ALL required files for your mod to work on SPT-AKI.
-To run this task you just need to go to: 
-
-> Terminal->Run Task...->Show All Tasks...->npm: build:zip
-
-The output will be a mod.zip file that will appear on the root of the project.
-
-Always verify that all files were included into the zip file.
+Unfortunately, while the loot quantity scales with remaing raid time, the loot quality does not. This could be good or bad depending on your perspective. Maybe I'll change this in a future release...

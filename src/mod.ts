@@ -57,7 +57,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
             }], "GetCarExtractNames"
         );
 
-        // Hook up a new dynamic route
+        // Adjust the static and loose loot multipliers
         dynamicRouterModService.registerDynamicRouter(`DynamicSetLootMultipliers${modName}`,
             [{
                 url: "/LateToTheParty/SetLootMultiplier/",
@@ -83,8 +83,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.databaseTables = this.databaseServer.getTables();
 
+        // Store the original static and loose loot multipliers
         this.getLootMultipliers();
 
+        // Make the Scav cooldown timer very short for debugging
         if (modConfig.debug)
             this.databaseTables.globals.config.SavagePlayCooldown = 1;
     }
@@ -175,8 +177,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.locationConfig.staticLootMultiplier.terminal = this.originalStaticLootMultipliers.terminal * factor;
         this.locationConfig.staticLootMultiplier.town = this.originalStaticLootMultipliers.town * factor;
         this.locationConfig.staticLootMultiplier.woods = this.originalStaticLootMultipliers.woods * factor;
-
-        this.logInfo(`Multiplier: ${this.locationConfig.looseLootMultiplier.bigmap}, ${this.locationConfig.staticLootMultiplier.bigmap}`);
     }
 }
 module.exports = {mod: new LateToTheParty()}

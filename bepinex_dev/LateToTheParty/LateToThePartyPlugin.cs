@@ -29,7 +29,6 @@ namespace LateToTheParty
 
                 Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names...");
                 CarExtractNames = Controllers.ConfigController.GetCarExtractNames();
-                Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names..." + string.Join(",",CarExtractNames));
             }
             
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
