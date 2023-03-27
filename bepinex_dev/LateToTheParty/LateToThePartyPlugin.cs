@@ -9,7 +9,7 @@ using EFT.UI;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.0.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.0.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static Configuration.ModConfig ModConfig { get; set; } = null;

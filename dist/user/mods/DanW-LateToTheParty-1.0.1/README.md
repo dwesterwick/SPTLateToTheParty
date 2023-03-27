@@ -14,6 +14,8 @@ This mod is highly customizable by modifying the *config.json* file. You can cha
 * The reduction of loot quantity available (defined as a fraction of the original loot quantity)
 * The reduction in the chance that a vehicle extract will be available (defined as a fraction of the original chance)
 
+The arrays for **loot_multipliers** and **vex_chance_reduction** are defined using pairs of [time_remaining_factor, reduction_factor] pairs. You can have as many pairs as you'd like in the arrays; the mod will just interpolate between them.
+
 **If you have suggestions to modify the arrays in *config.json* to better match your experience in live Tarkov, please let me know! I only have ~100 hours of live experience, so I based my initial settings on that. I'd love to get feedback from the veteran players of live Tarkov!**
 
-Unfortunately, while the loot quantity scales with remaing raid time, the loot quality does not. This could be good or bad depending on your perspective. Maybe I'll change this in a future release...
+Unfortunately, while the loot quantity scales with remaining raid time, the loot quality does not. This could be good or bad depending on your perspective. Maybe I'll change this in a future release...

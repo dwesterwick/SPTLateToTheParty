@@ -37,6 +37,7 @@ namespace LateToTheParty.Patches
             if (timeReductionFactor == 1)
             {
                 Logger.LogInfo("Using original settings");
+                Controllers.ConfigController.SetLootMultipliers(1);
                 return;
             }
 
