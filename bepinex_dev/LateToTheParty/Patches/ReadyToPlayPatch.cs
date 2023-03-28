@@ -8,12 +8,15 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using EFT.UI;
+using Comfort.Common;
 
 namespace LateToTheParty.Patches
 {
     public class ReadyToPlayPatch : ModulePatch
     {
+        private static BackendConfigSettingsClass.GClass1304.GClass1311 matchEndConfig = null;
         private static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
+        private static int MinimumTimeForSurvived = -1;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -29,6 +32,15 @@ namespace LateToTheParty.Patches
                 return;
             }
 
+            // Get the singleton instance for match-end experience configuration and get the default value for minimum time to get a "Survived" status
+            // NOTE: You have to get the singleton instance each time this method runs!
+            matchEndConfig = Singleton<BackendConfigSettingsClass>.Instance.Experience.MatchEnd;
+            if (MinimumTimeForSurvived < 0)
+            {
+                MinimumTimeForSurvived = matchEndConfig.SurvivedTimeRequirement;
+                Logger.LogInfo("Default minimum time for Survived status: " + MinimumTimeForSurvived);
+            }
+
             // Restore the orginal settings for the selected location before modifying them (or factors will be applied multiple times)
             LocationSettingsClass.Location location = ___raidSettings_0.SelectedLocation;
             RestoreSettings(location);
@@ -37,12 +49,19 @@ namespace LateToTheParty.Patches
             if (timeReductionFactor == 1)
             {
                 Logger.LogInfo("Using original settings");
+
+                // Need to reset the minimum survival time to the default value
+                AdjustMinimumSurvivalTime(location);
+
+                // Need to reset loot multipliers to original values
                 Controllers.ConfigController.SetLootMultipliers(1);
+                
                 return;
             }
 
             location.EscapeTimeLimit = (int)(location.EscapeTimeLimit * timeReductionFactor);
             Logger.LogInfo("Changed escape time to " + location.EscapeTimeLimit);
+            AdjustMinimumSurvivalTime(location);
 
             if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
             {
@@ -94,7 +113,7 @@ namespace LateToTheParty.Patches
         {
             if (OriginalSettings.ContainsKey(location.Id))
             {
-                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;                
                 foreach (GClass1195 exit in location.exits)
                 {
                     if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
@@ -143,6 +162,15 @@ namespace LateToTheParty.Patches
             }
 
             return (config.TimeFactorMax - config.TimeFactorMin) * random.NextDouble() + config.TimeFactorMin;
+        }
+
+        private static void AdjustMinimumSurvivalTime(LocationSettingsClass.Location location)
+        {
+            double minRaidTimeForRunThrough = (OriginalSettings[location.Id].EscapeTimeLimit * 60) - MinimumTimeForSurvived;
+            double survTimeReq = Math.Max(1, Math.Min(MinimumTimeForSurvived, (location.EscapeTimeLimit * 60) - minRaidTimeForRunThrough));
+            matchEndConfig.SurvivedTimeRequirement = (int)survTimeReq;
+
+            Logger.LogInfo("Changed minimum survival time to " + matchEndConfig.SurvivedTimeRequirement);
         }
 
         private static void AdjustTrainTimes(LocationSettingsClass.Location location)
