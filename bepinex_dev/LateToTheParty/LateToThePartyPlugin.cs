@@ -9,7 +9,7 @@ using EFT.UI;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.0.2.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.0.3.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static Configuration.ModConfig ModConfig { get; set; } = null;
@@ -26,6 +26,7 @@ namespace LateToTheParty
             {
                 Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
+                new Patches.ShowScreenPatch().Enable();
 
                 Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names...");
                 CarExtractNames = Controllers.ConfigController.GetCarExtractNames();

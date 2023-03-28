@@ -14,8 +14,9 @@ namespace LateToTheParty.Patches
 {
     public class ReadyToPlayPatch : ModulePatch
     {
+        public static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
+
         private static BackendConfigSettingsClass.GClass1304.GClass1311 matchEndConfig = null;
-        private static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
         private static int MinimumTimeForSurvived = -1;
 
         protected override MethodBase GetTargetMethod()
@@ -48,7 +49,7 @@ namespace LateToTheParty.Patches
             double timeReductionFactor = GenerateTimeReductionFactor(___raidSettings_0.IsScav);
             if (timeReductionFactor == 1)
             {
-                Logger.LogInfo("Using original settings");
+                Logger.LogInfo("Using original settings. Escape time: " + location.EscapeTimeLimit);
 
                 // Need to reset the minimum survival time to the default value
                 AdjustMinimumSurvivalTime(location);
