@@ -21,7 +21,8 @@ namespace LateToTheParty.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(MainMenuController).GetMethod("method_45", BindingFlags.NonPublic | BindingFlags.Instance);
+            // Through 1.0.3, I used method_45, but it was always called twice. Method_42 should work the same but will be easier to debug.
+            return typeof(MainMenuController).GetMethod("method_42", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         [PatchPostfix]
