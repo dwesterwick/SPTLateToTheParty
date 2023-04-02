@@ -19,9 +19,11 @@ namespace LateToTheParty
         public static Configuration.ModConfig ModConfig { get; set; } = null;
         public static string[] CarExtractNames { get; set; } = new string[0];
 
-        private Transform _mainCameraTransform;
-        private float LootDestroyDist = 50;
-        private int lastLootCount = 0;
+        private float LootDestroyDist = 20;
+        private float minUpdateDist = 1;
+        private Vector3 lastUpdatePosition = Vector3.zero;
+        private int lastLooseLootCount = 0;
+        private int lastStaticLootCount = 0;
 
         private void Awake()
         {
@@ -50,31 +52,35 @@ namespace LateToTheParty
                 return;
             }
 
-            if (this._mainCameraTransform == null)
+            if (Camera.main == null)
             {
-                Camera main = Camera.main;
-                if (main != null)
-                {
-                    this._mainCameraTransform = main.transform;
-                }
+                return;
+            }
+            Vector3 yourPosition = Camera.main.transform.position;
+
+            float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
+            if (lastUpdateDist < minUpdateDist)
+            {
                 return;
             }
 
-            Vector3 position = this._mainCameraTransform.position;
+            DestroyLooseLoot(yourPosition);
+            DestroyStaticLoot(yourPosition);
+            lastUpdatePosition = yourPosition;
+        }
 
+        private void DestroyLooseLoot(Vector3 yourPosition)
+        {
             List<GClass1171> allLootSeriously = Singleton<GameWorld>.Instance.AllLoot;
             List<GInterface7> allLootSeriously2 = Singleton<GameWorld>.Instance.LootList;
             GClass743<int, LootItem> allLootSeriously3 = Singleton<GameWorld>.Instance.LootItems;
-
             List<LootItem> allLoot = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToList();
 
-            if (lastLootCount == allLoot.Count)
+            /*if (allLoot.Count == lastLooseLootCount)
             {
                 return;
             }
-            lastLootCount = allLoot.Count;
-
-            Logger.LogInfo("Loot count: " + allLoot.Count + " (" + allLootSeriously.Count + "), (" + allLootSeriously2.Count + ")");
+            lastLooseLootCount = allLoot.Count;*/
 
             foreach (GInterface7 item in allLootSeriously2.ToArray())
             {
@@ -85,36 +91,66 @@ namespace LateToTheParty
             {
                 if (lootItem.Item.QuestItem)
                 {
-                    Logger.LogInfo("Skipping " + lootItem.Item.LocalizedName());
+                    //Logger.LogInfo("Skipping " + lootItem.Item.LocalizedName());
                     continue;
                 }
 
-                float lootDist = Vector3.Distance(position, lootItem.transform.position);
-
-                if (lootDist > LootDestroyDist)
+                float lootDist = Vector3.Distance(yourPosition, lootItem.transform.position);
+                if (lootDist < LootDestroyDist)
                 {
-                    Logger.LogInfo("Destroying loot: " + lootItem.Item.LocalizedName());
-                    Singleton<GameWorld>.Instance.DestroyLoot(lootItem);
+                    continue;
+                }
+
+                Logger.LogInfo("Destroying loot: " + lootItem.Item.LocalizedName());
+                Singleton<GameWorld>.Instance.DestroyLoot(lootItem);
+            }
+        }
+
+        private void DestroyStaticLoot(Vector3 yourPosition)
+        {
+            LootableContainer[] lootableContainers = UnityEngine.Object.FindObjectsOfType<LootableContainer>();
+            //int itemCount = lootableContainers.Sum(lc => lc.ItemOwner.Items.Sum(i => i.GetAllItems().Count()));
+
+            /*if (itemCount == lastStaticLootCount)
+            {
+                return;
+            }
+            lastStaticLootCount = itemCount;*/
+
+            foreach (LootableContainer lootableContainer in lootableContainers)
+            {
+                float lootDist = Vector3.Distance(yourPosition, lootableContainer.transform.position);
+                if (lootDist < LootDestroyDist)
+                {
+                    continue;
+                }
+
+                if (lootableContainer.ItemOwner == null)
+                {
+                    continue;
+                }
+
+                foreach (Item childItem in lootableContainer.ItemOwner.Items)
+                {
+                    DestroyItemsInContainer(childItem, lootableContainer.ItemOwner);
                 }
             }
+        }
 
-            LootableContainer[] lootableContainers = UnityEngine.Object.FindObjectsOfType<LootableContainer>();
-            foreach(LootableContainer lootableContainer in lootableContainers)
+        private void DestroyItemsInContainer(Item container, TraderControllerClass traderController)
+        {
+            Item[] containedItems = container.GetAllItems().ToArray();
+            foreach (Item item in containedItems.Reverse())
             {
-                foreach(Item childItem in lootableContainer.ItemOwner.Items)
+                if (item.Id == container.Id)
                 {
-                    Item[] containedItems = childItem.GetAllItems().ToArray();
-                    foreach(Item item in containedItems.Reverse())
-                    {
-                        if (item.Id == childItem.Id)
-                        {
-                            continue;
-                        }
-
-                        Logger.LogInfo("Discarding " + item.LocalizedName() + "...");
-                        lootableContainer.ItemOwner.DestroyItem(item);
-                    }
+                    continue;
                 }
+
+                DestroyItemsInContainer(item, traderController);
+
+                Logger.LogInfo("Discarding " + item.LocalizedName() + "...");
+                traderController.DestroyItem(item);
             }
         }
     }
