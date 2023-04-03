@@ -95,17 +95,8 @@ namespace LateToTheParty.Controllers
 
         private void DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
-            double currentLootRemainingFraction = (double)LooseLootDestroyed.Values.Where(v => v == false).Count() / LooseLootDestroyed.Count;
-            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            if (lootFractionToDestroy <= 0)
-            {
-                return;
-            }
-
-            System.Random randomGen = new System.Random();
-            LootItem[] lootToDestroy = LooseLootDestroyed.Keys.ToArray().OrderBy(e => randomGen.NextDouble()).ToArray();
-            lootToDestroy = lootToDestroy.Take((int)Math.Floor(lootFractionToDestroy * LooseLootDestroyed.Count)).ToArray();
-
+            targetLootRemainingFraction = 0;
+            LootItem[] lootToDestroy = FindLootToDestroy(LooseLootDestroyed, targetLootRemainingFraction);
             foreach (LootItem lootItem in lootToDestroy)
             {
                 if (LooseLootDestroyed[lootItem])
@@ -119,10 +110,25 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                Logger.LogInfo("Destroying loose loot: " + lootItem.Item.LocalizedName());
-                Singleton<GameWorld>.Instance.DestroyLoot(lootItem);
+                TraderControllerClass traderController = lootItem.ItemOwner;
 
-                LooseLootDestroyed[lootItem] = true;
+                Item parentItem = lootItem.Item.GetAllParentItemsAndSelf().Last();
+                Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
+                Logger.LogInfo("Destroying loose loot: " + string.Join(",", allItems.Select(i => i.LocalizedName())));
+                foreach (Item containedItem in allItems)
+                {
+                    LootItem[] matchingLootItems = LooseLootDestroyed.Keys.Where(k => k.ItemId == containedItem.Id).ToArray();
+                    if ((matchingLootItems.Length != 1) || (!LooseLootDestroyed.ContainsKey(matchingLootItems[0])))
+                    {
+                        Logger.LogWarning("Could not find entry for " + containedItem.LocalizedName());
+                        continue;
+                    }
+
+                    Logger.LogInfo("Destroying loose loot in " + lootItem.Item.LocalizedName() + ": " + containedItem.LocalizedName());
+                    traderController.DestroyItem(containedItem);
+                    //Singleton<GameWorld>.Instance.DestroyLoot(lootItem);
+                    LooseLootDestroyed[matchingLootItems[0]] = true;
+                }
             }
         }
 
@@ -160,17 +166,7 @@ namespace LateToTheParty.Controllers
 
         private void DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
-            double currentLootRemainingFraction = (double)StaticLootDestroyed.Values.Where(v => v == false).Count() / StaticLootDestroyed.Count;
-            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            if (lootFractionToDestroy <= 0)
-            {
-                return;
-            }
-
-            System.Random randomGen = new System.Random();
-            Item[] lootToDestroy = StaticLootDestroyed.Keys.ToArray().OrderBy(e => randomGen.NextDouble()).ToArray();
-            lootToDestroy = lootToDestroy.Take((int)Math.Floor(lootFractionToDestroy * StaticLootDestroyed.Count)).ToArray();
-
+            Item[] lootToDestroy = FindLootToDestroy(StaticLootDestroyed, targetLootRemainingFraction);
             foreach (Item item in lootToDestroy)
             {
                 if (StaticLootDestroyed[item])
@@ -184,7 +180,7 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                Item[] containedItems = item.GetAllItems().Where(i => i.Id != item.Id).ToArray();
+                Item[] containedItems = item.GetAllItems().Where(i => i.Id != item.Id).Reverse().ToArray();
                 foreach (Item containedItem in containedItems)
                 {
                     if (!StaticLootDestroyed.ContainsKey(containedItem))
@@ -198,10 +194,26 @@ namespace LateToTheParty.Controllers
                     StaticLootDestroyed[containedItem] = true;
                 }
 
-                Logger.LogInfo("Destroying static loot: " + item.LocalizedName());
+                Logger.LogInfo("Destroying static loot: " + item.LocalizedName() + " (Parents: " + string.Join(",", item.GetAllParentItems().Select(p => p.LocalizedName())));
                 StaticLootController[item].DestroyItem(item);
                 StaticLootDestroyed[item] = true;
             }
+        }
+
+        public static T[] FindLootToDestroy<T>(Dictionary<T, bool> lootDict, double targetLootRemainingFraction)
+        {
+            double currentLootRemainingFraction = (double)lootDict.Values.Where(v => v == false).Count() / lootDict.Count;
+            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
+            if (lootFractionToDestroy <= 0)
+            {
+                return new T[0];
+            }
+
+            System.Random randomGen = new System.Random();
+            T[] lootToDestroy = lootDict.Keys.ToArray().OrderBy(e => randomGen.NextDouble()).ToArray();
+            lootToDestroy = lootToDestroy.Take((int)Math.Floor(lootFractionToDestroy * lootDict.Count)).ToArray();
+
+            return lootToDestroy;
         }
     }
 }
