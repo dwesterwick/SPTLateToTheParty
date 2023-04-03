@@ -46,26 +46,34 @@ namespace LateToTheParty.Controllers
                 AllLootableContainers = UnityEngine.Object.FindObjectsOfType<LootableContainer>();
             }
 
-            Vector3 yourPosition = Camera.main.transform.position;
-            float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
-            if (lastUpdateDist < minUpdateDist)
+            float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
+            if (timeRemainingFraction == 1)
             {
                 return;
             }
 
-            float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
-            float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
-            Logger.LogInfo("Destroying loot... (Time Remaining Fraction: " + timeRemainingFraction + ")");
+            Vector3 yourPosition = Camera.main.transform.position;
+            float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
+            if ((lastUpdateDist < minUpdateDist) && (LooseLootDestroyed.Count > 0))
+            {
+                return;
+            }
+
+            Stopwatch jobTimer = Stopwatch.StartNew();
+            Logger.LogInfo("Destroying loot...");            
 
             FindLooseLoot();
             FindStaticLoot();
-            Logger.LogInfo("Found " + LooseLootDestroyed.Count + " loose loot items (" + LooseLootDestroyed.Values.Where(v => v == false).Count() + " remaining)");
-            Logger.LogInfo("Found " + StaticLootDestroyed.Count + " static loot items (" + StaticLootDestroyed.Values.Where(v => v == false).Count() + " remaining)");
+            //Logger.LogInfo("Found " + LooseLootDestroyed.Count + " loose loot items (" + LooseLootDestroyed.Values.Where(v => v == false).Count() + " remaining)");
+            //Logger.LogInfo("Found " + StaticLootDestroyed.Count + " static loot items (" + StaticLootDestroyed.Values.Where(v => v == false).Count() + " remaining)");
 
-            DestroyLooseLoot(yourPosition);
-            DestroyStaticLoot(yourPosition);
+            double targetLootRemainingFraction = Patches.ReadyToPlayPatch.GetLootRemainingFactor(timeRemainingFraction);
+            DestroyLooseLoot(yourPosition, targetLootRemainingFraction);
+            DestroyStaticLoot(yourPosition, targetLootRemainingFraction);
 
             lastUpdatePosition = yourPosition;
+            Logger.LogInfo("Destroying loot...done. (" + jobTimer.ElapsedMilliseconds + ")");
         }
 
         private void FindLooseLoot()
@@ -85,9 +93,20 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private void DestroyLooseLoot(Vector3 yourPosition)
+        private void DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
-            foreach (LootItem lootItem in LooseLootDestroyed.Keys.ToArray())
+            double currentLootRemainingFraction = (double)LooseLootDestroyed.Values.Where(v => v == false).Count() / LooseLootDestroyed.Count;
+            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
+            if (lootFractionToDestroy <= 0)
+            {
+                return;
+            }
+
+            System.Random randomGen = new System.Random();
+            LootItem[] lootToDestroy = LooseLootDestroyed.Keys.ToArray().OrderBy(e => randomGen.NextDouble()).ToArray();
+            lootToDestroy = lootToDestroy.Take((int)Math.Floor(lootFractionToDestroy * LooseLootDestroyed.Count)).ToArray();
+
+            foreach (LootItem lootItem in lootToDestroy)
             {
                 if (LooseLootDestroyed[lootItem])
                 {
@@ -139,9 +158,20 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private void DestroyStaticLoot(Vector3 yourPosition)
+        private void DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
-            foreach (Item item in StaticLootDestroyed.Keys.ToArray())
+            double currentLootRemainingFraction = (double)StaticLootDestroyed.Values.Where(v => v == false).Count() / StaticLootDestroyed.Count;
+            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
+            if (lootFractionToDestroy <= 0)
+            {
+                return;
+            }
+
+            System.Random randomGen = new System.Random();
+            Item[] lootToDestroy = StaticLootDestroyed.Keys.ToArray().OrderBy(e => randomGen.NextDouble()).ToArray();
+            lootToDestroy = lootToDestroy.Take((int)Math.Floor(lootFractionToDestroy * StaticLootDestroyed.Count)).ToArray();
+
+            foreach (Item item in lootToDestroy)
             {
                 if (StaticLootDestroyed[item])
                 {
