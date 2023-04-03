@@ -15,6 +15,7 @@ namespace LateToTheParty.Patches
     public class ReadyToPlayPatch : ModulePatch
     {
         public static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
+        public static int LastOriginalEscapeTime = -1;
 
         private static BackendConfigSettingsClass.GClass1304.GClass1311 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
@@ -46,6 +47,7 @@ namespace LateToTheParty.Patches
             // Restore the orginal settings for the selected location before modifying them (or factors will be applied multiple times)
             LocationSettingsClass.Location location = ___raidSettings_0.SelectedLocation;
             RestoreSettings(location);
+            LastOriginalEscapeTime = location.EscapeTimeLimit;
 
             double timeReductionFactor = GenerateTimeReductionFactor(___raidSettings_0.IsScav);
             if (timeReductionFactor == 1)
@@ -115,7 +117,8 @@ namespace LateToTheParty.Patches
         {
             if (OriginalSettings.ContainsKey(location.Id))
             {
-                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;                
+                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+                
                 foreach (GClass1195 exit in location.exits)
                 {
                     if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)

@@ -10,6 +10,7 @@ using Comfort.Common;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using EFT;
+using EFT.UI;
 
 namespace LateToTheParty.Controllers
 {
@@ -45,15 +46,15 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            Stopwatch jobTimer = Stopwatch.StartNew();
-            Logger.LogInfo("Destroying loot...");
+            float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
+            Logger.LogInfo("Destroying loot... (Time Remaining Fraction: " + timeRemainingFraction + ")");
 
             AllLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
             DestroyLooseLoot(yourPosition);
             DestroyStaticLoot(yourPosition);
 
             lastUpdatePosition = yourPosition;
-            Logger.LogInfo("Destroying loot...done. (" + jobTimer.ElapsedMilliseconds + " ms)");
         }
 
         private void DestroyLooseLoot(Vector3 yourPosition)
