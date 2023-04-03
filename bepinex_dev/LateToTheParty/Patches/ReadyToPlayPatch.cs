@@ -67,12 +67,12 @@ namespace LateToTheParty.Patches
             Logger.LogInfo("Changed escape time to " + location.EscapeTimeLimit);
             AdjustMinimumSurvivalTime(location);
 
-            if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
+            /*if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
             {
-                double lootMultiplierFactor = Interpolate(LateToThePartyPlugin.ModConfig.LootMultipliers, timeReductionFactor);
+                double lootMultiplierFactor = GetLootRemainingFactor(timeReductionFactor);
                 Logger.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
-                Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
-            }
+               /Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
+            }*/
 
             AdjustTrainTimes(location);
 
@@ -111,6 +111,11 @@ namespace LateToTheParty.Patches
             }
 
             return array.Last()[1];
+        }
+
+        public static double GetLootRemainingFactor(double timeRemainingFactor)
+        {
+            return Interpolate(LateToThePartyPlugin.ModConfig.LootMultipliers, timeRemainingFactor);
         }
 
         private static void RestoreSettings(LocationSettingsClass.Location location)
