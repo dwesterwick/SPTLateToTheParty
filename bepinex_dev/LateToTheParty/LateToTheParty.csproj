@@ -74,6 +74,7 @@
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
+    <Compile Include="Controllers\LootDestroyerController.cs" />
     <Compile Include="LocationSettings.cs" />
     <Compile Include="Patches\ReadyToPlayPatch.cs" />
     <Compile Include="Patches\ShowScreenPatch.cs" />
