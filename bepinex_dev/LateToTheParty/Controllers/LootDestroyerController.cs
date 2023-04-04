@@ -24,31 +24,36 @@ namespace LateToTheParty.Controllers
         private float minUpdateDist = 1;
         private Vector3 lastUpdatePosition = Vector3.zero;
 
-        private LootItem[] AllLootItems = new LootItem[0];
         private LootableContainer[] AllLootableContainers = new LootableContainer[0];
-
         private Dictionary<LootItem, bool> LooseLootDestroyed = new Dictionary<LootItem, bool>();
         private Dictionary<Item, bool> StaticLootDestroyed = new Dictionary<Item, bool>();
         private Dictionary<Item, TraderControllerClass> StaticLootController = new Dictionary<Item, TraderControllerClass>();
         private Dictionary<Item, Transform> StaticLootTransform = new Dictionary<Item, Transform>();
-        private Dictionary<Item, Item[]> StaticLootChildItems = new Dictionary<Item, Item[]>();
 
         private void Update()
         {
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 AllLootableContainers = new LootableContainer[0];
+
+                LooseLootDestroyed.Clear();
+                StaticLootDestroyed.Clear();
+                StaticLootController.Clear();
+                StaticLootTransform.Clear();
+
                 return;
             }
 
             if (AllLootableContainers.Length == 0)
             {
+                Stopwatch containerSearchTimer = Stopwatch.StartNew();
                 AllLootableContainers = UnityEngine.Object.FindObjectsOfType<LootableContainer>();
+                Logger.LogInfo("Found " + AllLootableContainers.Length + " lootable containers (" + containerSearchTimer.ElapsedMilliseconds + ")");
             }
 
             float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
-            if (timeRemainingFraction == 1)
+            if (timeRemainingFraction > 0.99)
             {
                 return;
             }
@@ -78,8 +83,8 @@ namespace LateToTheParty.Controllers
 
         private void FindLooseLoot()
         {
-            AllLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
-            foreach (LootItem lootItem in AllLootItems)
+            LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
+            foreach (LootItem lootItem in allLootItems)
             {
                 if (lootItem.Item.QuestItem)
                 {
@@ -93,9 +98,22 @@ namespace LateToTheParty.Controllers
             }
         }
 
+        /*private void FindLooseLootInContainer(Item container, TraderControllerClass traderController, Transform containerTransform)
+        {
+            Item[] containedItems = container.GetAllItems().Where(i => i.Id != container.Id).ToArray();
+            foreach (Item item in containedItems)
+            {
+                FindLooseLootInContainer(item, traderController, containerTransform);
+
+                if (!LooseLootDestroyed.ContainsKey(item))
+                {
+                    LooseLootDestroyed.Add(item, false);
+                }
+            }
+        }*/
+
         private void DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
-            targetLootRemainingFraction = 0;
             LootItem[] lootToDestroy = FindLootToDestroy(LooseLootDestroyed, targetLootRemainingFraction);
             foreach (LootItem lootItem in lootToDestroy)
             {
@@ -114,7 +132,7 @@ namespace LateToTheParty.Controllers
 
                 Item parentItem = lootItem.Item.GetAllParentItemsAndSelf().Last();
                 Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
-                Logger.LogInfo("Destroying loose loot: " + string.Join(",", allItems.Select(i => i.LocalizedName())));
+                //Logger.LogInfo("Destroying loose loot: " + string.Join(",", allItems.Select(i => i.LocalizedName())));
                 foreach (Item containedItem in allItems)
                 {
                     LootItem[] matchingLootItems = LooseLootDestroyed.Keys.Where(k => k.ItemId == containedItem.Id).ToArray();
@@ -124,7 +142,7 @@ namespace LateToTheParty.Controllers
                         continue;
                     }
 
-                    Logger.LogInfo("Destroying loose loot in " + lootItem.Item.LocalizedName() + ": " + containedItem.LocalizedName());
+                    Logger.LogInfo("Destroying loose loot" + ((lootItem.Item.Id != containedItem.Id) ? " in " + lootItem.Item.LocalizedName() : "") + ": " + containedItem.LocalizedName());
                     traderController.DestroyItem(containedItem);
                     //Singleton<GameWorld>.Instance.DestroyLoot(lootItem);
                     LooseLootDestroyed[matchingLootItems[0]] = true;
@@ -180,8 +198,10 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                Item[] containedItems = item.GetAllItems().Where(i => i.Id != item.Id).Reverse().ToArray();
-                foreach (Item containedItem in containedItems)
+                Item parentItem = item.GetAllParentItemsAndSelf().TakeLast(2).First();
+                Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
+                //Logger.LogInfo("Destroying static loot: " + string.Join(",", allItems.Select(i => i.LocalizedName())));
+                foreach (Item containedItem in allItems)
                 {
                     if (!StaticLootDestroyed.ContainsKey(containedItem))
                     {
@@ -189,14 +209,10 @@ namespace LateToTheParty.Controllers
                         continue;
                     }
 
-                    Logger.LogInfo("Destroying static loot in " + item.LocalizedName() + ": " + item.LocalizedName());
-                    StaticLootController[containedItem].DestroyItem(containedItem);
+                    Logger.LogInfo("Destroying static loot" + ((parentItem.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() : "") + ": " + containedItem.LocalizedName());
+                    StaticLootController[item].DestroyItem(containedItem);
                     StaticLootDestroyed[containedItem] = true;
                 }
-
-                Logger.LogInfo("Destroying static loot: " + item.LocalizedName() + " (Parents: " + string.Join(",", item.GetAllParentItems().Select(p => p.LocalizedName())));
-                StaticLootController[item].DestroyItem(item);
-                StaticLootDestroyed[item] = true;
             }
         }
 
