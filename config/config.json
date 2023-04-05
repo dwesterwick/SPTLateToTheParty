@@ -12,6 +12,12 @@
 		"max_time_remaining": 1,
 		"min_time_remaining": 0.95
 	},
+	"destroy_loot_during_raid" : {
+		"enabled": true,
+		"exclusion_radius": 40,
+		"min_distance_traveled_for_update": 1,
+		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571" ]
+	},
 	"loot_multipliers": [
 		[0, 0.15],
 		[0.3, 0.2],

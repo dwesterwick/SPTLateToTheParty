@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using EFT.UI;
 using Comfort.Common;
+using LateToTheParty.Configuration;
 
 namespace LateToTheParty.Patches
 {
@@ -22,8 +23,14 @@ namespace LateToTheParty.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            // Through 1.0.3, I used method_45, but it was always called twice. Method_42 should work the same but will be easier to debug.
-            return typeof(MainMenuController).GetMethod("method_42", BindingFlags.NonPublic | BindingFlags.Instance);
+            // Method 45 always runs, but sometimes twice. Method 42 runs before pressing "Ready", but won't work if you press "Ready" early.
+            string methodName = "method_45";
+            if (LateToThePartyPlugin.ModConfig.Debug)
+            {
+                methodName = "method_42";
+            }
+
+            return typeof(MainMenuController).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         [PatchPostfix]
@@ -58,7 +65,10 @@ namespace LateToTheParty.Patches
                 AdjustMinimumSurvivalTime(location);
 
                 // Need to reset loot multipliers to original values
-                Controllers.ConfigController.SetLootMultipliers(1);
+                if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.Enabled)
+                {
+                    Controllers.ConfigController.SetLootMultipliers(1);
+                }
                 
                 return;
             }
@@ -67,12 +77,12 @@ namespace LateToTheParty.Patches
             Logger.LogInfo("Changed escape time to " + location.EscapeTimeLimit);
             AdjustMinimumSurvivalTime(location);
 
-            /*if (LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
+            if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.Enabled && LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
             {
                 double lootMultiplierFactor = GetLootRemainingFactor(timeReductionFactor);
                 Logger.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
-               /Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
-            }*/
+               Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
+            }
 
             AdjustTrainTimes(location);
 

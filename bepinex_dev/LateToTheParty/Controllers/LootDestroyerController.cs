@@ -20,16 +20,19 @@ namespace LateToTheParty.Controllers
         public BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
         public Configuration.ModConfig ModConfig { get; set; } = null;
 
-        private float LootDestroyDist = 20;
-        private float minUpdateDist = 1;
         private Vector3 lastUpdatePosition = Vector3.zero;
-
+        private static List<string> secureContainerIDs = new List<string>();
         private LootableContainer[] AllLootableContainers = new LootableContainer[0];
         private Dictionary<Item, LootInfo> LooseLootInfo = new Dictionary<Item, LootInfo>();
         private Dictionary<Item, LootInfo> StaticLootInfo = new Dictionary<Item, LootInfo>();
 
         private void Update()
         {
+            if (!ModConfig.DestroyLootDuringRaid.Enabled)
+            {
+                return;
+            }
+
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 AllLootableContainers = new LootableContainer[0];
@@ -49,9 +52,15 @@ namespace LateToTheParty.Controllers
 
             Vector3 yourPosition = Camera.main.transform.position;
             float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
-            if ((lastUpdateDist < minUpdateDist) && (StaticLootInfo.Count > 0))
+            if ((lastUpdateDist < ModConfig.DestroyLootDuringRaid.MinDistanceTraveledForUpdate) && (StaticLootInfo.Count > 0))
             {
                 return;
+            }
+
+            // This should only be run once to generate the list of secure containers
+            if (secureContainerIDs.Count == 0)
+            {
+                secureContainerIDs = GetSecureContainerIDs();
             }
 
             if (AllLootableContainers.Length == 0)
@@ -60,7 +69,7 @@ namespace LateToTheParty.Controllers
             }
 
             Stopwatch jobTimer = Stopwatch.StartNew();
-            Logger.LogInfo("Destroying loot...");            
+            //Logger.LogInfo("Destroying loot...");            
 
             FindLooseLoot();
             FindStaticLoot();
@@ -72,7 +81,32 @@ namespace LateToTheParty.Controllers
             DestroyStaticLoot(yourPosition, targetLootRemainingFraction);
 
             lastUpdatePosition = yourPosition;
-            Logger.LogInfo("Destroying loot...done. (" + jobTimer.ElapsedMilliseconds + ")");
+            //Logger.LogInfo("Destroying loot...done. (" + jobTimer.ElapsedMilliseconds + ")");
+        }
+
+        public static List<string> GetSecureContainerIDs()
+        {
+            List<string> secureContainerIDs = new List<string>();
+
+            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
+            if (itemFactory == null)
+            {
+                return secureContainerIDs;
+            }
+
+            // Find all possible secure containers
+            foreach (Item item in itemFactory.CreateAllItemsEver())
+            {
+                if (item.Template is SecureContainerTemplateClass)
+                {
+                    if ((item.Template as SecureContainerTemplateClass).isSecured)
+                    {
+                        secureContainerIDs.Add(item.TemplateId);
+                    }
+                }
+            }
+
+            return secureContainerIDs;
         }
 
         public static IEnumerable<Item> FindAllItemsInContainer(Item container)
@@ -90,7 +124,7 @@ namespace LateToTheParty.Controllers
             IEnumerable<Item> allItems = Enumerable.Empty<Item>();
             foreach (Item container in containers)
             {
-                allItems.Concat(FindAllItemsInContainer(container));
+                allItems = allItems.Concat(FindAllItemsInContainer(container));
             }
             return allItems.Distinct();
         }
@@ -101,16 +135,23 @@ namespace LateToTheParty.Controllers
             foreach (Item item in items)
             {
                 Item parentItem = item.GetAllParentItemsAndSelf().Last();
-                allItems.Concat(parentItem.GetAllItems().Reverse());
+                allItems = allItems.Concat(parentItem.GetAllItems().Reverse());
             }
             return allItems.Distinct();
+        }
+
+        private IEnumerable<Item> RemoveExcludedParentItems(IEnumerable<Item> items)
+        {
+            return items
+                .Where(i => !ModConfig.DestroyLootDuringRaid.ExcludedParents.Contains(i.TemplateId))
+                .Where(i => !secureContainerIDs.Contains(i.TemplateId));
         }
 
         public IEnumerable<Item> FindLootToDestroy(Dictionary<Item, LootInfo> lootInfo, double targetLootRemainingFraction)
         {
             double currentLootRemainingFraction = (double)lootInfo.Values.Where(v => v.IsDestroyed == false).Count() / lootInfo.Count;
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            Logger.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
+            //Logger.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
             if (lootFractionToDestroy <= 0)
             {
                 return Enumerable.Empty<Item>();
@@ -128,7 +169,7 @@ namespace LateToTheParty.Controllers
                 lootToDestroy = randomlySortedLoot.Take(--targetLootIndex);
                 actualLootBeingDestroyed = FindAllRelatedItems(lootToDestroy.Where(l => !l.Value.IsDestroyed).Select(l => l.Key)).Count();
             }
-            Logger.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed + ", Iterations: " + (lootItemsToDestroy - targetLootIndex));
+            //Logger.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed + ", Iterations: " + (lootItemsToDestroy - targetLootIndex));
 
             return lootToDestroy.Select(l => l.Key);
         }
@@ -143,7 +184,13 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                foreach (Item item in FindAllItemsInContainer(lootItem.Item).Append(lootItem.Item))
+                IEnumerable<Item> allItems = RemoveExcludedParentItems(FindAllItemsInContainer(lootItem.Item).Append(lootItem.Item));
+                if (allItems.Count() == 0)
+                {
+                    continue;
+                }
+
+                foreach (Item item in allItems)
                 {
                     if (!LooseLootInfo.ContainsKey(item))
                     {
@@ -164,12 +211,18 @@ namespace LateToTheParty.Controllers
                 }
 
                 float lootDist = Vector3.Distance(yourPosition, LooseLootInfo[item].Transform.position);
-                if (lootDist < LootDestroyDist)
+                if (lootDist < ModConfig.DestroyLootDuringRaid.ExclusionRadius)
                 {
                     continue;
                 }
 
-                Item parentItem = item.GetAllParentItemsAndSelf().Last();
+                IEnumerable<Item> parentItems = RemoveExcludedParentItems(item.GetAllParentItemsAndSelf());
+                if (parentItems.Count() == 0)
+                {
+                    continue;
+                }
+
+                Item parentItem = parentItems.Last();
                 Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
                 foreach (Item containedItem in allItems)
                 {
@@ -179,7 +232,7 @@ namespace LateToTheParty.Controllers
                         continue;
                     }
 
-                    Logger.LogInfo("Destroying loose loot" + ((item.Id != containedItem.Id) ? " in " + item.LocalizedName() : "") + ": " + containedItem.LocalizedName());
+                    Logger.LogInfo("Destroying loose loot" + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() : "") + ": " + containedItem.LocalizedName());
                     LooseLootInfo[item].TraderController.DestroyItem(containedItem);
                     LooseLootInfo[containedItem].IsDestroyed = true;
                 }
@@ -219,7 +272,7 @@ namespace LateToTheParty.Controllers
                 }
 
                 float lootDist = Vector3.Distance(yourPosition, StaticLootInfo[item].Transform.position);
-                if (lootDist < LootDestroyDist)
+                if (lootDist < ModConfig.DestroyLootDuringRaid.ExclusionRadius)
                 {
                     continue;
                 }

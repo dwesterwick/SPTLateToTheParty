@@ -24,6 +24,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("pmc")]
         public EscapeTimeConfig PMC { get; set; } = new EscapeTimeConfig();
 
+        [JsonProperty("destroy_loot_during_raid")]
+        public DestroyLootDuringRaidConfig DestroyLootDuringRaid { get; set; } = new DestroyLootDuringRaidConfig();
+
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
 
