@@ -143,7 +143,8 @@ namespace LateToTheParty.Controllers
         private IEnumerable<Item> RemoveExcludedParentItems(IEnumerable<Item> items)
         {
             return items
-                .Where(i => !ModConfig.DestroyLootDuringRaid.ExcludedParents.Contains(i.TemplateId))
+                .Where(i => !ModConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
+                .Where(i => !ModConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
                 .Where(i => !secureContainerIDs.Contains(i.TemplateId));
         }
 
@@ -232,7 +233,7 @@ namespace LateToTheParty.Controllers
                         continue;
                     }
 
-                    Logger.LogInfo("Destroying loose loot" + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() : "") + ": " + containedItem.LocalizedName());
+                    Logger.LogInfo("Destroying loose loot" + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() + " (" + parentItem.TemplateId + ")" : "") + ": " + containedItem.LocalizedName());
                     LooseLootInfo[item].TraderController.DestroyItem(containedItem);
                     LooseLootInfo[containedItem].IsDestroyed = true;
                 }
