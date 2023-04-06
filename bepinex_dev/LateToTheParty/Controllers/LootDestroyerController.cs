@@ -17,14 +17,15 @@ namespace LateToTheParty.Controllers
 {
     public class LootDestroyerController : MonoBehaviour
     {
-        public BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
-        public Configuration.ModConfig ModConfig { get; set; } = null;
+        public static BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
+        public static Configuration.ModConfig ModConfig { get; set; } = null;
+        public static List<Item> ItemsDroppedByMainPlayer { get; set; } = new List<Item>();
 
-        private Vector3 lastUpdatePosition = Vector3.zero;
+        private static Vector3 lastUpdatePosition = Vector3.zero;
         private static List<string> secureContainerIDs = new List<string>();
-        private LootableContainer[] AllLootableContainers = new LootableContainer[0];
-        private Dictionary<Item, LootInfo> LooseLootInfo = new Dictionary<Item, LootInfo>();
-        private Dictionary<Item, LootInfo> StaticLootInfo = new Dictionary<Item, LootInfo>();
+        private static LootableContainer[] AllLootableContainers = new LootableContainer[0];
+        private static Dictionary<Item, LootInfo> LooseLootInfo = new Dictionary<Item, LootInfo>();
+        private static Dictionary<Item, LootInfo> StaticLootInfo = new Dictionary<Item, LootInfo>();
 
         private void Update()
         {
@@ -35,6 +36,7 @@ namespace LateToTheParty.Controllers
 
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
+                ItemsDroppedByMainPlayer.Clear();
                 AllLootableContainers = new LootableContainer[0];
 
                 LooseLootInfo.Clear();
@@ -140,12 +142,17 @@ namespace LateToTheParty.Controllers
             return allItems.Distinct();
         }
 
-        private IEnumerable<Item> RemoveExcludedParentItems(IEnumerable<Item> items)
+        private IEnumerable<Item> RemoveExcludedItems(IEnumerable<Item> items)
         {
             return items
                 .Where(i => !ModConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
                 .Where(i => !ModConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
                 .Where(i => !secureContainerIDs.Contains(i.TemplateId));
+        }
+
+        private IEnumerable<Item> RemoveItemsNotDroppedByPlayer(IEnumerable<Item> items)
+        {
+            return items.Where(i => !ItemsDroppedByMainPlayer.Contains(i));
         }
 
         public IEnumerable<Item> FindLootToDestroy(Dictionary<Item, LootInfo> lootInfo, double targetLootRemainingFraction)
@@ -185,7 +192,7 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                IEnumerable<Item> allItems = RemoveExcludedParentItems(FindAllItemsInContainer(lootItem.Item).Append(lootItem.Item));
+                IEnumerable<Item> allItems = RemoveItemsNotDroppedByPlayer(RemoveExcludedItems(FindAllItemsInContainer(lootItem.Item).Append(lootItem.Item)));
                 if (allItems.Count() == 0)
                 {
                     continue;
@@ -217,7 +224,7 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                IEnumerable<Item> parentItems = RemoveExcludedParentItems(item.GetAllParentItemsAndSelf());
+                IEnumerable<Item> parentItems = RemoveExcludedItems(item.GetAllParentItemsAndSelf());
                 if (parentItems.Count() == 0)
                 {
                     continue;
@@ -251,7 +258,7 @@ namespace LateToTheParty.Controllers
 
                 foreach (Item containerItem in lootableContainer.ItemOwner.Items)
                 {
-                    foreach(Item item in FindAllItemsInContainer(containerItem))
+                    foreach(Item item in RemoveItemsNotDroppedByPlayer(FindAllItemsInContainer(containerItem)))
                     {
                         if (!StaticLootInfo.ContainsKey(item))
                         {

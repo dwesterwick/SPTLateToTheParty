@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("min_distance_traveled_for_update")]
         public double MinDistanceTraveledForUpdate { get; set; } = 1;
 
+        [JsonProperty("ignore_items_dropped_by_player")]
+        public IgnoreItemsDroppedByPlayerConfig IgnoreItemsDroppedByPlayer { get; set; } = new IgnoreItemsDroppedByPlayerConfig();
+
         [JsonProperty("excluded_parents")]
         public string[] ExcludedParents { get; set; } = new string[0];
 

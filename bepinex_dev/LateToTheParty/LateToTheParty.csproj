@@ -73,11 +73,13 @@
   <ItemGroup>
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
+    <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
     <Compile Include="Controllers\LootDestroyerController.cs" />
     <Compile Include="Controllers\LootInfo.cs" />
     <Compile Include="LocationSettings.cs" />
+    <Compile Include="Patches\OnItemRemovedPatch.cs" />
     <Compile Include="Patches\ReadyToPlayPatch.cs" />
     <Compile Include="Patches\ShowScreenPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

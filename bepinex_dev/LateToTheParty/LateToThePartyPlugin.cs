@@ -28,11 +28,12 @@ namespace LateToTheParty
                 Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.ShowScreenPatch().Enable();
+                new Patches.OnItemRemovedPatch().Enable();
 
                 Logger.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 Controllers.LootDestroyerController lootDestroyerController = this.GetOrAddComponent<Controllers.LootDestroyerController>();
-                lootDestroyerController.Logger = Logger;
-                lootDestroyerController.ModConfig = ModConfig;
+                Controllers.LootDestroyerController.Logger = Logger;
+                Controllers.LootDestroyerController.ModConfig = ModConfig;
 
                 Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names...");
                 CarExtractNames = Controllers.ConfigController.GetCarExtractNames();
