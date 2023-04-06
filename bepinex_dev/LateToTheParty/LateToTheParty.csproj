@@ -79,7 +79,7 @@
     <Compile Include="Controllers\LootDestroyerController.cs" />
     <Compile Include="Controllers\LootInfo.cs" />
     <Compile Include="LocationSettings.cs" />
-    <Compile Include="Patches\OnItemRemovedPatch.cs" />
+    <Compile Include="Patches\OnItemAddedOrRemovedPatch.cs" />
     <Compile Include="Patches\ReadyToPlayPatch.cs" />
     <Compile Include="Patches\ShowScreenPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

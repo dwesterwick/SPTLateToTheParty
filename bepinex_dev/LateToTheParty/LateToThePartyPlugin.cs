@@ -28,7 +28,7 @@ namespace LateToTheParty
                 Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.ShowScreenPatch().Enable();
-                new Patches.OnItemRemovedPatch().Enable();
+                new Patches.OnItemAddedOrRemovedPatch().Enable();
 
                 Logger.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 Controllers.LootDestroyerController lootDestroyerController = this.GetOrAddComponent<Controllers.LootDestroyerController>();

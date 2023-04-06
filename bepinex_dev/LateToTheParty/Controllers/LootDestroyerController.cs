@@ -19,13 +19,14 @@ namespace LateToTheParty.Controllers
     {
         public static BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
         public static Configuration.ModConfig ModConfig { get; set; } = null;
+
         public static List<Item> ItemsDroppedByMainPlayer { get; set; } = new List<Item>();
+        public static Dictionary<Item, LootInfo> LooseLootInfo = new Dictionary<Item, LootInfo>();
+        public static Dictionary<Item, LootInfo> StaticLootInfo = new Dictionary<Item, LootInfo>();
 
         private static Vector3 lastUpdatePosition = Vector3.zero;
         private static List<string> secureContainerIDs = new List<string>();
-        private static LootableContainer[] AllLootableContainers = new LootableContainer[0];
-        private static Dictionary<Item, LootInfo> LooseLootInfo = new Dictionary<Item, LootInfo>();
-        private static Dictionary<Item, LootInfo> StaticLootInfo = new Dictionary<Item, LootInfo>();
+        private static LootableContainer[] AllLootableContainers = new LootableContainer[0];        
 
         private void Update()
         {
@@ -34,6 +35,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Clear all arrays if not in a raid to reset them for the next raid
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 ItemsDroppedByMainPlayer.Clear();
@@ -45,6 +47,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
             float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
             if (timeRemainingFraction > 0.99)
@@ -52,6 +55,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Only run the script if you've traveled a minimum distance from the last update. Othewise, stuttering will occur. 
+            // However, ignore this check initially so loot can be despawned at the very beginning of the raid before you start moving if you spawn in late
             Vector3 yourPosition = Camera.main.transform.position;
             float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
             if ((lastUpdateDist < ModConfig.DestroyLootDuringRaid.MinDistanceTraveledForUpdate) && (StaticLootInfo.Count > 0))
@@ -59,18 +64,19 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // This should only be run once to generate the list of secure containers
+            // This should only be run once to generate the list of secure container ID's
             if (secureContainerIDs.Count == 0)
             {
                 secureContainerIDs = GetSecureContainerIDs();
             }
 
+            // This should only be run once to generate the list of lootable containers in the map
             if (AllLootableContainers.Length == 0)
             {
                 AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>();
             }
 
-            Stopwatch jobTimer = Stopwatch.StartNew();
+            //Stopwatch jobTimer = Stopwatch.StartNew();
             //Logger.LogInfo("Destroying loot...");            
 
             FindLooseLoot();
@@ -157,6 +163,7 @@ namespace LateToTheParty.Controllers
 
         public IEnumerable<Item> FindLootToDestroy(Dictionary<Item, LootInfo> lootInfo, double targetLootRemainingFraction)
         {
+            // Calculate the fraction of loot that should be removed from the map
             double currentLootRemainingFraction = (double)lootInfo.Values.Where(v => v.IsDestroyed == false).Count() / lootInfo.Count;
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
             //Logger.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
@@ -165,13 +172,15 @@ namespace LateToTheParty.Controllers
                 return Enumerable.Empty<Item>();
             }
 
+            // Calculate the number of loot items to destrory and randomly sort the loot dictionary before creating an initial selection
             System.Random randomGen = new System.Random();
             int lootItemsToDestroy = (int)Math.Floor(lootFractionToDestroy * lootInfo.Count);
             int targetLootIndex = lootItemsToDestroy + 1;
             int actualLootBeingDestroyed = lootItemsToDestroy + 1;
             IEnumerable<KeyValuePair<Item, LootInfo>> randomlySortedLoot = lootInfo.OrderBy(e => randomGen.NextDouble());
             IEnumerable<KeyValuePair<Item, LootInfo>> lootToDestroy = randomlySortedLoot.Take(targetLootIndex);
-                        
+            
+            // Generate a list of loot to be destroyed. This needs to be iterated because each item in the loot dictionaries has an unknown number of child items in it. 
             while (actualLootBeingDestroyed > lootItemsToDestroy)
             {
                 lootToDestroy = randomlySortedLoot.Take(--targetLootIndex);
@@ -187,11 +196,13 @@ namespace LateToTheParty.Controllers
             LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
             foreach (LootItem lootItem in allLootItems)
             {
+                // Ignore quest items like the bronze pocket watch for Checking
                 if (lootItem.Item.QuestItem)
                 {
                     continue;
                 }
 
+                // Find all items associated with lootItem that are eligible for despawning
                 IEnumerable<Item> allItems = RemoveItemsNotDroppedByPlayer(RemoveExcludedItems(FindAllItemsInContainer(lootItem.Item).Append(lootItem.Item)));
                 if (allItems.Count() == 0)
                 {
@@ -218,18 +229,22 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
+                // Ignore loot that's too close to you
                 float lootDist = Vector3.Distance(yourPosition, LooseLootInfo[item].Transform.position);
                 if (lootDist < ModConfig.DestroyLootDuringRaid.ExclusionRadius)
                 {
                     continue;
                 }
 
+                // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
+                // all of the mods, magazines, etc. on it will be orphaned and cause errors
                 IEnumerable<Item> parentItems = RemoveExcludedItems(item.GetAllParentItemsAndSelf());
                 if (parentItems.Count() == 0)
                 {
                     continue;
                 }
 
+                // Get all child items of the parent item. The array needs to be reversed to prevent any of the items from becoming orphaned. 
                 Item parentItem = parentItems.Last();
                 Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
                 foreach (Item containedItem in allItems)
@@ -256,6 +271,7 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
+                // NOTE: This level is for containers like weapon boxes, not like backpacks
                 foreach (Item containerItem in lootableContainer.ItemOwner.Items)
                 {
                     foreach(Item item in RemoveItemsNotDroppedByPlayer(FindAllItemsInContainer(containerItem)))
@@ -279,13 +295,17 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
+                // Ignore loot that's too close to you
                 float lootDist = Vector3.Distance(yourPosition, StaticLootInfo[item].Transform.position);
                 if (lootDist < ModConfig.DestroyLootDuringRaid.ExclusionRadius)
                 {
                     continue;
                 }
 
+                // Need to find the parent item, but not the lootable container itself (thus TakeLast(2).First(), not Last())
                 Item parentItem = item.GetAllParentItemsAndSelf().TakeLast(2).First();
+
+                // Get all child items of the parent item. The array needs to be reversed to prevent any of the items from becoming orphaned. 
                 Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
                 foreach (Item containedItem in allItems)
                 {
