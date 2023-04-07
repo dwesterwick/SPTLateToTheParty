@@ -71,10 +71,10 @@ namespace LateToTheParty.Patches
             // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
             foreach (Item relevantItem in Controllers.LootDestroyerController.FindAllItemsInContainer(item).Append(item))
             {
-                if (lootDict.Any(i => i.Key.Id == item.Id))
+                if (lootDict.Any(i => i.Key.Id == relevantItem.Id))
                 {
-                    Logger.LogInfo("Removing item from loot list: " + item.LocalizedName());
-                    lootDict.Remove(item);
+                    Logger.LogInfo("Removing item from loot list: " + relevantItem.LocalizedName());
+                    lootDict.Remove(relevantItem);
                 }
             }
         }
