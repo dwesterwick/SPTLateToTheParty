@@ -50,7 +50,7 @@ namespace LateToTheParty.Controllers
             // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
             float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
-            if (timeRemainingFraction > 0.99)
+            if ((escapeTimeSec > 3600 * 24 * 90) || (timeRemainingFraction > 0.99))
             {
                 return;
             }
@@ -67,23 +67,27 @@ namespace LateToTheParty.Controllers
             // This should only be run once to generate the list of secure container ID's
             if (secureContainerIDs.Count == 0)
             {
+                Logger.LogInfo("Enumerating secure container ID's...");
                 secureContainerIDs = GetSecureContainerIDs();
+                Logger.LogInfo("Enumerating secure container ID's...found " + secureContainerIDs.Count + " secure containers.");
             }
 
             // This should only be run once to generate the list of lootable containers in the map
             if (AllLootableContainers.Length == 0)
             {
+                Logger.LogInfo("Searching for lootable containers in the map...");
                 AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>();
+                Logger.LogInfo("Searching for lootable containers in the map...found " + AllLootableContainers.Length + " lootable containers.");
             }
 
             //Stopwatch jobTimer = Stopwatch.StartNew();
-            //Logger.LogInfo("Destroying loot...");            
-
+            //Logger.LogInfo("Searching for new loot...");
             FindLooseLoot();
             FindStaticLoot();
             //Logger.LogInfo("Found " + LooseLootInfo.Count + " loose loot items (" + LooseLootInfo.Values.Where(v => v.IsDestroyed == false).Count() + " remaining)");
             //Logger.LogInfo("Found " + StaticLootInfo.Count + " static loot items (" + StaticLootInfo.Values.Where(v => v.IsDestroyed == false).Count() + " remaining)");
 
+            //Logger.LogInfo("Destroying loot...");
             double targetLootRemainingFraction = Patches.ReadyToPlayPatch.GetLootRemainingFactor(timeRemainingFraction);
             DestroyLooseLoot(yourPosition, targetLootRemainingFraction);
             DestroyStaticLoot(yourPosition, targetLootRemainingFraction);
@@ -221,6 +225,11 @@ namespace LateToTheParty.Controllers
 
         private void DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
+            if ((LooseLootInfo.Count == 0) || LooseLootInfo.All(l => l.Value.IsDestroyed))
+            {
+                return;
+            }
+
             Item[] itemsToDestroy = FindLootToDestroy(LooseLootInfo, targetLootRemainingFraction).ToArray();
             foreach (Item item in itemsToDestroy)
             {
@@ -287,6 +296,11 @@ namespace LateToTheParty.Controllers
 
         private void DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
+            if ((StaticLootInfo.Count == 0) || StaticLootInfo.All(l => l.Value.IsDestroyed))
+            {
+                return;
+            }
+
             Item[] itemsToDestroy = FindLootToDestroy(StaticLootInfo, targetLootRemainingFraction).ToArray();
             foreach (Item item in itemsToDestroy)
             {
