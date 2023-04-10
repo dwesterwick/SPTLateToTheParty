@@ -48,7 +48,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
-            float escapeTimeSec = GClass1423.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float escapeTimeSec = GClass1426.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
             if ((escapeTimeSec > 3600 * 24 * 90) || (timeRemainingFraction > 0.99))
             {

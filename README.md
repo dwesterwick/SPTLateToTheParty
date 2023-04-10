@@ -17,12 +17,9 @@ This mod is highly customizable by modifying the *config.json* file. You can cha
 
 The arrays for **loot_multipliers** and **vex_chance_reduction** are defined using [time_remaining_factor, reduction_factor] pairs. You can have as many pairs as you'd like in the arrays; the mod will just interpolate between them.
 
-**If you have suggestions to modify the arrays in *config.json* to better match your experience in live Tarkov, please let me know! I only have ~100 hours of live experience, so I based my initial settings on that. I'd love to get feedback from the veteran players of live Tarkov!**
+For a future release, I plan on creating a ranking system for which loot to remove from the map first. Currently, the loot that's despawned is completely random. 
 
-Planned improvements in future releases:
-* A ranking system to determine what loot should be despawned first. Currently, the loot that's despawned is completely random. 
-* Changes to AI bot conversion percentages (i.e. turning Scav spawns into PMC bots) as the raid progresses
-* Reduction in boss spawning chances if you enter the raid late 
+**If you have suggestions to modify the arrays in *config.json* to better match your experience in live Tarkov, please let me know! I only have ~100 hours of live experience, so I based my initial settings on that. I'd love to get feedback from the veteran players of live Tarkov!**
 
 Known issues:
 * If you spawn into the map late, some stuttering may occur at the very beginning of the raid because the mod needs to despawn a lot of items at once

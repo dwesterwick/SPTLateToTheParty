@@ -18,7 +18,7 @@ namespace LateToTheParty.Patches
         public static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
         public static int LastOriginalEscapeTime = -1;
 
-        private static BackendConfigSettingsClass.GClass1304.GClass1311 matchEndConfig = null;
+        private static BackendConfigSettingsClass.GClass1307.GClass1314 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
         protected override MethodBase GetTargetMethod()
@@ -134,7 +134,7 @@ namespace LateToTheParty.Patches
             {
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
                 
-                foreach (GClass1195 exit in location.exits)
+                foreach (GClass1198 exit in location.exits)
                 {
                     if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                     {
@@ -153,7 +153,7 @@ namespace LateToTheParty.Patches
             }
 
             LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
-            foreach (GClass1195 exit in location.exits)
+            foreach (GClass1198 exit in location.exits)
             {
                 if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                 {
@@ -198,7 +198,7 @@ namespace LateToTheParty.Patches
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
             int minTimeBeforeActivation = 60;
             
-            foreach (GClass1195 exit in location.exits)
+            foreach (GClass1198 exit in location.exits)
             {
                 if (exit.PassageRequirement != EFT.Interactive.ERequirementState.Train)
                 {
@@ -232,7 +232,7 @@ namespace LateToTheParty.Patches
 
         private static void AdjustVExChance(LocationSettingsClass.Location location, double reductionFactor)
         {
-            foreach (GClass1195 exit in location.exits)
+            foreach (GClass1198 exit in location.exits)
             {
                 if (LateToThePartyPlugin.CarExtractNames.Contains(exit.Name))
                 {
