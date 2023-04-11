@@ -12,6 +12,7 @@ using EFT.InventoryLogic;
 using EFT;
 using EFT.UI;
 using System.ComponentModel;
+using System.Collections;
 
 namespace LateToTheParty.Controllers
 {
@@ -26,11 +27,23 @@ namespace LateToTheParty.Controllers
 
         private static Vector3 lastUpdatePosition = Vector3.zero;
         private static List<string> secureContainerIDs = new List<string>();
-        private static LootableContainer[] AllLootableContainers = new LootableContainer[0];        
+        private static LootableContainer[] AllLootableContainers = new LootableContainer[0];
+
+        private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static Stopwatch cycleTimer = new Stopwatch();
+        private bool isDestroyingLoot = false;
 
         private void Update()
         {
+            cycleTimer.Restart();
+
             if (!ModConfig.DestroyLootDuringRaid.Enabled)
+            {
+                return;
+            }
+
+            // Skip the frame if the coroutine from the previous frame(s) are still running or not enough time has elapsed
+            if (isDestroyingLoot || (updateTimer.ElapsedMilliseconds < ModConfig.DestroyLootDuringRaid.MinTimeBeforeUpdate))
             {
                 return;
             }
@@ -59,7 +72,7 @@ namespace LateToTheParty.Controllers
             // However, ignore this check initially so loot can be despawned at the very beginning of the raid before you start moving if you spawn in late
             Vector3 yourPosition = Camera.main.transform.position;
             float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
-            if ((lastUpdateDist < ModConfig.DestroyLootDuringRaid.MinDistanceTraveledForUpdate) && (StaticLootInfo.Count > 0))
+            if ((updateTimer.ElapsedMilliseconds < ModConfig.DestroyLootDuringRaid.MaxTimeBeforeUpdate) && (lastUpdateDist < ModConfig.DestroyLootDuringRaid.MinDistanceTraveledForUpdate) && (StaticLootInfo.Count > 0))
             {
                 return;
             }
@@ -80,20 +93,8 @@ namespace LateToTheParty.Controllers
                 Logger.LogInfo("Searching for lootable containers in the map...found " + AllLootableContainers.Length + " lootable containers.");
             }
 
-            //Stopwatch jobTimer = Stopwatch.StartNew();
-            //Logger.LogInfo("Searching for new loot...");
-            FindLooseLoot();
-            FindStaticLoot();
-            //Logger.LogInfo("Found " + LooseLootInfo.Count + " loose loot items (" + LooseLootInfo.Values.Where(v => v.IsDestroyed == false).Count() + " remaining)");
-            //Logger.LogInfo("Found " + StaticLootInfo.Count + " static loot items (" + StaticLootInfo.Values.Where(v => v.IsDestroyed == false).Count() + " remaining)");
-
-            //Logger.LogInfo("Destroying loot...");
-            double targetLootRemainingFraction = Patches.ReadyToPlayPatch.GetLootRemainingFactor(timeRemainingFraction);
-            DestroyLooseLoot(yourPosition, targetLootRemainingFraction);
-            DestroyStaticLoot(yourPosition, targetLootRemainingFraction);
-
-            lastUpdatePosition = yourPosition;
-            //Logger.LogInfo("Destroying loot...done. (" + jobTimer.ElapsedMilliseconds + ")");
+            // Spread the work out across multiple frames to avoid stuttering
+            StartCoroutine(FindAndDestroyLootCoroutine(yourPosition, timeRemainingFraction));
         }
 
         public static List<string> GetSecureContainerIDs()
@@ -195,7 +196,52 @@ namespace LateToTheParty.Controllers
             return lootToDestroy.Select(l => l.Key);
         }
 
-        private void FindLooseLoot()
+        private IEnumerator FindAndDestroyLootCoroutine(Vector3 yourPosition, float timeRemainingFraction)
+        {
+            isDestroyingLoot = true;
+            cycleTimer.Restart();
+
+            //Stopwatch jobTimer = Stopwatch.StartNew();
+            //Logger.LogInfo("Searching for new loot...");
+
+            yield return FindLooseLoot();
+            cycleTimer.Restart();
+
+            yield return FindStaticLoot();
+            cycleTimer.Restart();
+
+            //Logger.LogInfo("Found " + LooseLootInfo.Count + " loose loot items (" + LooseLootInfo.Values.Where(v => v.IsDestroyed == false).Count() + " remaining)");
+            //Logger.LogInfo("Found " + StaticLootInfo.Count + " static loot items (" + StaticLootInfo.Values.Where(v => v.IsDestroyed == false).Count() + " remaining)");
+
+            //Logger.LogInfo("Destroying loot...");
+            double targetLootRemainingFraction = Patches.ReadyToPlayPatch.GetLootRemainingFactor(timeRemainingFraction);
+
+            yield return DestroyLooseLoot(yourPosition, targetLootRemainingFraction);
+            cycleTimer.Restart();
+
+            yield return DestroyStaticLoot(yourPosition, targetLootRemainingFraction);
+            cycleTimer.Restart();
+
+            lastUpdatePosition = yourPosition;
+            //Logger.LogInfo("Destroying loot...done. (" + jobTimer.ElapsedMilliseconds + ")");
+
+            updateTimer.Restart();
+            isDestroyingLoot = false;
+        }
+
+        private bool PauseCoroutineCheck()
+        {
+            return cycleTimer.ElapsedMilliseconds > ModConfig.DestroyLootDuringRaid.MaxCalcTimePerFrame;
+        }
+
+        private IEnumerator PauseCoroutine()
+        {
+            Logger.LogWarning("Waiting for next frame... (Cycle time: " + cycleTimer.ElapsedMilliseconds + " ms)");
+            yield return null;
+            cycleTimer.Restart();
+        }
+
+        private IEnumerator FindLooseLoot()
         {
             LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
             foreach (LootItem lootItem in allLootItems)
@@ -220,14 +266,19 @@ namespace LateToTheParty.Controllers
                         LooseLootInfo.Add(item, new LootInfo(lootItem.ItemOwner, lootItem.transform));
                     }
                 }
+
+                if (PauseCoroutineCheck())
+                {
+                    yield return PauseCoroutine();
+                }
             }
         }
 
-        private void DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
+        private IEnumerator DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
             if ((LooseLootInfo.Count == 0) || LooseLootInfo.All(l => l.Value.IsDestroyed))
             {
-                return;
+                yield return null;
             }
 
             Item[] itemsToDestroy = FindLootToDestroy(LooseLootInfo, targetLootRemainingFraction).ToArray();
@@ -268,10 +319,15 @@ namespace LateToTheParty.Controllers
                     LooseLootInfo[item].TraderController.DestroyItem(containedItem);
                     LooseLootInfo[containedItem].IsDestroyed = true;
                 }
+
+                if (PauseCoroutineCheck())
+                {
+                    yield return PauseCoroutine();
+                }
             }
         }
 
-        private void FindStaticLoot()
+        private IEnumerator FindStaticLoot()
         {
             foreach (LootableContainer lootableContainer in AllLootableContainers)
             {
@@ -291,14 +347,19 @@ namespace LateToTheParty.Controllers
                         }
                     }
                 }
+
+                if (PauseCoroutineCheck())
+                {
+                    yield return PauseCoroutine();
+                }
             }
         }
 
-        private void DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction)
+        private IEnumerator DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction)
         {
             if ((StaticLootInfo.Count == 0) || StaticLootInfo.All(l => l.Value.IsDestroyed))
             {
-                return;
+                yield return null;
             }
 
             Item[] itemsToDestroy = FindLootToDestroy(StaticLootInfo, targetLootRemainingFraction).ToArray();
@@ -332,6 +393,11 @@ namespace LateToTheParty.Controllers
                     Logger.LogInfo("Destroying static loot" + ((parentItem.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() : "") + ": " + containedItem.LocalizedName());
                     StaticLootInfo[item].TraderController.DestroyItem(containedItem);
                     StaticLootInfo[containedItem].IsDestroyed = true;
+                }
+
+                if (PauseCoroutineCheck())
+                {
+                    yield return PauseCoroutine();
                 }
             }
         }

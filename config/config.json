@@ -16,6 +16,9 @@
 		"enabled": true,
 		"exclusion_radius": 40,
 		"min_distance_traveled_for_update": 1,
+		"min_time_before_update_ms": 30,
+		"max_time_before_update_ms": 5000,
+		"max_calc_time_per_frame_ms": 5,
 		"ignore_items_dropped_by_player": {
 			"enabled": true,
 			"only_items_brought_into_raid": false
