@@ -13,6 +13,7 @@ using EFT;
 using EFT.UI;
 using System.ComponentModel;
 using System.Collections;
+using EFT.Game.Spawning;
 
 namespace LateToTheParty.Controllers
 {
@@ -62,8 +63,9 @@ namespace LateToTheParty.Controllers
 
             // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
             float escapeTimeSec = GClass1426.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float raidTimeElapsed = (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f) - escapeTimeSec;
             float timeRemainingFraction = escapeTimeSec / (Patches.ReadyToPlayPatch.LastOriginalEscapeTime * 60f);
-            if ((escapeTimeSec > 3600 * 24 * 90) || (timeRemainingFraction > 0.99))
+            if ((escapeTimeSec > 3600 * 24 * 90) || (timeRemainingFraction > 0.995))
             {
                 return;
             }
@@ -94,7 +96,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Spread the work out across multiple frames to avoid stuttering
-            StartCoroutine(FindAndDestroyLootCoroutine(yourPosition, timeRemainingFraction));
+            StartCoroutine(FindAndDestroyLootCoroutine(yourPosition, timeRemainingFraction, raidTimeElapsed));
         }
 
         public static List<string> GetSecureContainerIDs()
@@ -196,7 +198,7 @@ namespace LateToTheParty.Controllers
             return lootToDestroy.Select(l => l.Key);
         }
 
-        private IEnumerator FindAndDestroyLootCoroutine(Vector3 yourPosition, float timeRemainingFraction)
+        private IEnumerator FindAndDestroyLootCoroutine(Vector3 yourPosition, float timeRemainingFraction, double raidET)
         {
             isDestroyingLoot = true;
             cycleTimer.Restart();
@@ -216,10 +218,10 @@ namespace LateToTheParty.Controllers
             //Logger.LogInfo("Destroying loot...");
             double targetLootRemainingFraction = Patches.ReadyToPlayPatch.GetLootRemainingFactor(timeRemainingFraction);
 
-            yield return DestroyLooseLoot(yourPosition, targetLootRemainingFraction);
+            yield return DestroyLooseLoot(yourPosition, targetLootRemainingFraction, raidET);
             cycleTimer.Restart();
 
-            yield return DestroyStaticLoot(yourPosition, targetLootRemainingFraction);
+            yield return DestroyStaticLoot(yourPosition, targetLootRemainingFraction, raidET);
             cycleTimer.Restart();
 
             lastUpdatePosition = yourPosition;
@@ -239,6 +241,37 @@ namespace LateToTheParty.Controllers
             Logger.LogWarning("Waiting for next frame... (Cycle time: " + cycleTimer.ElapsedMilliseconds + " ms)");
             yield return null;
             cycleTimer.Restart();
+        }
+
+        private static double GetDistanceToNearestSpawnPoint(Vector3 position)
+        {
+            return GetDistanceToNearestSpawnPoint(position, Patches.ReadyToPlayPatch.LastLocationSelected);
+        }
+
+        public static double GetDistanceToNearestSpawnPoint(Vector3 position, LocationSettingsClass.Location location)
+        {
+            double distance = double.MaxValue;
+
+            foreach (SpawnPointParams spawnPoint in location.SpawnPointParams)
+            {
+                if (!(spawnPoint.Sides.HasFlag(EPlayerSideMask.Pmc)))
+                {
+                    continue;
+                }
+
+                double _dist = Vector3.Distance(position, spawnPoint.Position.ToUnityVector3());
+                if (_dist < distance)
+                {
+                    distance = _dist;
+                }
+            }
+
+            if (distance == double.MaxValue)
+            {
+                return 0;
+            }
+
+            return distance;
         }
 
         private IEnumerator FindLooseLoot()
@@ -263,7 +296,7 @@ namespace LateToTheParty.Controllers
                 {
                     if (!LooseLootInfo.ContainsKey(item))
                     {
-                        LooseLootInfo.Add(item, new LootInfo(lootItem.ItemOwner, lootItem.transform));
+                        LooseLootInfo.Add(item, new LootInfo(lootItem.ItemOwner, lootItem.transform, GetDistanceToNearestSpawnPoint(lootItem.transform.position)));
                     }
                 }
 
@@ -274,7 +307,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private IEnumerator DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction)
+        private IEnumerator DestroyLooseLoot(Vector3 yourPosition, double targetLootRemainingFraction, double raidET)
         {
             if ((LooseLootInfo.Count == 0) || LooseLootInfo.All(l => l.Value.IsDestroyed))
             {
@@ -293,6 +326,14 @@ namespace LateToTheParty.Controllers
                 float lootDist = Vector3.Distance(yourPosition, LooseLootInfo[item].Transform.position);
                 if (lootDist < ModConfig.DestroyLootDuringRaid.ExclusionRadius)
                 {
+                    continue;
+                }
+
+                // Ignore loot that players couldn't have possibly reached yet
+                double maxBotRunDistance = raidET * ModConfig.DestroyLootDuringRaid.MapTraversalSpeed;
+                if (maxBotRunDistance < LooseLootInfo[item].DistanceToNearestSpawnPoint)
+                {
+                    Logger.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LooseLootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
                     continue;
                 }
 
@@ -343,7 +384,7 @@ namespace LateToTheParty.Controllers
                     {
                         if (!StaticLootInfo.ContainsKey(item))
                         {
-                            StaticLootInfo.Add(item, new LootInfo(lootableContainer.ItemOwner, lootableContainer.transform));
+                            StaticLootInfo.Add(item, new LootInfo(lootableContainer.ItemOwner, lootableContainer.transform, GetDistanceToNearestSpawnPoint(lootableContainer.transform.position)));
                         }
                     }
                 }
@@ -355,7 +396,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private IEnumerator DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction)
+        private IEnumerator DestroyStaticLoot(Vector3 yourPosition, double targetLootRemainingFraction, double raidET)
         {
             if ((StaticLootInfo.Count == 0) || StaticLootInfo.All(l => l.Value.IsDestroyed))
             {
@@ -374,6 +415,14 @@ namespace LateToTheParty.Controllers
                 float lootDist = Vector3.Distance(yourPosition, StaticLootInfo[item].Transform.position);
                 if (lootDist < ModConfig.DestroyLootDuringRaid.ExclusionRadius)
                 {
+                    continue;
+                }
+
+                // Ignore loot that players couldn't have possibly reached yet
+                double maxBotRunDistance = raidET * ModConfig.DestroyLootDuringRaid.MapTraversalSpeed;
+                if (maxBotRunDistance < StaticLootInfo[item].DistanceToNearestSpawnPoint)
+                {
+                    Logger.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + StaticLootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
                     continue;
                 }
 

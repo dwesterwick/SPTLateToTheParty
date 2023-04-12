@@ -15,6 +15,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("exclusion_radius")]
         public double ExclusionRadius { get; set; } = 1;
 
+        [JsonProperty("map_traversal_speed_mps")]
+        public double MapTraversalSpeed { get; set; } = 2;
+
         [JsonProperty("min_distance_traveled_for_update")]
         public double MinDistanceTraveledForUpdate { get; set; } = 1;
 

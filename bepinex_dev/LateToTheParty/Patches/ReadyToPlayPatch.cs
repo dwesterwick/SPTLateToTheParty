@@ -15,8 +15,9 @@ namespace LateToTheParty.Patches
 {
     public class ReadyToPlayPatch : ModulePatch
     {
-        public static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
-        public static int LastOriginalEscapeTime = -1;
+        public static Dictionary<string, LocationSettings> OriginalSettings { get; private set; } = new Dictionary<string, LocationSettings>();
+        public static int LastOriginalEscapeTime { get; private set; } = -1;
+        public static LocationSettingsClass.Location LastLocationSelected { get; private set; } = null;
 
         private static BackendConfigSettingsClass.GClass1307.GClass1314 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
@@ -52,17 +53,17 @@ namespace LateToTheParty.Patches
             }
 
             // Restore the orginal settings for the selected location before modifying them (or factors will be applied multiple times)
-            LocationSettingsClass.Location location = ___raidSettings_0.SelectedLocation;
-            RestoreSettings(location);
-            LastOriginalEscapeTime = location.EscapeTimeLimit;
+            LastLocationSelected = ___raidSettings_0.SelectedLocation;
+            RestoreSettings(LastLocationSelected);
+            LastOriginalEscapeTime = LastLocationSelected.EscapeTimeLimit;
 
             double timeReductionFactor = GenerateTimeReductionFactor(___raidSettings_0.IsScav);
             if (timeReductionFactor == 1)
             {
-                Logger.LogInfo("Using original settings. Escape time: " + location.EscapeTimeLimit);
+                Logger.LogInfo("Using original settings. Escape time: " + LastLocationSelected.EscapeTimeLimit);
 
                 // Need to reset the minimum survival time to the default value
-                AdjustMinimumSurvivalTime(location);
+                AdjustMinimumSurvivalTime(LastLocationSelected);
 
                 // Need to reset loot multipliers to original values
                 if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.Enabled)
@@ -73,9 +74,9 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            location.EscapeTimeLimit = (int)(location.EscapeTimeLimit * timeReductionFactor);
-            Logger.LogInfo("Changed escape time to " + location.EscapeTimeLimit);
-            AdjustMinimumSurvivalTime(location);
+            LastLocationSelected.EscapeTimeLimit = (int)(LastLocationSelected.EscapeTimeLimit * timeReductionFactor);
+            Logger.LogInfo("Changed escape time to " + LastLocationSelected.EscapeTimeLimit);
+            AdjustMinimumSurvivalTime(LastLocationSelected);
 
             if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.Enabled && LateToThePartyPlugin.ModConfig.LootMultipliers.Length > 0)
             {
@@ -84,15 +85,15 @@ namespace LateToTheParty.Patches
                Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
             }
 
-            AdjustTrainTimes(location);
+            AdjustTrainTimes(LastLocationSelected);
 
             if (LateToThePartyPlugin.ModConfig.VExChanceReductions.Length > 0)
             {
                 double vexChanceFactor = Interpolate(LateToThePartyPlugin.ModConfig.VExChanceReductions, timeReductionFactor);
-                AdjustVExChance(location, vexChanceFactor);
+                AdjustVExChance(LastLocationSelected, vexChanceFactor);
             }
             
-            AdjustBotWaveTimes(location);
+            AdjustBotWaveTimes(LastLocationSelected);
         }
 
         public static double Interpolate(double[][] array, double value)
