@@ -55,12 +55,12 @@ namespace LateToTheParty.Models
 
         public static void RegisterItemDroppedByPlayer(Item item)
         {
-            if (!ItemsDroppedByMainPlayer.Contains(item))
+            // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
+            foreach (Item relevantItem in item.FindAllItemsInContainer(true))
             {
-                // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
-                foreach (Item relevantItem in item.FindAllItemsInContainer(true))
+                if (!ItemsDroppedByMainPlayer.Contains(relevantItem))
                 {
-                    LoggingController.LogInfo("Preventing dropped item from despawning: " + item.LocalizedName());
+                    LoggingController.LogInfo("Preventing dropped item from despawning: " + relevantItem.LocalizedName());
                     ItemsDroppedByMainPlayer.Add(relevantItem);
                 }
             }
