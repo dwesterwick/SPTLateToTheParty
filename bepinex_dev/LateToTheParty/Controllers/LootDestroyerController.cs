@@ -20,21 +20,18 @@ namespace LateToTheParty.Controllers
 {
     public class LootDestroyerController : MonoBehaviour
     {
-        public static BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
-        public static Configuration.ModConfig ModConfig { get; set; } = null;
-
         private static Vector3 lastUpdatePosition = Vector3.zero;        
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
         private void Update()
         {
-            if (!ModConfig.DestroyLootDuringRaid.Enabled)
+            if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.Enabled)
             {
                 return;
             }
 
             // Skip the frame if the coroutine from the previous frame(s) are still running or not enough time has elapsed
-            if (LootManager.IsFindingAndDestroyingLoot || (updateTimer.ElapsedMilliseconds < ModConfig.DestroyLootDuringRaid.MinTimeBeforeUpdate))
+            if (LootManager.IsFindingAndDestroyingLoot || (updateTimer.ElapsedMilliseconds < LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.MinTimeBeforeUpdate))
             {
                 return;
             }
@@ -62,7 +59,7 @@ namespace LateToTheParty.Controllers
             // However, ignore this check initially so loot can be despawned at the very beginning of the raid before you start moving if you spawn in late
             Vector3 yourPosition = Camera.main.transform.position;
             float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
-            if ((updateTimer.ElapsedMilliseconds < ModConfig.DestroyLootDuringRaid.MaxTimeBeforeUpdate) && (lastUpdateDist < ModConfig.DestroyLootDuringRaid.MinDistanceTraveledForUpdate) && (LootManager.LootInfo.Count > 0))
+            if ((updateTimer.ElapsedMilliseconds < LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.MaxTimeBeforeUpdate) && (lastUpdateDist < LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.MinDistanceTraveledForUpdate) && (LootManager.LootInfo.Count > 0))
             {
                 return;
             }
@@ -70,9 +67,9 @@ namespace LateToTheParty.Controllers
             // This should only be run once to generate the list of lootable containers in the map
             if (LootManager.AllLootableContainers.Count == 0)
             {
-                Logger.LogInfo("Searching for lootable containers in the map...");
+                LateToThePartyPlugin.Log.LogInfo("Searching for lootable containers in the map...");
                 LootManager.AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
-                Logger.LogInfo("Searching for lootable containers in the map...found " + LootManager.AllLootableContainers.Count + " lootable containers.");
+                LateToThePartyPlugin.Log.LogInfo("Searching for lootable containers in the map...found " + LootManager.AllLootableContainers.Count + " lootable containers.");
             }
 
             // Spread the work out across multiple frames to avoid stuttering

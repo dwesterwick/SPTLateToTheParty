@@ -18,6 +18,7 @@ namespace LateToTheParty.Models
         private Stopwatch cycleTimer = new Stopwatch();
         private double maxTimePerIteration;
         private bool stopRequested = false;
+        private bool hadToWait = false;
 
         public EnumeratorWithTimeLimit(double _maxTimePerIteration)
         {
@@ -27,13 +28,25 @@ namespace LateToTheParty.Models
         public IEnumerator Run<T>(IEnumerable<T> collection, Action<T> collectionItemAction)
         {
             IsRunning = true;
+            cycleTimer.Restart();
 
             foreach (T item in collection)
             {
-                collectionItemAction(item);
+                try
+                {
+                    collectionItemAction(item);
+                }
+                catch(Exception ex)
+                {
+                    LateToThePartyPlugin.Log.LogError("Aborting coroutine iteration for " + item.ToString());
+                    LateToThePartyPlugin.Log.LogError(ex);
+                }
 
                 if (cycleTimer.ElapsedMilliseconds > maxTimePerIteration)
                 {
+                    hadToWait = true;
+                    LateToThePartyPlugin.Log.LogWarning("Waiting for next frame... (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")");
+
                     yield return null;
                     cycleTimer.Restart();
                 }
@@ -47,6 +60,11 @@ namespace LateToTheParty.Models
 
             IsRunning = false;
             IsCompleted = true;
+
+            if (hadToWait)
+            {
+                LateToThePartyPlugin.Log.LogWarning("Waiting for next frame...done. (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")");
+            }
         }
 
         public void Abort()

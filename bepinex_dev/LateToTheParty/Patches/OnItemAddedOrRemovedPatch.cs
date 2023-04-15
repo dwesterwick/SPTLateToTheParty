@@ -44,13 +44,13 @@ namespace LateToTheParty.Patches
 
             if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
             {
-                Logger.LogInfo("Main player removed item: " + item.LocalizedName() + " (ignored)");
+                Logger.LogInfo("Ignoring item removed by player: " + item.LocalizedName());
                 return;
             }
 
             if (LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.OnlyItemsBroughtIntoRaid && item.SpawnedInSession)
             {
-                Logger.LogInfo("Main player removed item: " + item.LocalizedName() + " (ignored because not FIR)");
+                Logger.LogInfo("Ignoring not-FIR item removed by player: " + item.LocalizedName());
                 return;
             }
 
