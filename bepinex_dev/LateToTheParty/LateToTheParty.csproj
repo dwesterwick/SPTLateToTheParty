@@ -77,8 +77,11 @@
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
     <Compile Include="Controllers\LootDestroyerController.cs" />
-    <Compile Include="Controllers\LootInfo.cs" />
-    <Compile Include="LocationSettings.cs" />
+    <Compile Include="Models\EnumeratorWithTimeLimit.cs" />
+    <Compile Include="Models\ItemHelpers.cs" />
+    <Compile Include="Models\LootInfo.cs" />
+    <Compile Include="Models\LocationSettings.cs" />
+    <Compile Include="Models\LootManager.cs" />
     <Compile Include="Patches\OnItemAddedOrRemovedPatch.cs" />
     <Compile Include="Patches\ReadyToPlayPatch.cs" />
     <Compile Include="Patches\ShowScreenPatch.cs" />

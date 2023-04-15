@@ -4,42 +4,46 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
+using BepInEx.Logging;
 using Comfort.Common;
 using EFT;
 using UnityEngine;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.1.2.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.1.3.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
-        public static Configuration.ModConfig ModConfig { get; set; } = null;
+        public static ManualLogSource Log { get; private set; } = null;
+        public static Configuration.ModConfig ModConfig { get; private set; } = null;
         public static string[] CarExtractNames { get; set; } = new string[0];
 
         private void Awake()
         {
-            Logger.LogInfo("Loading LateToThePartyPlugin...");
+            Log = Logger;
 
-            Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
+            Log.LogInfo("Loading LateToThePartyPlugin...");
+
+            Log.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ModConfig = Controllers.ConfigController.GetConfig();
 
             if (ModConfig.Enabled)
             {
-                Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
+                Log.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.ShowScreenPatch().Enable();
                 new Patches.OnItemAddedOrRemovedPatch().Enable();
 
-                Logger.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
+                Log.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 Controllers.LootDestroyerController lootDestroyerController = this.GetOrAddComponent<Controllers.LootDestroyerController>();
-                Controllers.LootDestroyerController.Logger = Logger;
+                Controllers.LootDestroyerController.Logger = Log;
                 Controllers.LootDestroyerController.ModConfig = ModConfig;
 
-                Logger.LogInfo("Loading LateToThePartyPlugin...getting car extract names...");
+                Log.LogInfo("Loading LateToThePartyPlugin...getting car extract names...");
                 CarExtractNames = Controllers.ConfigController.GetCarExtractNames();
             }
-            
-            Logger.LogInfo("Loading LateToThePartyPlugin...done.");
+
+            Log.LogInfo("Loading LateToThePartyPlugin...done.");
         }
     }
 }

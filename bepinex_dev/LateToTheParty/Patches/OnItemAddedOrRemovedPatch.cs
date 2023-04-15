@@ -10,6 +10,7 @@ using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using LateToTheParty.Controllers;
+using LateToTheParty.Models;
 using UnityEngine;
 
 namespace LateToTheParty.Patches
@@ -37,9 +38,7 @@ namespace LateToTheParty.Patches
             // If you pick up an item, it needs to be removed from the loot lists to prevent it from being randomly despawned while in your inventory
             if (added)
             {
-                Logger.LogInfo("Main player picked up item: " + item.LocalizedName());
-                RemoveAllRelatedLootItems(item, Controllers.LootDestroyerController.LooseLootInfo);
-                RemoveAllRelatedLootItems(item, Controllers.LootDestroyerController.StaticLootInfo);
+                LootManager.RegisterItemPickedUpByPlayer(item);
                 return;
             }
 
@@ -55,28 +54,7 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            if (!Controllers.LootDestroyerController.ItemsDroppedByMainPlayer.Contains(item))
-            {
-                // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
-                foreach (Item relevantItem in Controllers.LootDestroyerController.FindAllItemsInContainer(item).Append(item))
-                {
-                    Logger.LogInfo("Main player removed item: " + item.LocalizedName() + " (Spawned in session: " + item.SpawnedInSession + ")");
-                    Controllers.LootDestroyerController.ItemsDroppedByMainPlayer.Add(relevantItem);
-                }
-            }
-        }
-
-        private static void RemoveAllRelatedLootItems(Item item, Dictionary<Item, LootInfo> lootDict)
-        {
-            // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
-            foreach (Item relevantItem in Controllers.LootDestroyerController.FindAllItemsInContainer(item).Append(item))
-            {
-                if (lootDict.Any(i => i.Key.Id == relevantItem.Id))
-                {
-                    Logger.LogInfo("Removing item from loot list: " + relevantItem.LocalizedName());
-                    lootDict.Remove(relevantItem);
-                }
-            }
+            LootManager.RegisterItemDroppedByPlayer(item);
         }
     }
 }

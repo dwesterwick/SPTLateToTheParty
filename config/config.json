@@ -24,7 +24,7 @@
 			"enabled": true,
 			"only_items_brought_into_raid": false
 		},
-		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571" ]
+		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ]
 	},
 	"loot_multipliers": [
 		[0, 0.15],
