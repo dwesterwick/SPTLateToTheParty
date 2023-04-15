@@ -29,7 +29,7 @@ namespace LateToTheParty.Controllers
             if (CarExtractNames.Length == 0)
             {
                 LoggingController.Logger.LogInfo("Getting car extract names...");
-                CarExtractNames = Controllers.ConfigController.GetCarExtractNames();
+                CarExtractNames = ConfigController.GetCarExtractNames();
             }
 
             // Get the singleton instance for match-end experience configuration and get the default value for minimum time to get a "Survived" status
@@ -57,7 +57,7 @@ namespace LateToTheParty.Controllers
                 // Need to reset loot multipliers to original values
                 if (!ConfigController.Config.DestroyLootDuringRaid.Enabled)
                 {
-                    Controllers.ConfigController.SetLootMultipliers(1);
+                    ConfigController.SetLootMultipliers(1);
                 }
 
                 return;
@@ -71,7 +71,7 @@ namespace LateToTheParty.Controllers
             {
                 double lootMultiplierFactor = GetLootRemainingFactor(timeReductionFactor);
                 LoggingController.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
-                Controllers.ConfigController.SetLootMultipliers(lootMultiplierFactor);
+                ConfigController.SetLootMultipliers(lootMultiplierFactor);
             }
 
             AdjustTrainTimes(LastLocationSelected);

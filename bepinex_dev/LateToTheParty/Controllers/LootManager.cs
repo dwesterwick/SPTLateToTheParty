@@ -83,19 +83,24 @@ namespace LateToTheParty.Models
         {
             IsFindingAndDestroyingLoot = true;
 
+            // Spread the work across multiple frames based on a maximum calculation time per frame
             EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
 
-            LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
-            
+            // Find all loose loot
+            LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();            
             yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem);
+
+            // Search all lootable containers for loot
             yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer);
 
+            // Ensure there is still loot on the map
             if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
             {
                 IsFindingAndDestroyingLoot = false;
                 yield break;
             }
 
+            // Destroy loot based on target fraction remaining
             double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
             Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
             yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
@@ -147,7 +152,7 @@ namespace LateToTheParty.Models
             // Calculate the fraction of loot that should be removed from the map
             double currentLootRemainingFraction = (double)LootInfo.Values.Where(v => v.IsDestroyed == false).Count() / LootInfo.Count;
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            //LateToThePartyPlugin.Log.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
+            //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
             if (lootFractionToDestroy <= 0)
             {
                 return Enumerable.Empty<Item>();
@@ -179,7 +184,7 @@ namespace LateToTheParty.Models
                 actualLootBeingDestroyed += lootInfo.Key.ToEnumerable().FindAllRelatedItems().Count();
             }
 
-            //LateToThePartyPlugin.Log.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed);
+            //LoggingController.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed);
 
             return lootToDestroy.Select(l => l.Key);
         }
@@ -207,7 +212,7 @@ namespace LateToTheParty.Models
             double maxBotRunDistance = raidET * ConfigController.Config.DestroyLootDuringRaid.MapTraversalSpeed;
             if (maxBotRunDistance < LootInfo[item].DistanceToNearestSpawnPoint)
             {
-                //LateToThePartyPlugin.Log.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
+                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
                 return false;
             }
 

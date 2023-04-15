@@ -38,7 +38,7 @@ namespace LateToTheParty.Controllers
             float escapeTimeSec = GClass1426.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
             float timeRemainingFraction = escapeTimeSec / (LocationSettingsController.LastOriginalEscapeTime * 60f);
-            if ((escapeTimeSec > 3600 * 24 * 90) || (raidTimeElapsed > 10))
+            if ((escapeTimeSec > 3600 * 24 * 90) || (raidTimeElapsed < 10))
             {
                 return;
             }
