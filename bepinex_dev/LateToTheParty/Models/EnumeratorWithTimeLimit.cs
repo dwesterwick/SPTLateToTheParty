@@ -1,10 +1,8 @@
-﻿using LateToTheParty.Configuration;
+﻿using LateToTheParty.Controllers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,7 +25,10 @@ namespace LateToTheParty.Models
 
         public IEnumerator Run<T>(IEnumerable<T> collection, Action<T> collectionItemAction)
         {
+            IsCompleted = false;
             IsRunning = true;
+            hadToWait = false;
+
             cycleTimer.Restart();
 
             foreach (T item in collection)
@@ -38,14 +39,14 @@ namespace LateToTheParty.Models
                 }
                 catch(Exception ex)
                 {
-                    LateToThePartyPlugin.Log.LogError("Aborting coroutine iteration for " + item.ToString());
-                    LateToThePartyPlugin.Log.LogError(ex);
+                    LoggingController.LogError("Aborting coroutine iteration for " + item.ToString());
+                    LoggingController.LogError(ex.ToString());
                 }
 
                 if (cycleTimer.ElapsedMilliseconds > maxTimePerIteration)
                 {
                     hadToWait = true;
-                    LateToThePartyPlugin.Log.LogWarning("Waiting for next frame... (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")");
+                    LoggingController.LogWarning("Waiting for next frame... (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
 
                     yield return null;
                     cycleTimer.Restart();
@@ -63,7 +64,7 @@ namespace LateToTheParty.Models
 
             if (hadToWait)
             {
-                LateToThePartyPlugin.Log.LogWarning("Waiting for next frame...done. (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")");
+                LoggingController.LogWarning("Waiting for next frame...done. (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
             }
         }
 

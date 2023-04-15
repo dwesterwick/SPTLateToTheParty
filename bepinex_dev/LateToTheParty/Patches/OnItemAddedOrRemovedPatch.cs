@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,10 +6,7 @@ using Aki.Reflection.Patching;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
-using HarmonyLib;
 using LateToTheParty.Controllers;
-using LateToTheParty.Models;
-using UnityEngine;
 
 namespace LateToTheParty.Patches
 {
@@ -38,23 +33,23 @@ namespace LateToTheParty.Patches
             // If you pick up an item, it needs to be removed from the loot lists to prevent it from being randomly despawned while in your inventory
             if (added)
             {
-                LootManager.RegisterItemPickedUpByPlayer(item);
+                Models.LootManager.RegisterItemPickedUpByPlayer(item);
                 return;
             }
 
-            if (!LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
+            if (!ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
             {
                 Logger.LogInfo("Ignoring item removed by player: " + item.LocalizedName());
                 return;
             }
 
-            if (LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.OnlyItemsBroughtIntoRaid && item.SpawnedInSession)
+            if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.OnlyItemsBroughtIntoRaid && item.SpawnedInSession)
             {
                 Logger.LogInfo("Ignoring not-FIR item removed by player: " + item.LocalizedName());
                 return;
             }
 
-            LootManager.RegisterItemDroppedByPlayer(item);
+            Models.LootManager.RegisterItemDroppedByPlayer(item);
         }
     }
 }

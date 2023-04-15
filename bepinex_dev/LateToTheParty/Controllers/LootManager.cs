@@ -8,7 +8,6 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using HarmonyLib;
 using LateToTheParty.Controllers;
 using UnityEngine;
 
@@ -18,11 +17,41 @@ namespace LateToTheParty.Models
     {
         public static bool IsFindingAndDestroyingLoot { get; private set; } = false;
 
-        public static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
-        public static Dictionary<Item, LootInfo> LootInfo = new Dictionary<Item, LootInfo>();
-        public static List<Item> ItemsDroppedByMainPlayer { get; set; } = new List<Item>();
-
+        private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
+        private static Dictionary<Item, LootInfo> LootInfo = new Dictionary<Item, LootInfo>();
+        private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
+
+        public static int LootableContainerCount
+        {
+            get { return AllLootableContainers.Count; }
+        }
+
+        public static int TotalLootItemsCount
+        {
+            get { return LootInfo.Count; }
+        }
+
+        public static int RemainingLootItemsCount
+        {
+            get { return LootInfo.Where(l => !l.Value.IsDestroyed).Count(); }
+        }
+
+        public static void Clear()
+        {
+            AllLootableContainers.Clear();
+            LootInfo.Clear();
+            ItemsDroppedByMainPlayer.Clear();
+        }
+
+        public static int FindAllLootableContainers()
+        {
+            LoggingController.LogInfo("Searching for lootable containers in the map...");
+            AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
+            LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
+
+            return LootableContainerCount;
+        }
 
         public static void RegisterItemDroppedByPlayer(Item item)
         {
@@ -31,7 +60,7 @@ namespace LateToTheParty.Models
                 // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
                 foreach (Item relevantItem in item.FindAllItemsInContainer(true))
                 {
-                    LateToThePartyPlugin.Log.LogInfo("Preventing dropped item from despawning: " + item.LocalizedName());
+                    LoggingController.LogInfo("Preventing dropped item from despawning: " + item.LocalizedName());
                     ItemsDroppedByMainPlayer.Add(relevantItem);
                 }
             }
@@ -44,7 +73,7 @@ namespace LateToTheParty.Models
             {
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))
                 {
-                    LateToThePartyPlugin.Log.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
+                    LoggingController.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
                     LootInfo.Remove(relevantItem);
                 }
             }
@@ -54,7 +83,7 @@ namespace LateToTheParty.Models
         {
             IsFindingAndDestroyingLoot = true;
 
-            EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+            EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
 
             LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
             
@@ -67,7 +96,7 @@ namespace LateToTheParty.Models
                 yield break;
             }
 
-            double targetLootRemainingFraction = Patches.ReadyToPlayPatch.GetLootRemainingFactor(timeRemainingFraction);
+            double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
             Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
             yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
 
@@ -125,14 +154,14 @@ namespace LateToTheParty.Models
             }
 
             // Calculate the number of loot items to destroy
-            System.Random randomGen = new System.Random();
             int lootItemsToDestroy = (int)Math.Floor(lootFractionToDestroy * LootInfo.Count);
             if (lootItemsToDestroy == 0)
             {
                 return Enumerable.Empty<Item>();
             }
-            
+
             // Find all loot items eligible for destruction and randomly sort them
+            System.Random randomGen = new System.Random();
             IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => CanDestroyItem(l.Key, yourPosition, raidET));
             IEnumerable<KeyValuePair<Item, LootInfo>> randomlySortedLoot = eligibleItems.OrderBy(e => randomGen.NextDouble());
             
@@ -169,13 +198,13 @@ namespace LateToTheParty.Models
 
             // Ignore loot that's too close to you
             float lootDist = Vector3.Distance(yourPosition, LootInfo[item].Transform.position);
-            if (lootDist < LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.ExclusionRadius)
+            if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius)
             {
                 return false;
             }
 
             // Ignore loot that players couldn't have possibly reached yet
-            double maxBotRunDistance = raidET * LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.MapTraversalSpeed;
+            double maxBotRunDistance = raidET * ConfigController.Config.DestroyLootDuringRaid.MapTraversalSpeed;
             if (maxBotRunDistance < LootInfo[item].DistanceToNearestSpawnPoint)
             {
                 //LateToThePartyPlugin.Log.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
@@ -195,9 +224,9 @@ namespace LateToTheParty.Models
                 IEnumerable<Item> _parentItems = item.GetAllParentItems();
                 parentItems = parentItems.Concat(_parentItems);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                LateToThePartyPlugin.Log.LogError("Could not get parents of " + item.LocalizedName() + " (" + item.TemplateId + ")");
+                LoggingController.LogError("Could not get parents of " + item.LocalizedName() + " (" + item.TemplateId + ")");
                 throw;
             }
 
@@ -206,9 +235,9 @@ namespace LateToTheParty.Models
             {
                 parentItems = parentItems.RemoveExcludedItems();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                LateToThePartyPlugin.Log.LogError("Could not removed excluded items from " + string.Join(",", parentItems.Select(i => i.LocalizedName())));
+                LoggingController.LogError("Could not removed excluded items from " + string.Join(",", parentItems.Select(i => i.LocalizedName())));
                 throw;
             }
 
@@ -225,17 +254,17 @@ namespace LateToTheParty.Models
             {
                 if (!LootInfo.ContainsKey(containedItem))
                 {
-                    LateToThePartyPlugin.Log.LogWarning("Could not find entry for " + containedItem.LocalizedName());
+                    LoggingController.LogWarning("Could not find entry for " + containedItem.LocalizedName());
                     continue;
                 }
 
                 if (containedItem.CurrentAddress == null)
                 {
-                    LateToThePartyPlugin.Log.LogWarning("Invalid parent for " + containedItem.LocalizedName());
+                    LoggingController.LogWarning("Invalid parent for " + containedItem.LocalizedName());
                     continue;
                 }
 
-                LateToThePartyPlugin.Log.LogInfo("Destroying " + LootInfo[item].LootType + " loot" + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() + " (" + parentItem.TemplateId + ")" : "") + ": " + containedItem.LocalizedName());
+                LoggingController.LogInfo("Destroying " + LootInfo[item].LootType + " loot" + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() + " (" + parentItem.TemplateId + ")" : "") + ": " + containedItem.LocalizedName());
                 try
                 {
                     LootInfo[containedItem].TraderController.DestroyItem(containedItem);
@@ -243,8 +272,8 @@ namespace LateToTheParty.Models
                 }
                 catch (Exception ex)
                 {
-                    LateToThePartyPlugin.Log.LogError("Could not destroy " + containedItem);
-                    LateToThePartyPlugin.Log.LogError(ex);
+                    LoggingController.LogError("Could not destroy " + containedItem);
+                    LoggingController.LogError(ex.ToString());
                     LootInfo.Remove(containedItem);
                 }
             }
@@ -264,8 +293,8 @@ namespace LateToTheParty.Models
             }
 
             IEnumerable<Item> filteredItems = items
-                .Where(i => i.Template.Parent == null || !LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
-                .Where(i => !LateToThePartyPlugin.ModConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
+                .Where(i => i.Template.Parent == null || !ConfigController.Config.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
+                .Where(i => !ConfigController.Config.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
                 .Where(i => !secureContainerIDs.Contains(i.TemplateId));
 
             return filteredItems;

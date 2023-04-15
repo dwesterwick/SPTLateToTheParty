@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
-using HarmonyLib;
 using UnityEngine;
 
 namespace LateToTheParty.Models
@@ -81,7 +80,7 @@ namespace LateToTheParty.Models
 
         public static double GetDistanceToNearestSpawnPoint(Vector3 position)
         {
-            return GetDistanceToNearestSpawnPoint(position, Patches.ReadyToPlayPatch.LastLocationSelected, EPlayerSideMask.Pmc);
+            return GetDistanceToNearestSpawnPoint(position, Controllers.LocationSettingsController.LastLocationSelected, EPlayerSideMask.Pmc);
         }
 
         public static double GetDistanceToNearestSpawnPoint(Vector3 position, LocationSettingsClass.Location location, EPlayerSideMask playerSideMask)

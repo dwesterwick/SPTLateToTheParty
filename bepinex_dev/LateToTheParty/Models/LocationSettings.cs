@@ -19,7 +19,7 @@ namespace LateToTheParty
 
         }
 
-        public LocationSettings(int escapeTimeLimit)
+        public LocationSettings(int escapeTimeLimit) : this()
         {
             EscapeTimeLimit = escapeTimeLimit;
         }

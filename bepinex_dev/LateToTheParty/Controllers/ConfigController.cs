@@ -9,13 +9,15 @@ using Newtonsoft.Json;
 
 namespace LateToTheParty.Controllers
 {
-    public class ConfigController : MonoBehaviour
+    public static class ConfigController
     {
+        public static Configuration.ModConfig Config { get; private set; } = null;
+
         public static Configuration.ModConfig GetConfig()
         {
             string json = RequestHandler.GetJson("/LateToTheParty/GetConfig");
-            Configuration.ModConfig config = JsonConvert.DeserializeObject<Configuration.ModConfig>(json);
-            return config;
+            Config = JsonConvert.DeserializeObject<Configuration.ModConfig>(json);
+            return Config;
         }
 
         public static void SetLootMultipliers(double factor)
