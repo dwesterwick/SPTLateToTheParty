@@ -81,31 +81,36 @@ namespace LateToTheParty.Models
 
         public static IEnumerator FindAndDestroyLoot(Vector3 yourPosition, float timeRemainingFraction, double raidET)
         {
-            IsFindingAndDestroyingLoot = true;
+            try
+            {
+                IsFindingAndDestroyingLoot = true;
 
-            // Spread the work across multiple frames based on a maximum calculation time per frame
-            EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                // Spread the work across multiple frames based on a maximum calculation time per frame
+                EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
 
-            // Find all loose loot
-            LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();            
-            yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem);
+                // Find all loose loot
+                LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
+                yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem);
 
-            // Search all lootable containers for loot
-            yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer);
+                // Search all lootable containers for loot
+                yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer);
 
-            // Ensure there is still loot on the map
-            if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
+                // Ensure there is still loot on the map
+                if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
+                {
+                    IsFindingAndDestroyingLoot = false;
+                    yield break;
+                }
+
+                // Destroy loot based on target fraction remaining
+                double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
+                Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+            }
+            finally
             {
                 IsFindingAndDestroyingLoot = false;
-                yield break;
             }
-
-            // Destroy loot based on target fraction remaining
-            double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
-            Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
-            yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-
-            IsFindingAndDestroyingLoot = false;
         }
 
         private static void ProcessFoundLooseLootItem(LootItem lootItem)

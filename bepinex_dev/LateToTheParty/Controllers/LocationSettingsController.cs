@@ -22,6 +22,8 @@ namespace LateToTheParty.Controllers
         {
             LoggingController.LogInfo("Discarding original raid settings...");
             OriginalSettings.Clear();
+            LastLocationSelected = null;
+            LastOriginalEscapeTime = -1;
         }
 
         public static void ModifyLocationSettings(LocationSettingsClass.Location location, bool isScavRun)

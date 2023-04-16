@@ -64,6 +64,7 @@ namespace LateToTheParty.Controllers
 
             // Spread the work out across multiple frames to avoid stuttering
             StartCoroutine(LootManager.FindAndDestroyLoot(yourPosition, timeRemainingFraction, raidTimeElapsed));
+            lastUpdatePosition = yourPosition;
             updateTimer.Restart();
         }
     }
