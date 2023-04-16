@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using LateToTheParty.Controllers;
 using UnityEngine;
 
 namespace LateToTheParty.Models
 {
     public static class ItemHelpers
     {
+        private static Dictionary<string, Item> allItems = new Dictionary<string, Item>();
+
         public static IEnumerable<Item> FindAllItemsInContainer(this Item container, bool includeSelf = false)
         {
             IEnumerable<Item> containedItems = container.GetAllItems();
@@ -107,6 +110,28 @@ namespace LateToTheParty.Models
             }
 
             return distance;
+        }
+
+        public static Dictionary<string, Item> GetAllItems()
+        {
+            if (allItems.Count > 0)
+            {
+                return allItems;
+            }
+
+            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
+            if (itemFactory == null)
+            {
+                return allItems;
+            }
+
+            foreach(Item item in itemFactory.CreateAllItemsEver())
+            {
+                allItems.Add(item.TemplateId, item);
+            }
+
+            LoggingController.LogInfo("Created dictionary of " + allItems.Count + " items");
+            return allItems;
         }
     }
 }

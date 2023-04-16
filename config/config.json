@@ -28,10 +28,13 @@
 	},
 	"open_doors_during_raid" : {
 		"enabled": true,
+		"can_open_locked_doors": true,
+		"can_breach_doors": true,
 		"exclusion_radius": 40,
-		"min_raid_ET": 300,
-		"min_raid_time_remaining": 600,
-		"percent_doors_to_open": 25
+		"min_raid_ET": 180,
+		"min_raid_time_remaining": 300,
+		"time_between_door_events": 120,
+		"chance_of_closing_doors": 30
 	},
 	"loot_multipliers": [
 		[0, 0.15],
