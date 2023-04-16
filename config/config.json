@@ -26,6 +26,13 @@
 		},
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ]
 	},
+	"open_doors_during_raid" : {
+		"enabled": true,
+		"exclusion_radius": 40,
+		"min_raid_ET": 300,
+		"min_raid_time_remaining": 600,
+		"percent_doors_to_open": 25
+	},
 	"loot_multipliers": [
 		[0, 0.15],
 		[0.3, 0.2],

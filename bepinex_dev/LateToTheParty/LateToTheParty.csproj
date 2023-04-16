@@ -75,7 +75,9 @@
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
+    <Compile Include="Configuration\OpenDoorsDuringRaidConfig.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
+    <Compile Include="Controllers\DoorController.cs" />
     <Compile Include="Controllers\LocationSettingsController.cs" />
     <Compile Include="Controllers\LoggingController.cs" />
     <Compile Include="Controllers\LootDestroyerController.cs" />

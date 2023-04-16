@@ -27,6 +27,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("destroy_loot_during_raid")]
         public DestroyLootDuringRaidConfig DestroyLootDuringRaid { get; set; } = new DestroyLootDuringRaidConfig();
 
+        [JsonProperty("open_doors_during_raid")]
+        public OpenDoorsDuringRaidConfig OpenDoorsDuringRaid { get; set; } = new OpenDoorsDuringRaidConfig();
+
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
 
