@@ -27,16 +27,16 @@
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ]
 	},
 	"open_doors_during_raid" : {
-		"enabled": true,
+		"enabled": false,
 		"can_open_locked_doors": true,
 		"can_breach_doors": true,
 		"exclusion_radius": 40,
 		"min_raid_ET": 180,
 		"min_raid_time_remaining": 300,
-		"time_between_door_events": 120,
-		"percentage_of_doors_per_event": 10,
-		"chance_of_closing_doors": 30,
-		"max_calc_time_per_frame_ms": 5
+		"time_between_door_events": 60,
+		"percentage_of_doors_per_event": 3,
+		"chance_of_closing_doors": 15,
+		"max_calc_time_per_frame_ms": 3
 	},
 	"loot_multipliers": [
 		[0, 0.15],

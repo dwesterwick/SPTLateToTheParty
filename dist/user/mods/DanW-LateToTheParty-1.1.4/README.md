@@ -2,7 +2,7 @@ Ever notice that you can find tons of loot even at the end of a raid? How about 
 
 To simulate players looting throughout the raid, items will now be gradually removed from the map as the raid progresses (for both your Scav and PMC characters). This includes loot on dead AI bots! Additionally, just like in live Tarkov, your Scav character will no longer spawn into the map at the start of the raid. Instead, you will have an unknown amount of time remaining in it. To make things even more interesting, your PMC character also has a small chance of spawning into the raid late (although not by much).
 
-Also, with the help of fellow modder DrakiaXYZ, doors randomly toggle throughout the raid, including doors that are initially locked. While this mod generally makes the game more difficult, this feature allows you to complete some quests that are normally locked behind a key and it gives you access to a slightly larger loot pool than normal. 
+Also, with the help of fellow modder DrakiaXYZ, doors randomly toggle throughout the raid, including doors that are initially locked. While this mod generally makes the game more difficult, this feature allows you to complete some quests that are normally locked behind a key and it gives you access to a slightly larger (initial) loot pool than normal. 
 
 Optionally, you can also have all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option is disabled by default because it may require a lot of CPU power. I also left it disabled in case you'd rather use a mod like SWAG to manage bot spawning. 
 
@@ -37,4 +37,5 @@ Known issues:
 * The mod tends to despawn containers (i.e. backpacks) along with all of their contents at the same time instead of gradually removing their contents first. This isn't totally unrealistic, but the mod is a bit aggressive with it. 
 * Airdrop loot will never despawn unless you pick it up and drop it elsewhere while **only_items_brought_into_raid=true**
 * If **debug=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug=false**, the script is called twice unless you press "Ready" early. 
-* The mod is equally likely to open any door on the map, including those locked with rare keys. 
+* Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
+* Doors that require power can still be opened without it being turned on. 
