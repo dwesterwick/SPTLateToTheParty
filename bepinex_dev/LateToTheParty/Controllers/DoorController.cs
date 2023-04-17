@@ -155,19 +155,22 @@ namespace LateToTheParty.Controllers
 
         private void ToggleRandomDoor(int maxCalcTime_ms)
         {
-            // Randomly select a new door state
+            // Randomly sort eligible doors
             System.Random randomObj = new System.Random();
-            EDoorState newState = EDoorState.Open;
-            if (randomObj.Next(0, 100) < ConfigController.Config.OpenDoorsDuringRaid.ChanceOfClosingDoors)
-            {
-                newState = EDoorState.Shut;
-            }
-
-            // Toggle the first door that can be changed to the new state
             IEnumerable<Door> randomlyOrderedKeys = canCloseDoors.OrderBy(e => randomObj.NextDouble()).Select(d => d.Key);
+
+            // Try to find a door to toggle, but do not wait too long
             Stopwatch calcTimer = Stopwatch.StartNew();
             while (calcTimer.ElapsedMilliseconds < maxCalcTime_ms)
             {
+                // Randomly select a new door state
+                EDoorState newState = EDoorState.Open;
+                if (randomObj.Next(0, 100) < ConfigController.Config.OpenDoorsDuringRaid.ChanceOfClosingDoors)
+                {
+                    newState = EDoorState.Shut;
+                }
+
+                // Try to make the desired change to each door in the randomly-sorted enumerator
                 foreach (Door door in randomlyOrderedKeys)
                 {
                     //LoggingController.LogInfo("Attempting to change door " + door.Id + " to " + newState + "...");

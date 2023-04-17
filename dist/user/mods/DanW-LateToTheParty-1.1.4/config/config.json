@@ -34,7 +34,9 @@
 		"min_raid_ET": 180,
 		"min_raid_time_remaining": 300,
 		"time_between_door_events": 120,
-		"chance_of_closing_doors": 30
+		"percentage_of_doors_per_event": 10,
+		"chance_of_closing_doors": 30,
+		"max_calc_time_per_frame_ms": 5
 	},
 	"loot_multipliers": [
 		[0, 0.15],
