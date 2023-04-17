@@ -30,8 +30,14 @@ namespace LateToTheParty.Configuration
         [JsonProperty("time_between_door_events")]
         public double TimeBetweenEvents { get; set; } = 60;
 
+        [JsonProperty("percentage_of_doors_per_event")]
+        public double PercentageOfDoorsPerEvent { get; set; } = 10;
+
         [JsonProperty("chance_of_closing_doors")]
         public double ChanceOfClosingDoors { get; set; } = 30;
+
+        [JsonProperty("max_calc_time_per_frame_ms")]
+        public double MaxCalcTimePerFrame { get; set; } = 5;
 
         public OpenDoorsDuringRaidConfig()
         {

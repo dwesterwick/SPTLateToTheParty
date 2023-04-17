@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,9 +17,10 @@ namespace LateToTheParty.Controllers
 {
     public class DoorController : MonoBehaviour
     {
-        private Dictionary<Door, bool> canCloseDoors = new Dictionary<Door, bool>();
+        private static Dictionary<Door, bool> canCloseDoors = new Dictionary<Door, bool>();
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static int doorsToToggle = 1;
 
         private void Update()
         {
@@ -31,11 +33,12 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 canCloseDoors.Clear();
+                updateTimer.Restart();
                 return;
             }
 
             // Ensure enough time has passed since the last door event
-            if (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000)
+            if ((updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000) && (canCloseDoors.Count > 0))
             {
                 return;
             }
@@ -44,29 +47,41 @@ namespace LateToTheParty.Controllers
             float escapeTimeSec = GClass1426.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
 
-            // Don't run the script in the Hideout
-            if (escapeTimeSec > 3600 * 24 * 90)
+            // Don't run the script in the Hideout or before the raid begins
+            if ((escapeTimeSec > 3600 * 24 * 90) || (raidTimeElapsed < 3))
             {
                 return;
             }
 
             // Do not change doors too early or late into the raid
-            if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
+            if ((canCloseDoors.Count > 0) && ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining)))
             {
                 return;
             }
 
             // Only find doors once per raid
+            doorsToToggle = (int)Math.Max(1, Math.Round(canCloseDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
             if (canCloseDoors.Count == 0)
             {
                 FindAllValidDoors();
+                doorsToToggle *= (int)Math.Floor(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
             }
 
-            // Try to change the state of a door
-            if (ToggleRandomDoor())
+            if (doorsToToggle == 0)
             {
-                updateTimer.Restart();
+                return;
             }
+
+            // Try to change the state of doors
+            StartCoroutine(ToggleDoors(doorsToToggle));
+            updateTimer.Restart();
+        }
+
+        private IEnumerator ToggleDoors(int doorsToToggle)
+        {
+            // Spread the work across multiple frames based on a maximum calculation time per frame
+            EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+            yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor);
         }
 
         private void FindAllValidDoors()
@@ -138,7 +153,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool ToggleRandomDoor()
+        private void ToggleRandomDoor(int maxCalcTime_ms)
         {
             // Randomly select a new door state
             System.Random randomObj = new System.Random();
@@ -150,16 +165,18 @@ namespace LateToTheParty.Controllers
 
             // Toggle the first door that can be changed to the new state
             IEnumerable<Door> randomlyOrderedKeys = canCloseDoors.OrderBy(e => randomObj.NextDouble()).Select(d => d.Key);
-            foreach (Door door in randomlyOrderedKeys)
+            Stopwatch calcTimer = Stopwatch.StartNew();
+            while (calcTimer.ElapsedMilliseconds < maxCalcTime_ms)
             {
-                //LoggingController.LogInfo("Attempting to change door " + door.Id + " to " + newState + "...");
-                if (ToggleDoor(door, newState))
+                foreach (Door door in randomlyOrderedKeys)
                 {
-                    return true;
+                    //LoggingController.LogInfo("Attempting to change door " + door.Id + " to " + newState + "...");
+                    if (ToggleDoor(door, newState))
+                    {
+                        return;
+                    }
                 }
             }
-
-            return false;
         }
 
         private bool ToggleDoor(Door door, EDoorState newState)
