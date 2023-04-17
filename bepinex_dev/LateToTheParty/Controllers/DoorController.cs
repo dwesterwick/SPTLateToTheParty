@@ -64,7 +64,7 @@ namespace LateToTheParty.Controllers
             if (canCloseDoors.Count == 0)
             {
                 FindAllValidDoors();
-                doorsToToggle *= (int)Math.Floor(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
+                doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
             }
 
             if (doorsToToggle == 0)
