@@ -36,6 +36,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("ignore_items_dropped_by_player")]
         public IgnoreItemsDroppedByPlayerConfig IgnoreItemsDroppedByPlayer { get; set; } = new IgnoreItemsDroppedByPlayerConfig();
 
+        [JsonProperty("ignore_items_on_dead_bots")]
+        public IgnoreItemsOnDeadBotsConfig IgnoreItemsOnDeadBots { get; set; } = new IgnoreItemsOnDeadBotsConfig();
+
         [JsonProperty("excluded_parents")]
         public string[] ExcludedParents { get; set; } = new string[0];
 

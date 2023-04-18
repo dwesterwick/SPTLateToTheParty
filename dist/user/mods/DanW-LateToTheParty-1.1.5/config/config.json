@@ -25,6 +25,10 @@
 			"enabled": true,
 			"only_items_brought_into_raid": false
 		},
+		"ignore_items_on_dead_bots" : {
+			"enabled": true,
+			"only_if_you_killed_them": true
+		},
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ]
 	},
 	"open_doors_during_raid" : {

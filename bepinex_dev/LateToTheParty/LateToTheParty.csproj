@@ -74,6 +74,7 @@
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
+    <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\OpenDoorsDuringRaidConfig.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Models\LootInfo.cs" />
     <Compile Include="Models\LocationSettings.cs" />
     <Compile Include="Controllers\LootManager.cs" />
+    <Compile Include="Patches\OnBeenKilledByAggressorPatch.cs" />
     <Compile Include="Patches\OnItemAddedOrRemovedPatch.cs" />
     <Compile Include="Patches\ReadyToPlayPatch.cs" />
     <Compile Include="Patches\ShowScreenPatch.cs" />

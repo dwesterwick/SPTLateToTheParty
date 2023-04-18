@@ -20,6 +20,7 @@ This mod is highly customizable by modifying the *config.json* file. You can cha
 * If items you brought into the raid are eligible for despawning if you drop them. For example, if you drop your backpack during a fight and then travel beyond the **exclusion_radius** setting, it might not be there when you return for it! This option is disabled by default. Please note: items in your Scav character's starting inventory are included in this list, not just your PMC's. 
 * How long the after loot first appears on the map before it can be despawned (does not include loot initally generated on the map). This prevents loot on bots from being destroyed too quickly after they're killed. 
 * If the mod should prevent any items that were ever placed in your inventory (either brought into the raid or FIR) from being despawned. This allows you to effectively "hide" items you picked up during the raid and return for them later. This is the default setting. 
+* If items on bots are allowed to despawn if they're killed by you or any other bot. By default, items on bot will not despawn if you kill them, but they can still despawn if another bot kills them. 
 * If the mod is allowed to open doors that are initially locked or doors that have to be breached (i.e. the door in Factory for Chemical Part 3).
 * The **exclusion_radius** setting to prevent doors from opening/closing too close to you.
 * The minimum elapsed time in the raid and the minimum time remaining in the raid for the mod to randomly open or close doors.

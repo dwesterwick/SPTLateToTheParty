@@ -23,6 +23,7 @@ namespace LateToTheParty
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.ShowScreenPatch().Enable();
                 new Patches.OnItemAddedOrRemovedPatch().Enable();
+                new Patches.OnBeenKilledByAggressorPatch().Enable();
 
                 LoggingController.Logger.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<LootDestroyerController>();
