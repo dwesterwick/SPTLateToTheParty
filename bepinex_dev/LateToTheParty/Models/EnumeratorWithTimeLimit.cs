@@ -23,7 +23,7 @@ namespace LateToTheParty.Models
             maxTimePerIteration = _maxTimePerIteration;
         }
 
-        public IEnumerator Run<T>(IEnumerable<T> collection, Action<T> collectionItemAction)
+        public IEnumerator Run<TItem, TArgs>(IEnumerable<TItem> collection, Action<TItem, TArgs> collectionItemAction, TArgs args)
         {
             IsCompleted = false;
             IsRunning = true;
@@ -31,11 +31,11 @@ namespace LateToTheParty.Models
 
             cycleTimer.Restart();
 
-            foreach (T item in collection)
+            foreach (TItem item in collection)
             {
                 try
                 {
-                    collectionItemAction(item);
+                    collectionItemAction(item, args);
                 }
                 catch(Exception ex)
                 {

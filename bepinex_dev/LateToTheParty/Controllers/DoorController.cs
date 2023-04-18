@@ -81,7 +81,7 @@ namespace LateToTheParty.Controllers
         {
             // Spread the work across multiple frames based on a maximum calculation time per frame
             EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-            yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor);
+            yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor, doorsToToggle);
         }
 
         private void FindAllValidDoors()
@@ -153,7 +153,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private void ToggleRandomDoor(int maxCalcTime_ms)
+        private void ToggleRandomDoor(int maxCalcTime_ms, int totalDoorsToToggle)
         {
             // Randomly sort eligible doors
             System.Random randomObj = new System.Random();

@@ -85,15 +85,18 @@ namespace LateToTheParty.Models
             {
                 IsFindingAndDestroyingLoot = true;
 
+                // Check if this is the first time looking for loot in the map
+                bool firstLootSearch = LootInfo.Count == 0;
+
                 // Spread the work across multiple frames based on a maximum calculation time per frame
                 EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
 
                 // Find all loose loot
                 LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
-                yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem);
+                yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem, firstLootSearch ? 0 : raidET);
 
                 // Search all lootable containers for loot
-                yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer);
+                yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
 
                 // Ensure there is still loot on the map
                 if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
@@ -105,7 +108,7 @@ namespace LateToTheParty.Models
                 // Destroy loot based on target fraction remaining
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
                 Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot, raidET);
             }
             finally
             {
@@ -113,7 +116,7 @@ namespace LateToTheParty.Models
             }
         }
 
-        private static void ProcessFoundLooseLootItem(LootItem lootItem)
+        private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
         {
             // Ignore quest items like the bronze pocket watch for "Checking"
             if (lootItem.Item.QuestItem)
@@ -127,12 +130,19 @@ namespace LateToTheParty.Models
             {
                 if (!LootInfo.ContainsKey(item))
                 {
-                    LootInfo.Add(item, new LootInfo(ELootType.Loose, lootItem.ItemOwner, lootItem.transform, ItemHelpers.GetDistanceToNearestSpawnPoint(lootItem.transform.position)));
+                    LootInfo newLoot = new LootInfo(
+                            ELootType.Loose,
+                            lootItem.ItemOwner,
+                            lootItem.transform,
+                            ItemHelpers.GetDistanceToNearestSpawnPoint(lootItem.transform.position),
+                            GetLootFoundTime(raidET)
+                    );
+                    LootInfo.Add(item, newLoot);
                 }
             }
         }
 
-        private static void ProcessStaticLootContainer(LootableContainer lootableContainer)
+        private static void ProcessStaticLootContainer(LootableContainer lootableContainer, double raidET)
         {
             if (lootableContainer.ItemOwner == null)
             {
@@ -146,10 +156,22 @@ namespace LateToTheParty.Models
                 {
                     if (!LootInfo.ContainsKey(item))
                     {
-                        LootInfo.Add(item, new LootInfo(ELootType.Static, lootableContainer.ItemOwner, lootableContainer.transform, ItemHelpers.GetDistanceToNearestSpawnPoint(lootableContainer.transform.position)));
+                        LootInfo newLoot = new LootInfo(
+                            ELootType.Static,
+                            lootableContainer.ItemOwner,
+                            lootableContainer.transform,
+                            ItemHelpers.GetDistanceToNearestSpawnPoint(lootableContainer.transform.position),
+                            GetLootFoundTime(raidET)
+                        );
+                        LootInfo.Add(item, newLoot);
                     }
                 }
             }
+        }
+
+        private static double GetLootFoundTime(double raidET)
+        {
+            return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
         }
 
         private static IEnumerable<Item> FindLootToDestroy(Vector3 yourPosition, double targetLootRemainingFraction, double raidET)
@@ -206,6 +228,14 @@ namespace LateToTheParty.Models
                 return false;
             }
 
+            // Ensure enough time has elapsed since the loot was first placed on the map (to prevent loot on dead bots from being destroyed too soon)
+            double lootAge = raidET - LootInfo[item].RaidETWhenFound;
+            if (lootAge < ConfigController.Config.DestroyLootDuringRaid.MinLootAge)
+            {
+                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot age: " + lootAge + ")");
+                return false;
+            }
+
             // Ignore loot that's too close to you
             float lootDist = Vector3.Distance(yourPosition, LootInfo[item].Transform.position);
             if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius)
@@ -224,7 +254,7 @@ namespace LateToTheParty.Models
             return true;
         }
 
-        private static void DestroyLoot(Item item)
+        private static void DestroyLoot(Item item, double raidET)
         {
             // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
             // all of the mods, magazines, etc. on it will be orphaned and cause errors

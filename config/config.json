@@ -15,6 +15,7 @@
 	"destroy_loot_during_raid" : {
 		"enabled": true,
 		"exclusion_radius": 40,
+		"min_loot_age": 120,
 		"map_traversal_speed_mps": 2,
 		"min_distance_traveled_for_update": 1,
 		"min_time_before_update_ms": 30,

@@ -21,6 +21,7 @@ namespace LateToTheParty.Controllers
         public TraderControllerClass TraderController { get; set; } = null;
         public Transform Transform { get; set; } = null;
         public double DistanceToNearestSpawnPoint { get; set; } = 0;
+        public double RaidETWhenFound { get; set; } = -999;
 
         public LootInfo(ELootType lootType)
         {
@@ -36,6 +37,11 @@ namespace LateToTheParty.Controllers
         public LootInfo(ELootType lootType, TraderControllerClass traderController, Transform transform, double distanceToNearestSpawnPoint) : this(lootType, traderController, transform)
         {
             DistanceToNearestSpawnPoint = distanceToNearestSpawnPoint;
+        }
+
+        public LootInfo(ELootType lootType, TraderControllerClass traderController, Transform transform, double distanceToNearestSpawnPoint, double raidET) : this(lootType, traderController, transform, distanceToNearestSpawnPoint)
+        {
+            RaidETWhenFound = raidET;
         }
     }
 }
