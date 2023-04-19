@@ -1,16 +1,21 @@
 {
 	"enabled": true,
 	"debug": false,
-	"adjust_bot_waves": false,
-	"scav" : {
-		"modification_chance": 1,
-		"max_time_remaining": 0.95,
-		"min_time_remaining": 0.3
-	},
-	"pmc" : {
-		"modification_chance": 0.03,
-		"max_time_remaining": 1,
-		"min_time_remaining": 0.95
+	"adjust_raid_times": {
+		"enabled": true,
+		"scav" : {
+			"modification_chance": 1,
+			"max_time_remaining": 0.95,
+			"min_time_remaining": 0.3
+		},
+		"pmc" : {
+			"modification_chance": 0.03,
+			"max_time_remaining": 1,
+			"min_time_remaining": 0.95
+		},
+		"adjust_vex_chance": true,
+		"adjust_bot_waves": true,
+		"can_reduce_starting_loot": true
 	},
 	"destroy_loot_during_raid" : {
 		"enabled": true,
@@ -21,6 +26,7 @@
 		"min_time_before_update_ms": 30,
 		"max_time_before_update_ms": 5000,
 		"max_calc_time_per_frame_ms": 5,
+		"max_time_without_destroying_any_loot": 60,
 		"ignore_items_dropped_by_player": {
 			"enabled": true,
 			"only_items_brought_into_raid": false

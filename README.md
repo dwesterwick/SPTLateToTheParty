@@ -31,7 +31,9 @@ The arrays for **loot_multipliers** and **vex_chance_reduction** are defined usi
 
 For a future release, I plan on creating a ranking system for which loot to remove from the map first. Currently, the loot that's despawned is completely random. 
 
-**If you have suggestions to modify the arrays in *config.json* to better match your experience in live Tarkov, please let me know! I only have ~100 hours of live experience, so I based my initial settings on that. I'd love to get feedback from the veteran players of live Tarkov!**
+If you're using this mod along with Kobrakon's Immersive Raids mod, please change the following in *config.json*:
+* **adjust_raid_times.enabled** to false
+* **destroy_loot_during_raid.max_time_without_destroying_any_loot** to any value you want. This is the frequency (in seconds) at which an item is removed from the map. If this value is small and you stay in the raid for a long time, you'll eventually have no more loot on the map.
 
 Known issues:
 * If you spawn into the map late, some stuttering may occur at the very beginning of the raid because the mod needs to despawn a lot of items at once. 
@@ -41,3 +43,4 @@ Known issues:
 * If **debug=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug=false**, the script is called twice unless you press "Ready" early. 
 * Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Doors that require power can still be opened without it being turned on. 
+* Occassional exceptions in the bepinex console (if enabled) when ending a raid. These can be ignored for now. 

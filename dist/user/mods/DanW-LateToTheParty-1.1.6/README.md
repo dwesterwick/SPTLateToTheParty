@@ -4,7 +4,7 @@ To simulate players looting throughout the raid, items will now be gradually rem
 
 Also, with the help of fellow modder DrakiaXYZ, doors randomly toggle throughout the raid, including doors that are initially locked. While this mod generally makes the game more difficult, this feature allows you to complete some quests that are normally locked behind a key and it gives you access to a slightly larger (initial) loot pool than normal. 
 
-Optionally, you can also have all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option is disabled by default because it may require a lot of CPU power. I also left it disabled in case you'd rather use a mod like SWAG to manage bot spawning. 
+By default, all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option can be disabled because it may require a lot of CPU power, or your might rather use a mod like SWAG to manage bot spawning. 
 
 This mod is highly customizable by modifying the *config.json* file. You can change:
 * The odds of spawning into the raid late (as either a PMC or Scav)
@@ -31,7 +31,9 @@ The arrays for **loot_multipliers** and **vex_chance_reduction** are defined usi
 
 For a future release, I plan on creating a ranking system for which loot to remove from the map first. Currently, the loot that's despawned is completely random. 
 
-**If you have suggestions to modify the arrays in *config.json* to better match your experience in live Tarkov, please let me know! I only have ~100 hours of live experience, so I based my initial settings on that. I'd love to get feedback from the veteran players of live Tarkov!**
+If you're using this mod along with Kobrakon's Immersive Raids mod, please change the following in *config.json*:
+* **adjust_raid_times.enabled** to false
+* **destroy_loot_during_raid.max_time_without_destroying_any_loot** to any value you want. This is the frequency (in seconds) at which an item is removed from the map. If this value is small and you stay in the raid for a long time, you'll eventually have no more loot on the map.
 
 Known issues:
 * If you spawn into the map late, some stuttering may occur at the very beginning of the raid because the mod needs to despawn a lot of items at once. 
@@ -41,3 +43,4 @@ Known issues:
 * If **debug=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug=false**, the script is called twice unless you press "Ready" early. 
 * Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Doors that require power can still be opened without it being turned on. 
+* Occassional exceptions in the bepinex console (if enabled) when ending a raid. These can be ignored for now. 
