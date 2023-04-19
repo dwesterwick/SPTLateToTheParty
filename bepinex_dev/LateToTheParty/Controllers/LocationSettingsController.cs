@@ -28,8 +28,11 @@ namespace LateToTheParty.Controllers
 
         public static void ModifyLocationSettings(LocationSettingsClass.Location location, bool isScavRun)
         {
+            LastLocationSelected = location;
+
             if (!ConfigController.Config.AdjustRaidTimes.Enabled)
             {
+                LastOriginalEscapeTime = LastLocationSelected.EscapeTimeLimit;
                 return;
             }
 
@@ -48,8 +51,7 @@ namespace LateToTheParty.Controllers
                 LoggingController.LogInfo("Default minimum time for Survived status: " + MinimumTimeForSurvived);
             }
 
-            // Restore the orginal settings for the selected location before modifying them (or factors will be applied multiple times)
-            LastLocationSelected = location;
+            // Restore the orginal settings for the selected location before modifying them (or factors will be applied multiple times)            
             RestoreSettings(LastLocationSelected);
             LastOriginalEscapeTime = LastLocationSelected.EscapeTimeLimit;
 
@@ -82,13 +84,7 @@ namespace LateToTheParty.Controllers
             }
 
             AdjustTrainTimes(LastLocationSelected);
-
-            if (ConfigController.Config.VExChanceReductions.Length > 0)
-            {
-                double vexChanceFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
-                AdjustVExChance(LastLocationSelected, vexChanceFactor);
-            }
-
+            AdjustVExChance(LastLocationSelected, timeReductionFactor);
             AdjustBotWaveTimes(LastLocationSelected);
         }
 
@@ -227,13 +223,23 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private static void AdjustVExChance(LocationSettingsClass.Location location, double reductionFactor)
+        private static void AdjustVExChance(LocationSettingsClass.Location location, double timeReductionFactor)
         {
             if (!ConfigController.Config.AdjustRaidTimes.AdjustVexChance)
             {
                 return;
             }
 
+            // Ensure at least one pair exists in the array
+            if (ConfigController.Config.VExChanceReductions.Length == 0)
+            {
+                return;
+            }
+
+            // Calculate the reduction in VEX chance
+            double reductionFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
+
+            // Find all VEX extracts and adjust their chances proportionally
             foreach (GClass1198 exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
