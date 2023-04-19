@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,8 +24,40 @@ namespace LateToTheParty.Models
             maxTimePerIteration = _maxTimePerIteration;
         }
 
-        public IEnumerator Run<TItem, TArgs>(IEnumerable<TItem> collection, Action<TItem, TArgs> collectionItemAction, TArgs args)
+        public IEnumerator Run<TItem>(IEnumerable<TItem> collection, Action<TItem> collectionItemAction)
         {
+            Action<TItem> action = ((item) =>
+            {
+                collectionItemAction(item);
+            });
+            yield return Run_Internal(collection, action);
+        }
+
+        public IEnumerator Run<TItem, T1>(IEnumerable<TItem> collection, Action<TItem, T1> collectionItemAction, T1 param1)
+        {
+            Action<TItem> action = ((item) =>
+            {
+                collectionItemAction(item, param1);
+            });
+            yield return Run_Internal(collection, action);
+        }
+
+        public IEnumerator Run<TItem, T1, T2>(IEnumerable<TItem> collection, Action<TItem, T1, T2> collectionItemAction, T1 param1, T2 param2)
+        {
+            Action<TItem> action = ((item) =>
+            {
+                collectionItemAction(item, param1, param2);
+            });
+            yield return Run_Internal(collection, action);
+        }
+
+        private IEnumerator Run_Internal<TItem>(IEnumerable<TItem> collection, Action<TItem> action)
+        {
+            if (IsRunning)
+            {
+                throw new InvalidOperationException("There is already a coroutine running.");
+            }
+
             IsCompleted = false;
             IsRunning = true;
             hadToWait = false;
@@ -35,9 +68,9 @@ namespace LateToTheParty.Models
             {
                 try
                 {
-                    collectionItemAction(item, args);
+                    action(item);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     LoggingController.LogError("Aborting coroutine iteration for " + item.ToString());
                     LoggingController.LogError(ex.ToString());

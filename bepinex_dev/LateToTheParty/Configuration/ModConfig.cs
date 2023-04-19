@@ -15,14 +15,8 @@ namespace LateToTheParty.Configuration
         [JsonProperty("debug")]
         public bool Debug { get; set; } = false;
 
-        [JsonProperty("adjust_bot_waves")]
-        public bool AdjustBotWaves { get; set; } = false;
-
-        [JsonProperty("scav")]
-        public EscapeTimeConfig Scav { get; set; } = new EscapeTimeConfig();
-
-        [JsonProperty("pmc")]
-        public EscapeTimeConfig PMC { get; set; } = new EscapeTimeConfig();
+        [JsonProperty("adjust_raid_times")]
+        public AdjustRaidTimesConfig AdjustRaidTimes { get; set; } = new AdjustRaidTimesConfig();
 
         [JsonProperty("destroy_loot_during_raid")]
         public DestroyLootDuringRaidConfig DestroyLootDuringRaid { get; set; } = new DestroyLootDuringRaidConfig();

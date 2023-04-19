@@ -28,6 +28,11 @@ namespace LateToTheParty.Controllers
 
         public static void ModifyLocationSettings(LocationSettingsClass.Location location, bool isScavRun)
         {
+            if (!ConfigController.Config.AdjustRaidTimes.Enabled)
+            {
+                return;
+            }
+
             if (CarExtractNames.Length == 0)
             {
                 LoggingController.Logger.LogInfo("Getting car extract names...");
@@ -57,7 +62,7 @@ namespace LateToTheParty.Controllers
                 AdjustMinimumSurvivalTime(LastLocationSelected);
 
                 // Need to reset loot multipliers to original values
-                if (!ConfigController.Config.DestroyLootDuringRaid.Enabled)
+                if (!ConfigController.Config.DestroyLootDuringRaid.Enabled && ConfigController.Config.AdjustRaidTimes.CanReduceStartingLoot)
                 {
                     ConfigController.SetLootMultipliers(1);
                 }
@@ -69,7 +74,7 @@ namespace LateToTheParty.Controllers
             LoggingController.LogInfo("Changed escape time to " + LastLocationSelected.EscapeTimeLimit);
             AdjustMinimumSurvivalTime(LastLocationSelected);
 
-            if (!ConfigController.Config.DestroyLootDuringRaid.Enabled && ConfigController.Config.LootMultipliers.Length > 0)
+            if (!ConfigController.Config.DestroyLootDuringRaid.Enabled && ConfigController.Config.AdjustRaidTimes.CanReduceStartingLoot && ConfigController.Config.LootMultipliers.Length > 0)
             {
                 double lootMultiplierFactor = GetLootRemainingFactor(timeReductionFactor);
                 LoggingController.LogInfo("Adjusting loot multipliers by " + lootMultiplierFactor);
@@ -80,14 +85,14 @@ namespace LateToTheParty.Controllers
 
             if (ConfigController.Config.VExChanceReductions.Length > 0)
             {
-                double vexChanceFactor = Interpolate(ConfigController.Config.VExChanceReductions, timeReductionFactor);
+                double vexChanceFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
                 AdjustVExChance(LastLocationSelected, vexChanceFactor);
             }
 
             AdjustBotWaveTimes(LastLocationSelected);
         }
 
-        public static double Interpolate(double[][] array, double value)
+        public static double InterpolateForFirstCol(double[][] array, double value)
         {
             if (array.Length == 1)
             {
@@ -117,7 +122,7 @@ namespace LateToTheParty.Controllers
 
         public static double GetLootRemainingFactor(double timeRemainingFactor)
         {
-            return Interpolate(ConfigController.Config.LootMultipliers, timeRemainingFactor);
+            return InterpolateForFirstCol(ConfigController.Config.LootMultipliers, timeRemainingFactor);
         }
 
         private static void RestoreSettings(LocationSettingsClass.Location location)
@@ -166,7 +171,7 @@ namespace LateToTheParty.Controllers
         {
             Random random = new Random();
 
-            Configuration.EscapeTimeConfig config = isScav ? ConfigController.Config.Scav : ConfigController.Config.PMC;
+            Configuration.EscapeTimeConfig config = isScav ? ConfigController.Config.AdjustRaidTimes.Scav : ConfigController.Config.AdjustRaidTimes.PMC;
 
             if (random.NextDouble() > config.Chance)
             {
@@ -224,6 +229,11 @@ namespace LateToTheParty.Controllers
 
         private static void AdjustVExChance(LocationSettingsClass.Location location, double reductionFactor)
         {
+            if (!ConfigController.Config.AdjustRaidTimes.AdjustVexChance)
+            {
+                return;
+            }
+
             foreach (GClass1198 exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
@@ -236,6 +246,11 @@ namespace LateToTheParty.Controllers
 
         private static void AdjustBotWaveTimes(LocationSettingsClass.Location location)
         {
+            if (!ConfigController.Config.AdjustRaidTimes.AdjustBotWaves)
+            {
+                return;
+            }
+
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
             int minTimeBeforeActivation = 20;
 

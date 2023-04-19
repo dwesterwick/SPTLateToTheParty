@@ -4,7 +4,7 @@ To simulate players looting throughout the raid, items will now be gradually rem
 
 Also, with the help of fellow modder DrakiaXYZ, doors randomly toggle throughout the raid, including doors that are initially locked. While this mod generally makes the game more difficult, this feature allows you to complete some quests that are normally locked behind a key and it gives you access to a slightly larger (initial) loot pool than normal. 
 
-Optionally, you can also have all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option is disabled by default because it may require a lot of CPU power. I also left it disabled in case you'd rather use a mod like SWAG to manage bot spawning. 
+By default, all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option can be disabled because it may require a lot of CPU power, or your might rather use a mod like SWAG to manage bot spawning. 
 
 This mod is highly customizable by modifying the *config.json* file. You can change:
 * The odds of spawning into the raid late (as either a PMC or Scav)

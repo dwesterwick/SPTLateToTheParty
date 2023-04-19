@@ -108,7 +108,7 @@ namespace LateToTheParty.Models
                 // Destroy loot based on target fraction remaining
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
                 Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot, raidET);
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
             }
             finally
             {
@@ -254,7 +254,7 @@ namespace LateToTheParty.Models
             return true;
         }
 
-        private static void DestroyLoot(Item item, double raidET)
+        private static void DestroyLoot(Item item)
         {
             // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
             // all of the mods, magazines, etc. on it will be orphaned and cause errors
