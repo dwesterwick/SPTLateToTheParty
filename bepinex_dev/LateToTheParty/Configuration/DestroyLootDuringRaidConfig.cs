@@ -33,6 +33,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("max_calc_time_per_frame_ms")]
         public double MaxCalcTimePerFrame { get; set; } = 5;
 
+        [JsonProperty("max_time_without_destroying_any_loot")]
+        public double MaxTimeWithoutDestroyingAnyLoot { get; set; } = 60;
+
         [JsonProperty("ignore_items_dropped_by_player")]
         public IgnoreItemsDroppedByPlayerConfig IgnoreItemsDroppedByPlayer { get; set; } = new IgnoreItemsDroppedByPlayerConfig();
 

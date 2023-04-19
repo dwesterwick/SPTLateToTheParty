@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,7 @@ namespace LateToTheParty.Models
         private static Dictionary<Item, LootInfo> LootInfo = new Dictionary<Item, LootInfo>();
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
+        private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
 
         public static int LootableContainerCount
         {
@@ -42,6 +44,8 @@ namespace LateToTheParty.Models
             AllLootableContainers.Clear();
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
+
+            lastLootDestroyedTimer.Restart();
         }
 
         public static int FindAllLootableContainers()
@@ -180,16 +184,20 @@ namespace LateToTheParty.Models
             double currentLootRemainingFraction = (double)LootInfo.Values.Where(v => v.IsDestroyed == false).Count() / LootInfo.Count;
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
             //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
-            if (lootFractionToDestroy <= 0)
-            {
-                return Enumerable.Empty<Item>();
-            }
 
             // Calculate the number of loot items to destroy
-            int lootItemsToDestroy = (int)Math.Floor(lootFractionToDestroy * LootInfo.Count);
+            int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * LootInfo.Count);
             if (lootItemsToDestroy == 0)
             {
-                return Enumerable.Empty<Item>();
+                if (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0)
+                {
+                    LoggingController.LogInfo("Max time of " + ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot + "s elapsed since destroying loot. Forcing at least 1 item to be removed...");
+                    lootItemsToDestroy = 1;
+                }
+                else
+                {
+                    return Enumerable.Empty<Item>();
+                }
             }
 
             // Find all loot items eligible for destruction and randomly sort them
@@ -309,6 +317,7 @@ namespace LateToTheParty.Models
                 {
                     LootInfo[containedItem].TraderController.DestroyItem(containedItem);
                     LootInfo[containedItem].IsDestroyed = true;
+                    lastLootDestroyedTimer.Restart();
                 }
                 catch (Exception ex)
                 {

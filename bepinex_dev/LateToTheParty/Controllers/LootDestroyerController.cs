@@ -13,6 +13,7 @@ namespace LateToTheParty.Controllers
     {
         private static Vector3 lastUpdatePosition = Vector3.zero;        
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static int foundLootableContainers = -1;
 
         private void Update()
         {
@@ -31,6 +32,8 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 LootManager.Clear();
+                foundLootableContainers = -1;
+
                 return;
             }
 
@@ -38,7 +41,9 @@ namespace LateToTheParty.Controllers
             float escapeTimeSec = GClass1426.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
             float timeRemainingFraction = escapeTimeSec / (LocationSettingsController.LastOriginalEscapeTime * 60f);
-            if ((escapeTimeSec > 3600 * 24 * 90) || (raidTimeElapsed < 10))
+
+            // Ensure the raid is progressing before running anything
+            if (raidTimeElapsed < 10)
             {
                 return;
             }
@@ -57,9 +62,15 @@ namespace LateToTheParty.Controllers
             }
 
             // This should only be run once to generate the list of lootable containers in the map
-            if (LootManager.TotalLootItemsCount == 0)
+            if (foundLootableContainers == -1)
             {
-                LootManager.FindAllLootableContainers();
+                foundLootableContainers = LootManager.FindAllLootableContainers();
+            }
+
+            // Ensure there are loot containers on the map
+            if (foundLootableContainers == 0)
+            {
+                return;
             }
 
             // Spread the work out across multiple frames to avoid stuttering

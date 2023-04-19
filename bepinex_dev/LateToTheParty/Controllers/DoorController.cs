@@ -21,6 +21,7 @@ namespace LateToTheParty.Controllers
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static int doorsToToggle = 1;
+        private static int validDoors = -1;
 
         private void Update()
         {
@@ -34,6 +35,9 @@ namespace LateToTheParty.Controllers
             {
                 canCloseDoors.Clear();
                 updateTimer.Restart();
+
+                validDoors = -1;
+
                 return;
             }
 
@@ -47,8 +51,8 @@ namespace LateToTheParty.Controllers
             float escapeTimeSec = GClass1426.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
 
-            // Don't run the script in the Hideout or before the raid begins
-            if ((escapeTimeSec > 3600 * 24 * 90) || (raidTimeElapsed < 3))
+            // Don't run the script before the raid begins
+            if (raidTimeElapsed < 3)
             {
                 return;
             }
@@ -61,12 +65,15 @@ namespace LateToTheParty.Controllers
 
             // Only find doors once per raid
             doorsToToggle = (int)Math.Max(1, Math.Round(canCloseDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
-            if (canCloseDoors.Count == 0)
+            if (validDoors == -1)
             {
                 FindAllValidDoors();
+                validDoors = canCloseDoors.Count;
+
                 doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
             }
 
+            // Ensure there are doors to toggle
             if (doorsToToggle == 0)
             {
                 return;
