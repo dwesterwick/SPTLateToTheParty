@@ -17,6 +17,8 @@ namespace LateToTheParty.Controllers
 {
     public class DoorController : MonoBehaviour
     {
+        public static int InteractiveLayer { get; set; }
+
         private static Dictionary<Door, bool> canCloseDoors = new Dictionary<Door, bool>();
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
@@ -104,12 +106,21 @@ namespace LateToTheParty.Controllers
 
             foreach (Door door in allDoors)
             {
+                //Player mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+                //GClass2644 availableActions = GClass1767.GetAvailableActions(, door);
+
                 if (!door.Operatable)
                 {
                     LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
                     continue;
                 }
-                
+
+                if (door.gameObject.layer != InteractiveLayer)
+                {
+                    LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable (wrong layer).");
+                    continue;
+                }
+
                 if (door.DoorState != EDoorState.Open && door.DoorState != EDoorState.Shut && door.DoorState != EDoorState.Locked)
                 {
                     LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has an invalid state: " + door.DoorState);
