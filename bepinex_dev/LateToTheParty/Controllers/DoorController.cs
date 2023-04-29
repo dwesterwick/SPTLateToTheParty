@@ -119,11 +119,12 @@ namespace LateToTheParty.Controllers
 
         private bool CanToggleDoor(Door door, bool logResult = false)
         {
-            if (!door.Operatable)
+            // Redundant check
+            /*if (!door.Operatable)
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
                 return false;
-            }
+            }*/
 
             if (door.gameObject.layer != InteractiveLayer)
             {
