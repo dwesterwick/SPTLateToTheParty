@@ -120,11 +120,11 @@ namespace LateToTheParty.Controllers
         private bool CanToggleDoor(Door door, bool logResult = false)
         {
             // Redundant check
-            if (!door.Operatable)
+            /*if (!door.Operatable)
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
                 return false;
-            }
+            }*/
 
             if (door.gameObject.layer != InteractiveLayer)
             {
@@ -136,8 +136,8 @@ namespace LateToTheParty.Controllers
             GClass2644 availableActions = GClass1767.GetAvailableActions(gamePlayerOwner, door);
             if ((availableActions == null) || (availableActions.Actions.Count == 0))
             {
-                //if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has no interaction options.");
-                //return false;
+                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has no interaction options.");
+                return false;
             }
 
             if (door.DoorState != EDoorState.Open && door.DoorState != EDoorState.Shut && door.DoorState != EDoorState.Locked)
