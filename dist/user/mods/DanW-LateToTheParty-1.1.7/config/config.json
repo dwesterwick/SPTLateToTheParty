@@ -38,7 +38,7 @@
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ]
 	},
 	"open_doors_during_raid" : {
-		"enabled": false,
+		"enabled": true,
 		"can_open_locked_doors": true,
 		"can_breach_doors": true,
 		"exclusion_radius": 40,
