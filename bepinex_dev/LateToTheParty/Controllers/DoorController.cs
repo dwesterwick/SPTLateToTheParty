@@ -19,11 +19,12 @@ namespace LateToTheParty.Controllers
     {
         public static int InteractiveLayer { get; set; }
 
-        private static Dictionary<Door, bool> canCloseDoors = new Dictionary<Door, bool>();
+        private static List<Door> validDoors = new List<Door>();
+        private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static int doorsToToggle = 1;
-        private static int validDoors = -1;
+        private static int validDoorCount = -1;
 
         private void Update()
         {
@@ -35,16 +36,16 @@ namespace LateToTheParty.Controllers
             // Clear all arrays if not in a raid to reset them for the next raid
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
-                canCloseDoors.Clear();
+                validDoors.Clear();
                 updateTimer.Restart();
 
-                validDoors = -1;
+                validDoorCount = -1;
 
                 return;
             }
 
             // Ensure enough time has passed since the last door event
-            if ((updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000) && (canCloseDoors.Count > 0))
+            if ((updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000) && (validDoors.Count > 0))
             {
                 return;
             }
@@ -60,17 +61,18 @@ namespace LateToTheParty.Controllers
             }
 
             // Do not change doors too early or late into the raid
-            if ((canCloseDoors.Count > 0) && ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining)))
+            if ((validDoors.Count > 0) && ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining)))
             {
                 return;
             }
 
             // Only find doors once per raid
-            doorsToToggle = (int)Math.Max(1, Math.Round(canCloseDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
-            if (validDoors == -1)
+            doorsToToggle = (int)Math.Max(1, Math.Round(validDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
+            if (validDoorCount == -1)
             {
+                gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
                 FindAllValidDoors();
-                validDoors = canCloseDoors.Count;
+                validDoorCount = validDoors.Count;
 
                 doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
             }
@@ -95,77 +97,76 @@ namespace LateToTheParty.Controllers
 
         private void FindAllValidDoors()
         {
-            canCloseDoors.Clear();
+            validDoors.Clear();
 
             LoggingController.LogInfo("Searching for valid doors...");
             Door[] allDoors = UnityEngine.Object.FindObjectsOfType<Door>();
             LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Length + " possible doors.");
 
-            // Get all items to search for key ID's
-            Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
-
             foreach (Door door in allDoors)
             {
-                //Player mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
-                //GClass2644 availableActions = GClass1767.GetAvailableActions(, door);
-
-                if (!door.Operatable)
+                if (!CanToggleDoor(door, true))
                 {
-                    LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
                     continue;
-                }
-
-                if (door.gameObject.layer != InteractiveLayer)
-                {
-                    LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable (wrong layer).");
-                    continue;
-                }
-
-                if (door.DoorState != EDoorState.Open && door.DoorState != EDoorState.Shut && door.DoorState != EDoorState.Locked)
-                {
-                    LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has an invalid state: " + door.DoorState);
-                    continue;
-                }
-
-                if (door.DoorState == EDoorState.Locked)
-                {
-                    if (allItems.ContainsKey(door.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
-                    {
-                        LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and not allowed to be opened.");
-                        continue;
-                    }
-
-                    if (!allItems.ContainsKey(door.KeyId) && !door.CanBeBreached)
-                    {
-                        LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and has no valid key.");
-                        continue;
-                    }
-
-                    if (door.CanBeBreached && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
-                    {
-                        LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is not allowed to be breached.");
-                        continue;
-                    }
                 }
 
                 // If the door is eligible for toggling during the raid, add it to the dictionary
-                canCloseDoors.Add(door, CanCloseDoor(door));
+                validDoors.Add(door);
             }
 
-            LoggingController.LogInfo("Searching for valid doors...found " + canCloseDoors.Count + " doors.");
+            LoggingController.LogInfo("Searching for valid doors...found " + validDoors.Count + " doors.");
         }
 
-        private bool CanCloseDoor(Door door)
+        private bool CanToggleDoor(Door door, bool logResult = false)
         {
-            // This is taken from DrakiaXYZ's Door Randomizer mod
-            Transform pushTransform = door.transform.Find("Push");
-            Transform pullTransform = door.transform.Find("Pull");
-            bool canPush = (pushTransform != null) && pushTransform.gameObject.activeInHierarchy;
-            bool canPull = (pullTransform != null) && pullTransform.gameObject.activeInHierarchy;
-            if (!canPush || !canPull)
+            if (!door.Operatable)
             {
-                //LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " cannot be opened (Push: " + canPush + ", Pull: " + canPull + ")");
+                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
                 return false;
+            }
+
+            if (door.gameObject.layer != InteractiveLayer)
+            {
+                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable (wrong layer).");
+                return false;
+            }
+
+            // Ensure there are context menu options for the door
+            GClass2644 availableActions = GClass1767.GetAvailableActions(gamePlayerOwner, door);
+            if ((availableActions == null) || (availableActions.Actions.Count == 0))
+            {
+                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has no interaction options.");
+                return false;
+            }
+
+            if (door.DoorState != EDoorState.Open && door.DoorState != EDoorState.Shut && door.DoorState != EDoorState.Locked)
+            {
+                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has an invalid state: " + door.DoorState);
+                return false;
+            }
+
+            // Get all items to search for key ID's
+            Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
+
+            if (door.DoorState == EDoorState.Locked)
+            {
+                if (allItems.ContainsKey(door.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
+                {
+                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and not allowed to be opened.");
+                    return false;
+                }
+
+                if (!allItems.ContainsKey(door.KeyId) && !door.CanBeBreached)
+                {
+                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and has no valid key.");
+                    return false;
+                }
+
+                if (door.CanBeBreached && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
+                {
+                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is not allowed to be breached.");
+                    return false;
+                }
             }
 
             return true;
@@ -175,7 +176,7 @@ namespace LateToTheParty.Controllers
         {
             // Randomly sort eligible doors
             System.Random randomObj = new System.Random();
-            IEnumerable<Door> randomlyOrderedKeys = canCloseDoors.OrderBy(e => randomObj.NextDouble()).Select(d => d.Key);
+            IEnumerable<Door> randomlyOrderedKeys = validDoors.OrderBy(e => randomObj.NextDouble());
 
             // Try to find a door to toggle, but do not wait too long
             Stopwatch calcTimer = Stopwatch.StartNew();
@@ -212,12 +213,6 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            // Ensure the player can interact with the door before closing it
-            if ((newState == EDoorState.Shut) && !canCloseDoors[door])
-            {
-                return false;
-            }
-
             // Ignore doors that are too close to you
             Vector3 yourPosition = Camera.main.transform.position;
             float doorDist = Vector3.Distance(yourPosition, door.transform.position);
@@ -243,15 +238,6 @@ namespace LateToTheParty.Controllers
 
                 // This doesn't work
                 //door.Interact(new GClass2599(EInteractionType.Unlock));
-
-                // This never seems to change, so don't bother running it
-                /*// Check again if the door can be opened/closed
-                bool canCloseDoor = CanCloseDoor(door);
-                if (canCloseDoors[door] != canCloseDoor)
-                {
-                    LoggingController.LogInfo("Allowed to close status changed for door " + door.Id + ": " + canCloseDoor);
-                    canCloseDoors[door] = canCloseDoor;
-                }*/
             }
 
             // Ignore doors that are currently being opened/closed                    
