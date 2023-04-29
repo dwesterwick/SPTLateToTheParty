@@ -42,5 +42,4 @@ Known issues:
 * Airdrop loot will never despawn unless you pick it up and drop it elsewhere while **only_items_brought_into_raid=true**
 * If **debug=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug=false**, the script is called twice unless you press "Ready" early. 
 * Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
-* Doors that require power can still be opened without it being turned on. 
 * Occasional exceptions in the bepinex console (if enabled) when ending a raid. These can be ignored for now. 
