@@ -13,6 +13,7 @@ import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
 import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
+import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
@@ -27,6 +28,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     private logger: ILogger;
     private locationConfig: ILocationConfig;
     private inRaidConfig: IInRaidConfig;
+    private iBotConfig: IBotConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -116,10 +118,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
-        this.configServer.getConfig(ConfigTypes.IN_RAID);
+        this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.databaseTables = this.databaseServer.getTables();
 
-        this.botConversionHelper = new BotConversionHelper(this.commonUtils);
+        this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
 
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
