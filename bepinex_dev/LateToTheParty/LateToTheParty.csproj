@@ -78,6 +78,7 @@
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\OpenDoorsDuringRaidConfig.cs" />
+    <Compile Include="Controllers\BotConversionController.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
     <Compile Include="Controllers\DoorController.cs" />
     <Compile Include="Controllers\LocationSettingsController.cs" />

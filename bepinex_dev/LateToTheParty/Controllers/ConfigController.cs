@@ -31,5 +31,10 @@ namespace LateToTheParty.Controllers
             string[] names = JsonConvert.DeserializeObject<string[]>(json);
             return names;
         }
+
+        public static void ShareEscapeTime(int escapeTime, double timeRemaining)
+        {
+            RequestHandler.GetJson("/LateToTheParty/EscapeTime/" + escapeTime + "/" + timeRemaining);
+        }
     }
 }

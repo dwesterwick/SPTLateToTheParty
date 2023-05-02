@@ -6,7 +6,7 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.1.7.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.1.8.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private void Awake()
@@ -29,6 +29,7 @@ namespace LateToTheParty
                 LoggingController.Logger.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<LootDestroyerController>();
                 this.GetOrAddComponent<DoorController>();
+                this.GetOrAddComponent<BotConversionController>();
             }
 
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
