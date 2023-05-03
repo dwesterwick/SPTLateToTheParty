@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import modConfig from "../config/config.json";
+import { CommonUtils } from "./CommonUtils";
+import { BotConversionHelper } from "./BotConversionHelper";
 
 import { DependencyContainer } from "tsyringe";
 import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
@@ -11,6 +13,7 @@ import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
 import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
+import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
@@ -19,9 +22,13 @@ const modName = "LateToTheParty";
 
 class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
 {
+    private commonUtils: CommonUtils
+    private botConversionHelper: BotConversionHelper
+    
     private logger: ILogger;
     private locationConfig: ILocationConfig;
     private inRaidConfig: IInRaidConfig;
+    private iBotConfig: IBotConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -34,6 +41,33 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         const staticRouterModService = container.resolve<StaticRouterModService>("StaticRouterModService");
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
         this.logger = container.resolve<ILogger>("WinstonLogger");
+        this.commonUtils = new CommonUtils(this.logger);
+
+        // Game start
+        // Needed to initialize bot conversion helper instance after any other mods have potentially changed config settings
+        staticRouterModService.registerStaticRouter(`StaticAkiGameStart${modName}`,
+            [{
+                url: "/client/game/start",
+                action: (url: string, info: any, sessionId: string, output: string) => 
+                {
+                    this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
+                    return output;
+                }
+            }], "aki"
+        );
+
+        // Game end
+        // Needed for disabling time remaining controller
+        staticRouterModService.registerStaticRouter(`StaticAkiProfileLoad${modName}`,
+            [{
+                url: "/client/match/offline/end",
+                action: (output: string) => 
+                {
+                    BotConversionHelper.stopRaidTimer();                    
+                    return output;
+                }
+            }], "aki"
+        );
         
         // Get config.json settings for the bepinex plugin
         staticRouterModService.registerStaticRouter(`StaticGetConfig${modName}`,
@@ -71,6 +105,22 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
                 }
             }], "SetLootMultiplier"
         );
+
+        // Sets the escape time for the map and the current time remaining
+        dynamicRouterModService.registerDynamicRouter(`DynamicSetEscapeTime${modName}`,
+            [{
+                url: "/LateToTheParty/EscapeTime/",
+                action: (url: string) => 
+                {
+                    const urlParts = url.split("/");
+                    const escapeTime = Number(urlParts[urlParts.length - 2]);
+                    const timeRemaining = Number(urlParts[urlParts.length - 1]);
+                    
+                    this.botConversionHelper.setEscapeTime(escapeTime, timeRemaining);
+                    return JSON.stringify({ resp: "OK" });
+                }
+            }], "SetEscapeTime"
+        );
     }
 
     public postDBLoad(container: DependencyContainer): void
@@ -80,7 +130,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
-        this.configServer.getConfig(ConfigTypes.IN_RAID);
+        this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.databaseTables = this.databaseServer.getTables();
 
         // Store the original static and loose loot multipliers
@@ -89,12 +139,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         // Make the Scav cooldown timer very short for debugging
         if (modConfig.debug)
             this.databaseTables.globals.config.SavagePlayCooldown = 1;
-    }
-
-    private logInfo(message: string): void
-    {
-        if (modConfig.debug)
-            this.logger.info("[" + modName + "] " + message);
     }
 
     private getLootMultipliers(): void
@@ -142,7 +186,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
 
     private setLootMultipliers(factor: number): void
     {
-        this.logInfo(`Adjusting loot multipliers by a factor of ${factor}...`);
+        this.commonUtils.logInfo(`Adjusting loot multipliers by a factor of ${factor}...`);
 
         this.locationConfig.looseLootMultiplier.bigmap = this.originalLooseLootMultipliers.bigmap * factor;
         this.locationConfig.looseLootMultiplier.develop = this.originalLooseLootMultipliers.develop * factor;
