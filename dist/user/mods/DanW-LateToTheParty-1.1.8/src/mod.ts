@@ -57,8 +57,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         );
 
         // Game end
-        // Needed for disabling time remaining controller
-        staticRouterModService.registerStaticRouter(`StaticAkiProfileLoad${modName}`,
+        // Needed for disabling the recurring task that modifies PMC-conversion chances
+        staticRouterModService.registerStaticRouter(`StaticAkiRaidEnd${modName}`,
             [{
                 url: "/client/match/offline/end",
                 action: (output: string) => 

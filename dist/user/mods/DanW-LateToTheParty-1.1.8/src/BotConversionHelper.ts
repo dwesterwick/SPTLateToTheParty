@@ -6,6 +6,7 @@ import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 
 export class BotConversionHelper
 {
+    // All variables should be static because there should only be one instance of this object
     private static escapeTime: number
     private static simulatedTimeRemaining: number
 
@@ -21,11 +22,13 @@ export class BotConversionHelper
         BotConversionHelper.commonUtils = commonUtils;
         BotConversionHelper.iBotConfig = iBotConfig;
 
+        // Store the values in iBotConfig as default settings
         this.setOriginalData();
     }
 
     public setEscapeTime(escapeTime: number, timeRemaining: number): void
     {
+        // Ensure the instance of this object is valid
         if (!this.checkIfInitialized())
         {
             BotConversionHelper.commonUtils.logError("BotConversionHelper object not initialized!");
@@ -35,8 +38,10 @@ export class BotConversionHelper
         BotConversionHelper.escapeTime = escapeTime;
         BotConversionHelper.simulatedTimeRemaining = timeRemaining;
 
+        // Ensure there isn't already a timer running
         if (!BotConversionHelper.timerRunning)
         {
+            // Start a recurring task to update bot spawn settings
             BotConversionHelper.timerHandle = setInterval(BotConversionHelper.simulateRaidTime, 1000 * modConfig.adjust_bot_spawn_chances.update_rate);
         }
         
@@ -45,9 +50,11 @@ export class BotConversionHelper
 
     public static stopRaidTimer(): void
     {
+        // Stop the recurring task
         clearInterval(BotConversionHelper.timerHandle);
         BotConversionHelper.timerRunning = false;
 
+        // Reset the PMC-conversion chances to their original settings
         BotConversionHelper.adjustPmcConversionChance(1);
 
         BotConversionHelper.commonUtils.logInfo("Raid ended");
@@ -55,11 +62,14 @@ export class BotConversionHelper
 
     public static adjustPmcConversionChance(timeRemainingFactor: number): void
     {
+        // Determine the factor that should be applied to the PMC-conversion chances based on the config.json setting
         const adjFactor = CommonUtils.interpolateForFirstCol(modConfig.pmc_spawn_chance_multipliers, timeRemainingFactor);
 
+        // Adjust the chances for each applicable bot type
         let logMessage = "";
         for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
         {
+            // Do not allow the chances to exceed 100%. Who knows what might happen...
             BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min = Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].min * adjFactor);
             BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max = Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].max * adjFactor);
             
@@ -88,6 +98,7 @@ export class BotConversionHelper
 
     private setOriginalData(): void
     {
+        // Store the default PMC-conversion chances for each bot type defined in SPT's configuration file
         let logMessage = "";
         for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
         {
@@ -107,11 +118,11 @@ export class BotConversionHelper
     {
         BotConversionHelper.timerRunning = true;
 
+        // Adjust the PMC-conversion chances once per cycle
         const timeFactor = BotConversionHelper.simulatedTimeRemaining / BotConversionHelper.escapeTime;
-        //BotConversionHelper.commonUtils.logInfo(`Time remaining: ${BotConversionHelper.simulatedTimeRemaining}, Factor: ${timeFactor}`);
-
         BotConversionHelper.adjustPmcConversionChance(timeFactor);
 
-        BotConversionHelper.simulatedTimeRemaining--;
+        // Decrement the simulated raid time to prepare for the next cycle
+        BotConversionHelper.simulatedTimeRemaining -= modConfig.adjust_bot_spawn_chances.update_rate;
     }
 }
