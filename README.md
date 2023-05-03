@@ -1,33 +1,61 @@
-Ever notice that you can find tons of loot even at the end of a raid? How about that your Scav character gets just as much time in raid as your PMC? Not anymore!
+Make your SPT experience closer to live Tarkov in all aspects except bot behavior and waiting for servers. Changes loot, open doors, bot spawn rates, and Scav raid time. 
 
-To simulate players looting throughout the raid, items will now be gradually removed from the map as the raid progresses (for both your Scav and PMC characters). This includes loot on dead AI bots! Additionally, just like in live Tarkov, your Scav character will no longer spawn into the map at the start of the raid. Instead, you will have an unknown amount of time remaining in it. To make things even more interesting, your PMC character also has a small chance of spawning into the raid late (although not by much).
+This mod makes the the following changes to your SPT experience:
+* Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
+* Doors will randomly open and close throughout the raid to simulate players moving through the map (thanks to help from DrakiaXYZ!). If you're lucky, locked doors may be opened for you...
+* Compared to vanilla SPT, PMC's are more likely to spawn toward the beginning of the raid and less likely to spawn toward the end of it. 
+* Your Scav will spawn into the raid with an unknown amount of time remaining in it. However, that also means you may be able to run directly to extract and get a "Survived" status if enough time has passed in the raid. There is also a small chance that your PMC will spawn into the raid slightly late. 
+* If you spawn into the map late as a Scav, bosses are less likely to spawn. 
+* If you spawn into the map late as a Scav, vehicle extracts are less likely to be available. 
+* If you spawn into the map late, all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate.
 
-Also, with the help of fellow modder DrakiaXYZ, doors randomly toggle throughout the raid, including doors that are initially locked. While this mod generally makes the game more difficult, this feature allows you to complete some quests that are normally locked behind a key and it gives you access to a slightly larger (initial) loot pool than normal. 
 
-By default, all of the "missed" bot waves spawn into the map all within the first minute of starting the raid to make the map more challenging to navigate. However, this option can be disabled because it may require a lot of CPU power, or your might rather use a mod like SWAG to manage bot spawning. 
+This mod is highly customizable by modifying the *config.json* file. Here are the settings you can change:
 
-This mod is highly customizable by modifying the *config.json* file. You can change:
-* The odds of spawning into the raid late (as either a PMC or Scav)
-* The range of time in which you'll spawn into a raid late (defined as a fraction of the original raid time)
-* The reduction of loot available as the raid progresses (defined as a fraction of the original loot quantity)
-* The reduction in the chance that a vehicle extract will be available if you spawn into the raid late (defined as a fraction of the original chance)
-* Whether loot will be gradually despawned throughout the raid or be static. **This may affect performance on slower computers**. If **destroy_loot_during_raid** is disabled, the map will still have reduced loot if you spawn in late (according to the **loot_multipliers** table); the amount just won't change after the start of the raid. 
-* The **exclusion_radius** for how far away items need to be from you (in meters) for the mod to consider despawning them
-* The rate at which a typical player traverses the map. This should not be the maximum speed a player can run in an open area because not all players are rushing Resort, Dorms, etc. at the beginning of every raid. Increase this value to despawn loot in map hot-spots (i.e. Resort) earlier in the raid. With the default setting, you have 2-3 min to get to Resort before loot can despawn there. 
-* How often the mod decides which loot to despawn (defined by the number of meters you traveled since the last update). Starting with the 1.1.1 release, this shouldn't be changed in most cases.
-* How often the mod decides which loot to despawn (defined by the minimum and maximum milliseconds since the last time the mod checked). If you're having performance issues, try increasing **min_time_before_update_ms**. 
-* The maximum amount of time (in milliseconds) the mod is allowed to run procedures per frame. By default this is set to 5ms, and delays of <15ms are basically imperceptible. 
-* If items you brought into the raid are eligible for despawning if you drop them. For example, if you drop your backpack during a fight and then travel beyond the **exclusion_radius** setting, it might not be there when you return for it! This option is disabled by default. Please note: items in your Scav character's starting inventory are included in this list, not just your PMC's. 
-* How long the after loot first appears on the map before it can be despawned (does not include loot initally generated on the map). This prevents loot on bots from being destroyed too quickly after they're killed. 
-* If the mod should prevent any items that were ever placed in your inventory (either brought into the raid or FIR) from being despawned. This allows you to effectively "hide" items you picked up during the raid and return for them later. This is the default setting. 
-* If items on bots are allowed to despawn if they're killed by you or any other bot. By default, items on bot will not despawn if you kill them, but they can still despawn if another bot kills them. 
-* If the mod is allowed to open doors that are initially locked or doors that have to be breached (i.e. the door in Factory for Chemical Part 3).
-* The **exclusion_radius** setting to prevent doors from opening/closing too close to you.
-* The minimum elapsed time in the raid and the minimum time remaining in the raid for the mod to randomly open or close doors.
-* The frequency at which the mod opens/closes doors and the percentage of doors in the map changed per event
-* The chance of the mod closing doors instead of opening them
+* **adjust_raid_times.enabled**: If the mod is allowed to make you spawn into a raid late (namely as a Scav). This is **true** by default. 
+* **adjust_raid_times.scav.modification_chance**: The probability (0-1) of spawning into the raid late as a Scav.
+* **adjust_raid_times.scav.max_time_remaining**: The maximum time remaining (as a fraction of the original raid time) in the raid if you spawn in late as a Scav. 
+* **adjust_raid_times.scav.min_time_remaining**: The minimum time remaining (as a fraction of the original raid time) in the raid if you spawn in late as a Scav. 
+* **adjust_raid_times.pmc.***: Same as above but for your PMC character. 
+* **adjust_raid_times.adjust_vex_chance**: If the probability that a vehicle extraction is available can be changed if you spawn in late.
+* **adjust_raid_times.adjust_bot_waves**: If "missed" bot waves should spawn in within the first minute of the raid if you spawn into the raid late. If you notice more stuttering when bots spawn into the map, you may want to disable this. 
+* **adjust_raid_times.can_reduce_starting_loot**: If the initial loot on the map should be reduced if you spawn in late. This setting is ignored if **destroy_loot_during_raid.enabled=true**.
 
-The arrays for **loot_multipliers** and **vex_chance_reduction** are defined using [time_remaining_factor, reduction_factor] pairs. You can have as many pairs as you'd like in the arrays; the mod will just interpolate between them.
+* **destroy_loot_during_raid.enabled**: If the mod is allowed to remove loot throughout the raid. If you spawn into the raid late, loot will be immediately removed from the map until it reaches the target amount for the fraction of time remaining in the raid. This is **true** by default. 
+* **destroy_loot_during_raid.exclusion_radius**: The radius (in meters) from you within which loot is not allowed to be despawned. By default, this is set to 40 meters. 
+* **destroy_loot_during_raid.min_loot_age**: Loot must be on the map (either loose or in a container) for at least this long (in seconds) before it's allowed to be despawned. This does not apply to loot initially placed on the map. This prevents loot on bots from being destroyed too quickly after they're killed. 
+* **destroy_loot_during_raid.map_traversal_speed_mps**: The rate at which a typical player traverses the map (in m/s). This should not be the maximum speed a player can run in an open area because not all players are rushing Resort, Dorms, etc. at the beginning of every raid. Increase this value to despawn loot in map hot-spots (i.e. Resort) earlier in the raid. With the default setting, you have 2-3 min to get to Resort before loot can despawn there. 
+* **destroy_loot_during_raid.min_distance_traveled_for_update**: The distance you need to travel (in meters) before the mod decides if loot should be despawned (from the last time loot was despawned). This shouldn't be changed in most cases.
+* **destroy_loot_during_raid.min_time_before_update_ms**: The minimum time that must elapse (in milliseconds) after loot was despawned before the mod is allowed to despawn loot again. If you're having performance issues, try increasing this. 
+* **destroy_loot_during_raid.max_time_before_update_ms**: The maximum time that elapses (in milliseconds) after loot was despawned before the mod checks if loot should be despawned again. 
+* **destroy_loot_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run loot-despawning procedures per frame. By default this is set to 5ms, and delays of <15ms are basically imperceptible. 
+* **destroy_loot_during_raid.max_time_without_destroying_any_loot**: The maximum time (in seconds) after loot was despawned before the mod forces at least one piece of loot to despawn. This is included for compatibility with Kobrakon's Immersive Raids mod. By default, this is set to 60 seconds. 
+* **destroy_loot_during_raid.ignore_items_dropped_by_player.enabled**: If items dropped by the player should not be allowed to be despawned. This allows you to effectively "hide" items you picked up during the raid and return for them later. This is **true** by default. 
+* **destroy_loot_during_raid.ignore_items_dropped_by_player.only_items_brought_into_raid**: If items dropped by the player should not be allowed to be despawned only if they're not FIR. Items in your Scav character's starting inventory are included in this list, not just your PMC's. This is **false** by default. 
+* **destroy_loot_during_raid.ignore_items_on_dead_bots.enabled**: If the mod should not be allowed to despawn items on dead bots. This is **true** by default. 
+* **destroy_loot_during_raid.ignore_items_on_dead_bots.only_if_you_killed_them**: If the mod should not be allowed to despawn items on dead bots only if you killed the bot. If you did not kill the bot, items in its inventory are still eligible for despawning. This is **true** by default. 
+* **destroy_loot_during_raid.excluded_parents**: Items that are children of these parent-item ID's will not be allowed to despawn. **Entries in this array should NOT be removed, or the mod may not work properly.** 
+
+* **open_doors_during_raid.enabled**: If the mod can open/close doors throughout the raid. This is **true** by default. 
+* **open_doors_during_raid.can_open_locked_doors**: If the mod is allowed to open locked doors. This is **true** by default. 
+* **open_doors_during_raid.can_breach_doors**: If the mod is allowed to open doors that can only be breached. This is **true** by default. 
+* **open_doors_during_raid.exclusion_radius**: The radius (in meters) from you within which doors are not allowed to be opened/closed. By default, this is set to 40 meters. 
+* **open_doors_during_raid.min_raid_ET**: The minimum time (in seconds) that must elapse in the raid (not necessarily from the time you spawn into the raid, namely as a Scav) before the mod is allowed to begin opening/closing doors. By default, this is set to 180 seconds.
+* **open_doors_during_raid.min_raid_time_remaining**: The minimum time (in seconds) that must be remaining in the raid for the mod to be allowed to open/close doors. By default, this is 300 seconds. 
+* **open_doors_during_raid.time_between_door_events**: The time (in seconds) that must elapse after the mod opens/closes doors before it's allowed to open/close doors again. By default, this is 60 seconds. 
+* **open_doors_during_raid.percentage_of_doors_per_event**: The percentage of eligible doors on the map that should be opened or closed per event. By default, this is 3%. 
+* **open_doors_during_raid.chance_of_closing_doors**: The chance (in percent) that the mod will close a door instead of opening a door. 
+* **open_doors_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run door-event procedures per frame. By default this is set to 3ms, and delays of <15ms are basically imperceptible. 
+
+* **adjust_bot_spawn_chances.enabled**: If the mod is allowed to change bot spawn-chance settings. This is **true** by default. 
+* **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to change boss spawn chances. This is **true** by default. 
+* **adjust_bot_spawn_chances.update_rate**: The time (in seconds) the must elapse after the mod updates PMC conversion-rate chances before it updates them again.  
+* **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
+
+* **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the initial loot pool that should be remaining on the map based on the fraction of time remaining in the raid.
+* **vex_chance_reduction**: [time_remaining_factor, reduction_factor] pairs describing how the chance that a vehicle extract is available chances based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
+* **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
+* **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 
 For a future release, I plan on creating a ranking system for which loot to remove from the map first. Currently, the loot that's despawned is completely random. 
 
