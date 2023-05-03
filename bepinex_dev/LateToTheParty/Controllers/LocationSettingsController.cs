@@ -86,6 +86,7 @@ namespace LateToTheParty.Controllers
             AdjustTrainTimes(LastLocationSelected);
             AdjustVExChance(LastLocationSelected, timeReductionFactor);
             AdjustBotWaveTimes(LastLocationSelected);
+            AdjustBossSpawnChances(LastLocationSelected, timeReductionFactor);
         }
 
         public static double InterpolateForFirstCol(double[][] array, double value)
@@ -142,10 +143,16 @@ namespace LateToTheParty.Controllers
                     }
                 }
 
+                foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
+                {
+                    bossLocation.BossChance = OriginalSettings[location.Id].BossSpawnChances[bossLocation];
+                }
+
                 return;
             }
 
             LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
+            
             foreach (GClass1198 exit in location.exits)
             {
                 if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
@@ -160,6 +167,12 @@ namespace LateToTheParty.Controllers
                     settings.VExChance = exit.Chance;
                 }
             }
+
+            foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
+            {
+                settings.BossSpawnChances.Add(bossLocation, bossLocation.BossChance);
+            }
+
             OriginalSettings.Add(location.Id, settings);
         }
 
@@ -277,6 +290,28 @@ namespace LateToTheParty.Controllers
                 }
 
                 LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
+            }
+        }
+
+        private static void AdjustBossSpawnChances(LocationSettingsClass.Location location, double timeReductionFactor)
+        {
+            if (!ConfigController.Config.AdjustBotSpawnChances.Enabled || !ConfigController.Config.AdjustBotSpawnChances.AdjustBosses)
+            {
+                return;
+            }
+
+            // Calculate the reduction in boss spawn chances
+            float reductionFactor = (float)InterpolateForFirstCol(ConfigController.Config.BossSpawnChanceMultipliers, timeReductionFactor);
+
+            foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
+            {
+                if (ConfigController.Config.AdjustBotSpawnChances.ExcludedBosses.Contains(bossLocation.BossName))
+                {
+                    continue;
+                }
+
+                bossLocation.BossChance *= reductionFactor;
+                LoggingController.LogInfo("Boss " + bossLocation.BossName + " spawn adjusted to " + Math.Round(bossLocation.BossChance, 1) + "%");
             }
         }
     }

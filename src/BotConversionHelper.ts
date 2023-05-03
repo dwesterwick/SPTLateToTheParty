@@ -37,7 +37,7 @@ export class BotConversionHelper
 
         if (!BotConversionHelper.timerRunning)
         {
-            BotConversionHelper.timerHandle = setInterval(BotConversionHelper.simulateRaidTime, 1000 * modConfig.adjust_pmc_spawn_chances.update_rate);
+            BotConversionHelper.timerHandle = setInterval(BotConversionHelper.simulateRaidTime, 1000 * modConfig.adjust_bot_spawn_chances.update_rate);
         }
         
         BotConversionHelper.commonUtils.logInfo("Updated escape time");

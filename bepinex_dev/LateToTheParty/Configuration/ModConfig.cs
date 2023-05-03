@@ -24,8 +24,8 @@ namespace LateToTheParty.Configuration
         [JsonProperty("open_doors_during_raid")]
         public OpenDoorsDuringRaidConfig OpenDoorsDuringRaid { get; set; } = new OpenDoorsDuringRaidConfig();
 
-        [JsonProperty("adjust_pmc_spawn_chances")]
-        public AdjustPMCSpawnChancesConfig AdjustPMCSpawnChances { get; set; } = new AdjustPMCSpawnChancesConfig();
+        [JsonProperty("adjust_bot_spawn_chances")]
+        public AdjustBotSpawnChancesConfig AdjustBotSpawnChances { get; set; } = new AdjustBotSpawnChancesConfig();
 
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
@@ -35,6 +35,9 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("pmc_spawn_chance_multipliers")]
         public double[][] PMCSpawnChanceMultipliers { get; set; } = new double[0][];
+
+        [JsonProperty("boss_spawn_chance_multipliers")]
+        public double[][] BossSpawnChanceMultipliers { get; set; } = new double[0][];
 
         public ModConfig()
         {

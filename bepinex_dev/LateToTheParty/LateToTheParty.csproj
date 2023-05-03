@@ -71,7 +71,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration\AdjustPMCSpawnChancesConfig.cs" />
+    <Compile Include="Configuration\AdjustBotSpawnChancesConfig.cs" />
     <Compile Include="Configuration\AdjustRaidTimesConfig.cs" />
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />

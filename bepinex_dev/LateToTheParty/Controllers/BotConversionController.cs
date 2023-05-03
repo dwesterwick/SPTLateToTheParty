@@ -15,7 +15,7 @@ namespace LateToTheParty.Controllers
 
         private void Update()
         {
-            if (!ConfigController.Config.AdjustPMCSpawnChances.Enabled)
+            if (!ConfigController.Config.AdjustBotSpawnChances.Enabled)
             {
                 return;
             }
@@ -43,6 +43,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Share the escape time and current time remaining with the server
             ConfigController.ShareEscapeTime(totalEscapeTime, escapeTimeSec);
             EscapeTimeShared = true;
         }

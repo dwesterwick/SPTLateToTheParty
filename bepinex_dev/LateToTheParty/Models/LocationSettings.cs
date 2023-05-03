@@ -13,6 +13,7 @@ namespace LateToTheParty
         public float TrainMinTime { get; set; } = 1200;
         public int TrainWaitTime { get; set; } = 420;
         public float VExChance { get; set; } = 50;
+        public Dictionary<BossLocationSpawn, float> BossSpawnChances { get; set; } = new Dictionary<BossLocationSpawn, float>();
 
         public LocationSettings()
         {
