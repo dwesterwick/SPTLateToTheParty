@@ -43,6 +43,19 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.logger = container.resolve<ILogger>("WinstonLogger");
         this.commonUtils = new CommonUtils(this.logger);
 
+        // Game start
+        // Needed to initialize bot conversion helper instance after any other mods have potentially changed config settings
+        staticRouterModService.registerStaticRouter(`StaticAkiGameStart${modName}`,
+            [{
+                url: "/client/game/start",
+                action: (url: string, info: any, sessionId: string, output: string) => 
+                {
+                    this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
+                    return output;
+                }
+            }], "aki"
+        );
+
         // Game end
         // Needed for disabling time remaining controller
         staticRouterModService.registerStaticRouter(`StaticAkiProfileLoad${modName}`,
@@ -50,8 +63,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
                 url: "/client/match/offline/end",
                 action: (output: string) => 
                 {
-                    this.botConversionHelper.stopRaidTimer();
-                    
+                    BotConversionHelper.stopRaidTimer();                    
                     return output;
                 }
             }], "aki"
@@ -120,8 +132,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.databaseTables = this.databaseServer.getTables();
-
-        this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
 
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();

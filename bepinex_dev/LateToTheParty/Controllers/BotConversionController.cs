@@ -15,6 +15,11 @@ namespace LateToTheParty.Controllers
 
         private void Update()
         {
+            if (!ConfigController.Config.AdjustPMCSpawnChances.Enabled)
+            {
+                return;
+            }
+
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 EscapeTimeShared = false;
