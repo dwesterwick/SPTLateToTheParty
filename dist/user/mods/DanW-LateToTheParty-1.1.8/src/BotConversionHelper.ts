@@ -102,6 +102,12 @@ export class BotConversionHelper
         let logMessage = "";
         for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
         {
+            if (BotConversionHelper.convertIntoPmcChanceOrig[pmcType] !== undefined)
+            {
+                logMessage += `${pmcType}: already buffered, `;
+                continue;
+            }
+
             const chances: MinMax = {
                 min: BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min,
                 max: BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max

@@ -1,27 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
+using EFT;
 using EFT.UI;
+using UnityEngine;
 
 namespace LateToTheParty.Patches
 {
-    public class ShowScreenPatch : ModulePatch
+    public class GameWorldOnDestroyPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(MainMenuController).GetMethod("ShowScreen", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(GameWorld).GetMethod("OnDestroy", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(EMenuType screen)
+        private static void PatchPostfix()
         {
             // Needed for compatibility with Refringe's CustomRaidTimes mod
-            if (screen == EMenuType.Play)
-            {
-                Controllers.LocationSettingsController.ClearOriginalSettings();
-            }
+            Controllers.LocationSettingsController.ClearOriginalSettings();
         }
     }
 }

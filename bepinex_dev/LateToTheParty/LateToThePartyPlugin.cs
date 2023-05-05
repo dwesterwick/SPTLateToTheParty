@@ -21,7 +21,7 @@ namespace LateToTheParty
             {
                 LoggingController.Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
-                new Patches.ShowScreenPatch().Enable();
+                new Patches.GameWorldOnDestroyPatch().Enable();
                 new Patches.OnItemAddedOrRemovedPatch().Enable();
                 new Patches.OnBeenKilledByAggressorPatch().Enable();
                 new Patches.OnGameStartedPatch().Enable();

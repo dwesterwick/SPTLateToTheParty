@@ -126,6 +126,8 @@ namespace LateToTheParty.Controllers
         {
             if (OriginalSettings.ContainsKey(location.Id))
             {
+                LoggingController.LogInfo("Recalling original raid settings for " + location.Name + "...");
+
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
                 foreach (GClass1198 exit in location.exits)
@@ -150,6 +152,8 @@ namespace LateToTheParty.Controllers
 
                 return;
             }
+
+            LoggingController.LogInfo("Storing original raid settings for " + location.Name + "...");
 
             LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
             
