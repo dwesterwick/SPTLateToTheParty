@@ -2,6 +2,7 @@
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 import { BotConversionHelper } from "./BotConversionHelper";
+import { LootRankingGenerator } from "./LootRankingGenerator";
 
 import { DependencyContainer } from "tsyringe";
 import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
@@ -17,6 +18,7 @@ import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
+import { VFS } from "@spt-aki/utils/VFS";
 
 const modName = "LateToTheParty";
 
@@ -24,6 +26,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
 {
     private commonUtils: CommonUtils
     private botConversionHelper: BotConversionHelper
+    private lootRankingGenerator: LootRankingGenerator
     
     private logger: ILogger;
     private locationConfig: ILocationConfig;
@@ -32,6 +35,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
+    private vfs: VFS;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -44,13 +48,15 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.commonUtils = new CommonUtils(this.logger);
 
         // Game start
-        // Needed to initialize bot conversion helper instance after any other mods have potentially changed config settings
+        // Needed to initialize bot conversion helper instance and loot ranking generator after any other mods have potentially changed config settings
         staticRouterModService.registerStaticRouter(`StaticAkiGameStart${modName}`,
             [{
                 url: "/client/game/start",
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
                     this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
+                    
+
                     return output;
                 }
             }], "aki"
@@ -127,11 +133,14 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     {
         this.configServer = container.resolve<ConfigServer>("ConfigServer");
         this.databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
+        this.vfs = container.resolve<VFS>("VFS");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.databaseTables = this.databaseServer.getTables();
+
+        this.generateLootRankingData();
 
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
@@ -221,6 +230,13 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.locationConfig.staticLootMultiplier.terminal = this.originalStaticLootMultipliers.terminal * factor;
         this.locationConfig.staticLootMultiplier.town = this.originalStaticLootMultipliers.town * factor;
         this.locationConfig.staticLootMultiplier.woods = this.originalStaticLootMultipliers.woods * factor;
+    }
+
+    private generateLootRankingData(): void
+    {
+        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs);
+
+        this.lootRankingGenerator.generateLootRankingData();
     }
 }
 module.exports = {mod: new LateToTheParty()}
