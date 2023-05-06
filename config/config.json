@@ -35,7 +35,16 @@
 			"enabled": true,
 			"only_if_you_killed_them": true
 		},
-		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ]
+		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ],
+		"loot_ranking": {
+			"enabled": true,
+			"weighting": {
+				"cost_per_slot": 1,
+				"weight": 0.1,
+				"size": 0.5,
+				"max_dim": 0.5
+			}
+		}
 	},
 	"open_doors_during_raid" : {
 		"enabled": true,
