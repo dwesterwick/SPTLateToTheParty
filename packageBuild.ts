@@ -58,7 +58,7 @@ fs.copySync(__dirname, path.normalize(`${__dirname}/../~${modName}/user/mods/${m
     return !exclude.includes(filePath);
 }});
 fs.copySync(path.normalize(`${__dirname}/${csharpDevFolder}/${packageName}/bin/${csharpBuildFolder}/${packageName}.dll`), path.normalize(`${__dirname}/../~${modName}/BepInEx/plugins/${packageName}.dll`));
-fs.copySync(path.normalize(`${__dirname}/${lootRankingReaderFolder}`), path.normalize(`${__dirname}/../~${modName}/LootRankingReader`));
+fs.copySync(path.normalize(`${__dirname}/${lootRankingReaderFolder}`), path.normalize(`${__dirname}/../~${modName}/user/mods/${modName}/db/LootRankingDataReader`));
 fs.moveSync(path.normalize(`${__dirname}/../~${modName}`), path.normalize(`${__dirname}/${modName}`), { overwrite: true });
 fs.copySync(path.normalize(`${__dirname}/${modName}`), path.normalize(`${__dirname}/dist`));
 console.log("Build files copied.");
