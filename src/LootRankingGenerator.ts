@@ -1,3 +1,4 @@
+import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
@@ -47,16 +48,65 @@ export class LootRankingGenerator
 
         this.commonUtils.logInfo("Creating loot ranking data...");
 
+        const items: Record<string, LootRankingData> = {};
+        for (const itemID in this.databaseTables.templates.items)
+        {
+            if (this.databaseTables.templates.items[itemID]._type == "Node")
+            {
+                continue;
+            }
+
+            items[this.databaseTables.templates.items[itemID]._id] = this.generateLookRankingForItem(this.databaseTables.templates.items[itemID]);
+        }
+
         const rankingData: LootRankingContainer = {
             costPerSlot: modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot,
             weight: modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight,
             size: modConfig.destroy_loot_during_raid.loot_ranking.weighting.size,
             maxDim: modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim,
-            items: undefined
+            items: items
         };
         const rankingDataStr = JSON.stringify(rankingData);
 
         this.vfs.writeFile(lootFilePath, rankingDataStr);
+    }
+
+    private generateLookRankingForItem(item: ITemplateItem): LootRankingData
+    {
+        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((item) => item.Id == item.Id);
+        let handbookPrice = 0;
+        if (matchingHandbookItems.length == 1)
+        {
+            handbookPrice = matchingHandbookItems[0].Price;
+        }
+
+        let price = 0;
+        if (item._id in this.databaseTables.templates.prices)
+        {
+            price = this.databaseTables.templates.prices[item._id];
+        }
+        
+        const cost = Math.max(handbookPrice, price);
+        const weight = item._props.Weight;
+        const size = item._props.Width * item._props.Height;
+        const maxDim = Math.max(item._props.Width, item._props.Height);
+
+        let value = (cost / maxDim) * modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot;
+        value += weight * modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight;
+        value += size * modConfig.destroy_loot_during_raid.loot_ranking.weighting.size;
+        value += maxDim * modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim;
+
+        const data: LootRankingData = {
+            id: item._id,
+            name: this.commonUtils.getItemName(item._id),
+            value: value,
+            costPerSlot: cost / size,
+            weight: weight,
+            size: size,
+            maxDim: maxDim
+        }
+
+        return data;
     }
 
     private validLootRankingDataExists(): boolean

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToTheParty", "LateToTheParty.csproj", "{A9039532-27CD-451F-A8D0-C222E28FB1D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LookRankingDataReader", "..\LookRankingDataReader\LookRankingDataReader.csproj", "{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{A9039532-27CD-451F-A8D0-C222E28FB1D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9039532-27CD-451F-A8D0-C222E28FB1D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9039532-27CD-451F-A8D0-C222E28FB1D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

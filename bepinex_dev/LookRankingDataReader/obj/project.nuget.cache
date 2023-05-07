@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "ex1YcHB/HEaKdUX99e1uy2qHs0PdqFpJc6OZoTcsDLvqZ/phKjK2WGbO+COax6QNH03CvCx00qkF9nR1/ajjyw==",
+  "success": true,
+  "projectFilePath": "D:\\Program Files (x86)\\Games\\Escape from Tarkov Single Player 3.5.5\\Mods\\SPTLateToTheParty\\bepinex_dev\\LookRankingDataReader\\LookRankingDataReader.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\dwest\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
