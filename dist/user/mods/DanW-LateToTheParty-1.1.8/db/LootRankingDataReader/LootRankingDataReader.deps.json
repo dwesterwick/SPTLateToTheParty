@@ -6,12 +6,12 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v6.0": {
-      "LookRankingDataReader/1.0.0": {
+      "LootRankingDataReader/1.0.0": {
         "dependencies": {
           "Newtonsoft.Json": "13.0.3"
         },
         "runtime": {
-          "LookRankingDataReader.dll": {}
+          "LootRankingDataReader.dll": {}
         }
       },
       "Newtonsoft.Json/13.0.3": {
@@ -25,7 +25,7 @@
     }
   },
   "libraries": {
-    "LookRankingDataReader/1.0.0": {
+    "LootRankingDataReader/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
