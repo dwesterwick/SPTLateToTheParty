@@ -40,6 +40,12 @@ export class LootRankingGenerator
     constructor(private commonUtils: CommonUtils, private databaseTables: IDatabaseTables, private vfs: VFS)
     { }
 
+    public getLootRankingDataFromFile(): LootRankingContainer
+    {
+        const rankingDataStr = this.vfs.readFile(lootFilePath);
+        return JSON.parse(rankingDataStr);
+    }
+
     public generateLootRankingData(): void
     {
         if (!modConfig.destroy_loot_during_raid.loot_ranking)
@@ -150,8 +156,7 @@ export class LootRankingGenerator
             return false;
         }
 
-        const rankingDataStr = this.vfs.readFile(lootFilePath);
-        const rankingData: LootRankingContainer = JSON.parse(rankingDataStr);
+        const rankingData: LootRankingContainer = this.getLootRankingDataFromFile();
 
         let parentParametersMatch = true;
         for (const parentID in modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents)

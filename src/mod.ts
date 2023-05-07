@@ -87,6 +87,17 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
             }], "GetConfig"
         );
 
+        // Get lootRanking.json for loot ranking
+        staticRouterModService.registerStaticRouter(`StaticGetLootRankingData${modName}`,
+            [{
+                url: "/LateToTheParty/GetLootRankingData",
+                action: () => 
+                {
+                    return JSON.stringify(this.lootRankingGenerator.getLootRankingDataFromFile());
+                }
+            }], "GetLootRankingData"
+        );
+
         // Get an array of all car extract names
         staticRouterModService.registerStaticRouter(`StaticGetCarExtractNames${modName}`,
             [{

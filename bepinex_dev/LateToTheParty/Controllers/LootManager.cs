@@ -200,15 +200,14 @@ namespace LateToTheParty.Models
                 }
             }
 
-            // Find all loot items eligible for destruction and randomly sort them
-            System.Random randomGen = new System.Random();
+            // Find all loot items eligible for destruction and sort them            
             IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => CanDestroyItem(l.Key, yourPosition, raidET));
-            IEnumerable<KeyValuePair<Item, LootInfo>> randomlySortedLoot = eligibleItems.OrderBy(e => randomGen.NextDouble());
+            IEnumerable<KeyValuePair<Item, LootInfo>> sortedLoot = SortLoot(eligibleItems);
             
             // Generate a list of loot to be destroyed. This needs to be iterated because each item in the loot dictionaries has an unknown number of child items in it. 
             int actualLootBeingDestroyed = 0;
             IEnumerable<KeyValuePair<Item, LootInfo>> lootToDestroy = Enumerable.Empty<KeyValuePair<Item, LootInfo>>();
-            foreach (KeyValuePair<Item, LootInfo> lootInfo in randomlySortedLoot)
+            foreach (KeyValuePair<Item, LootInfo> lootInfo in sortedLoot)
             {
                 if (actualLootBeingDestroyed >= lootItemsToDestroy)
                 {
@@ -222,6 +221,29 @@ namespace LateToTheParty.Models
             //LoggingController.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed);
 
             return lootToDestroy.Select(l => l.Key);
+        }
+
+        private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
+        {
+            System.Random randomGen = new System.Random();
+
+            // Get the loot ranking data from the server, but this only needs to be done once
+            if (ConfigController.LootRanking == null)
+            {
+                ConfigController.GetLootRankingData();
+            }
+            if (ConfigController.LootRanking == null)
+            {
+                LoggingController.LogError("Cannot read loot ranking data from the server.");
+            }
+
+            // If loot ranking is disabled, simply sort the loot randomly
+            if ((!ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled) || (ConfigController.LootRanking == null))
+            {
+                return loot.OrderBy(i => randomGen.NextDouble());
+            }
+
+            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value);
         }
 
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)

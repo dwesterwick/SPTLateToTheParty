@@ -12,12 +12,20 @@ namespace LateToTheParty.Controllers
     public static class ConfigController
     {
         public static Configuration.ModConfig Config { get; private set; } = null;
+        public static Configuration.LootRankingWeightingConfig LootRanking { get; private set; } = null;
 
         public static Configuration.ModConfig GetConfig()
         {
             string json = RequestHandler.GetJson("/LateToTheParty/GetConfig");
             Config = JsonConvert.DeserializeObject<Configuration.ModConfig>(json);
             return Config;
+        }
+
+        public static Configuration.LootRankingWeightingConfig GetLootRankingData()
+        {
+            string json = RequestHandler.GetJson("/LateToTheParty/GetLootRankingData");
+            LootRanking = JsonConvert.DeserializeObject<Configuration.LootRankingWeightingConfig>(json);
+            return LootRanking;
         }
 
         public static void SetLootMultipliers(double factor)
