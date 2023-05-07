@@ -19,6 +19,7 @@ import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
+import { LocaleService } from "@spt-aki/services/LocaleService";
 
 const modName = "LateToTheParty";
 
@@ -36,6 +37,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
     private vfs: VFS;
+    private localeService: LocaleService;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -45,7 +47,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         const staticRouterModService = container.resolve<StaticRouterModService>("StaticRouterModService");
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
         this.logger = container.resolve<ILogger>("WinstonLogger");
-        this.commonUtils = new CommonUtils(this.logger);
 
         // Game start
         // Needed to initialize bot conversion helper instance and loot ranking generator after any other mods have potentially changed config settings
@@ -84,6 +85,17 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
                     return JSON.stringify(modConfig);
                 }
             }], "GetConfig"
+        );
+
+        // Get lootRanking.json for loot ranking
+        staticRouterModService.registerStaticRouter(`StaticGetLootRankingData${modName}`,
+            [{
+                url: "/LateToTheParty/GetLootRankingData",
+                action: () => 
+                {
+                    return JSON.stringify(this.lootRankingGenerator.getLootRankingDataFromFile());
+                }
+            }], "GetLootRankingData"
         );
 
         // Get an array of all car extract names
@@ -134,11 +146,13 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.configServer = container.resolve<ConfigServer>("ConfigServer");
         this.databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
         this.vfs = container.resolve<VFS>("VFS");
+        this.localeService = container.resolve<LocaleService>("LocaleService");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.databaseTables = this.databaseServer.getTables();
+        this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
 
         this.generateLootRankingData();
 

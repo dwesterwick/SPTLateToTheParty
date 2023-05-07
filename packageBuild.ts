@@ -4,6 +4,8 @@
 const csharpDevFolder = "bepinex_dev";
 const csharpBuildFolder = "Debug";
 
+const lootRankingReaderFolder = "bepinex_dev\\LookRankingDataReader\\bin\\Debug\\net6.0-windows";
+
 // This is a simple script used to build a mod package. The script will copy necessary files to the build directory
 // and compress the build directory into a zip file that can be easily shared.
 
@@ -56,6 +58,7 @@ fs.copySync(__dirname, path.normalize(`${__dirname}/../~${modName}/user/mods/${m
     return !exclude.includes(filePath);
 }});
 fs.copySync(path.normalize(`${__dirname}/${csharpDevFolder}/${packageName}/bin/${csharpBuildFolder}/${packageName}.dll`), path.normalize(`${__dirname}/../~${modName}/BepInEx/plugins/${packageName}.dll`));
+fs.copySync(path.normalize(`${__dirname}/${lootRankingReaderFolder}`), path.normalize(`${__dirname}/../~${modName}/LootRankingReader`));
 fs.moveSync(path.normalize(`${__dirname}/../~${modName}`), path.normalize(`${__dirname}/${modName}`), { overwrite: true });
 fs.copySync(path.normalize(`${__dirname}/${modName}`), path.normalize(`${__dirname}/dist`));
 console.log("Build files copied.");
