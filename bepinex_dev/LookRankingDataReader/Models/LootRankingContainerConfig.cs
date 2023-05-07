@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LookRankingDataReader.Models
 {
-    internal class LootRankingContainer
+    internal class LootRankingContainerConfig
     {
         [JsonProperty("costPerSlot")]
         public double CostPerSlot { get; set; }
@@ -21,10 +21,13 @@ namespace LookRankingDataReader.Models
         [JsonProperty("maxDim")]
         public double MaxDim { get; set; }
 
-        [JsonProperty("items")]
-        public Dictionary<string, LootRankingData> Items { get; set; } = new Dictionary<string, LootRankingData>();
+        [JsonProperty("parents")]
+        public Dictionary<string, LootRankingForParentConfig> Parents { get; set; } = new Dictionary<string, LootRankingForParentConfig>();
 
-        public LootRankingContainer()
+        [JsonProperty("items")]
+        public Dictionary<string, LootRankingDataConfig> Items { get; set; } = new Dictionary<string, LootRankingDataConfig>();
+
+        public LootRankingContainerConfig()
         {
 
         }

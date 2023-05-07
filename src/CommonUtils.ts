@@ -1,6 +1,7 @@
 import modConfig from "../config/config.json";
 import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
+import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import { LocaleService } from "@spt-aki/services/LocaleService";
 
 export class CommonUtils
@@ -39,6 +40,26 @@ export class CommonUtils
         // If a key can't be found in the translations dictionary, fall back to the template data
         const item = this.databaseTables.templates.items[itemID];
         return item._name;
+    }
+
+    /**
+     * Check if @param item is a child of the item with ID @param parentID
+     */
+    public static hasParent(item: ITemplateItem, parentID: string, databaseTables: IDatabaseTables): boolean
+    {
+        const allParents = CommonUtils.getAllParents(item, databaseTables);
+        return allParents.includes(parentID);
+    }
+
+    public static getAllParents(item: ITemplateItem, databaseTables: IDatabaseTables): string[]
+    {
+        if ((item._parent === null) || (item._parent === undefined) || (item._parent == ""))
+            return [];
+		
+        const allParents = CommonUtils.getAllParents(databaseTables.templates.items[item._parent], databaseTables);
+        allParents.push(item._parent);
+		
+        return allParents;
     }
 
     public static interpolateForFirstCol(array: number[][], value: number): number

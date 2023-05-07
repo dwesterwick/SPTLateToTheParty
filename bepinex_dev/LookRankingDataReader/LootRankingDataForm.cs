@@ -6,7 +6,7 @@ namespace LookRankingDataReader
 {
     public partial class LootRankingDataForm : Form
     {
-        private static LootRankingContainer? lootRankingContainer;
+        private static LootRankingContainerConfig? lootRankingContainer;
 
         public LootRankingDataForm()
         {
@@ -18,7 +18,7 @@ namespace LookRankingDataReader
             if (openLootRankingDataDialog.ShowDialog() == DialogResult.OK)
             {
                 string json = File.ReadAllText(openLootRankingDataDialog.FileName);
-                lootRankingContainer = JsonConvert.DeserializeObject<LootRankingContainer>(json);
+                lootRankingContainer = JsonConvert.DeserializeObject<LootRankingContainerConfig>(json);
                 updateLootRankingData();
             }
         }
@@ -49,11 +49,12 @@ namespace LookRankingDataReader
             dt.Columns.Add("Name", typeof(string));
             dt.Columns.Add("Value", typeof(double));
             dt.Columns.Add("Cost Per Slot", typeof(double));
-            dt.Columns.Add("Weight", typeof(string));
-            dt.Columns.Add("Size", typeof(string));
-            dt.Columns.Add("Max Dimension", typeof(string));
+            dt.Columns.Add("Weight", typeof(double));
+            dt.Columns.Add("Size", typeof(double));
+            dt.Columns.Add("Max Dimension", typeof(double));
+            dt.Columns.Add("Parent Weighting", typeof(double));
 
-            foreach (LootRankingData item in lootRankingContainer.Items.Values)
+            foreach (LootRankingDataConfig item in lootRankingContainer.Items.Values)
             {
                 DataRow row = dt.NewRow();
                 row["ID"] = item.ID;
@@ -63,6 +64,7 @@ namespace LookRankingDataReader
                 row["Weight"] = item.Weight;
                 row["Size"] = item.Size;
                 row["Max Dimension"] = item.MaxDim;
+                row["Parent Weighting"] = item.ParentWeighting;
                 dt.Rows.Add(row);
             }
 

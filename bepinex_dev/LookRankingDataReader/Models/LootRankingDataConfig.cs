@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LookRankingDataReader.Models
 {
-    internal class LootRankingData
+    internal class LootRankingDataConfig
     {
         [JsonProperty("id")]
         public string ID { get; set; } = "";
@@ -30,7 +30,10 @@ namespace LookRankingDataReader.Models
         [JsonProperty("maxDim")]
         public double MaxDim { get; set; }
 
-        public LootRankingData()
+        [JsonProperty("parentWeighting")]
+        public double ParentWeighting { get; set; }
+
+        public LootRankingDataConfig()
         {
 
         }
