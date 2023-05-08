@@ -112,7 +112,7 @@ export class LootRankingGenerator
         const size = item._props.Width * item._props.Height;
         const maxDim = Math.max(item._props.Width, item._props.Height);
 
-        let value = (cost / maxDim) * modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot;
+        let value = (cost / size) * modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot;
         value += weight * modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight;
         value += size * modConfig.destroy_loot_during_raid.loot_ranking.weighting.size;
         value += maxDim * modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim;

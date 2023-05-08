@@ -38,57 +38,61 @@
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ],
 		"loot_ranking": {
 			"enabled": true,
-			"randomness": 10,
+			"randomness": 30,
 			"alwaysRegenerate": true,
 			"weighting": {
-				"cost_per_slot": 1,
-				"weight": -1,
-				"size": -5,
-				"max_dim": -5,
+				"cost_per_slot": 0.001,
+				"weight": -0.2,
+				"size": -3,
+				"max_dim": -2,
 				"parents": {
 					"543be6674bdc2df1348b4569":{
 						"name": "FoodDrink",
-						"weighting": 500
+						"weighting": 5
 					},
 					"5422acb9af1c889c16000029": {
 						"name": "Weapon",
-						"weighting": 500
+						"weighting": 5
 					},
 					"5485a8684bdc2da71d8b4567": {
 						"name": "Ammo",
-						"weighting": 5000
+						"weighting": 10
 					},
 					"543be6564bdc2df4348b4568": {
 						"name": "ThrowWeap",
-						"weighting": 2000
+						"weighting": 10
 					},
 					"5447e1d04bdc2dff2f8b4567": {
 						"name": "Knife",
-						"weighting": 1000
+						"weighting": 5
 					},
 					"543be5664bdc2dd4348b4569": {
 						"name": "Meds",
-						"weighting": 1000
+						"weighting": 10
 					},
 					"5448e5284bdc2dcb718b4567": {
 						"name": "Vest",
-						"weighting": 500
+						"weighting": 35
 					},
 					"5448e53e4bdc2d60728b4567": {
 						"name": "Backpack",
-						"weighting": 500
+						"weighting": 50
 					},
 					"5645bcb74bdc2ded0b8b4578": {
 						"name": "Headphones",
-						"weighting": 1000
+						"weighting": 5
 					},
 					"5448e5724bdc2ddf718b4568": {
 						"name": "Visors",
-						"weighting": 1000
+						"weighting": 5
+					},
+					"5a341c4686f77469e155819e": {
+						"name": "FaceCover",
+						"weighting": 5
 					},
 					"5a341c4086f77401f2541505": {
 						"name": "Headwear",
-						"weighting": 1000
+						"weighting": 5
 					}
 				}
 			}
@@ -113,11 +117,12 @@
 		"excluded_bosses": [ "sptBear", "sptUsec" ]
 	},
 	"loot_multipliers": [
-		[0, 0.15],
-		[0.3, 0.2],
+		[0, 0.18],
+		[0.1, 0.2],
+		[0.3, 0.3],
 		[0.5, 0.5],
 		[0.85, 0.8],
-		[0.95, 0.95],
+		[0.95, 0.98],
 		[1, 1]
 	],
 	"vex_chance_reduction": [
