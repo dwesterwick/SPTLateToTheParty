@@ -7,16 +7,26 @@ import { VFS } from "@spt-aki/utils/VFS";
 
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
+// Overall file structure
 export interface LootRankingContainer
 {
     costPerSlot: number,
     weight: number,
-    size: number,
+    netSize: number,
     maxDim: number,
+    armorClass: number,
     parentWeighting: Record<string, LootRankingForParent>,
     items: Record<string, LootRankingData>
 }
 
+// Store the parameters for parent weighting
+export interface LootRankingForParent
+{
+    name: string,
+    weighting: number
+}
+
+// Object for each item
 export interface LootRankingData
 {
     id: string,
@@ -24,15 +34,10 @@ export interface LootRankingData
     value: number,
     costPerSlot: number,
     weight: number,
-    size: number,
+    netSize: number,
     maxDim: number,
+    armorClass: number,
     parentWeighting: number
-}
-
-export interface LootRankingForParent
-{
-    name: string,
-    weighting: number
 }
 
 export class LootRankingGenerator
@@ -62,6 +67,7 @@ export class LootRankingGenerator
 
         this.commonUtils.logInfo("Creating loot ranking data...");
 
+        // Create ranking data for each item found in the server database
         const items: Record<string, LootRankingData> = {};
         for (const itemID in this.databaseTables.templates.items)
         {
@@ -78,11 +84,13 @@ export class LootRankingGenerator
             items[this.databaseTables.templates.items[itemID]._id] = this.generateLookRankingForItem(this.databaseTables.templates.items[itemID]);
         }
 
+        // Generate the file contents
         const rankingData: LootRankingContainer = {
             costPerSlot: modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot,
             weight: modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight,
-            size: modConfig.destroy_loot_during_raid.loot_ranking.weighting.size,
+            netSize: modConfig.destroy_loot_during_raid.loot_ranking.weighting.net_size,
             maxDim: modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim,
+            armorClass: modConfig.destroy_loot_during_raid.loot_ranking.weighting.armor_class,
             parentWeighting: modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents,
             items: items
         };
@@ -94,6 +102,7 @@ export class LootRankingGenerator
 
     private generateLookRankingForItem(item: ITemplateItem): LootRankingData
     {
+        // Get the handbook.json price, if any exists
         const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((item) => item.Id == item.Id);
         let handbookPrice = 0;
         if (matchingHandbookItems.length == 1)
@@ -101,22 +110,41 @@ export class LootRankingGenerator
             handbookPrice = matchingHandbookItems[0].Price;
         }
 
+        // Get the prices.json price, if any exists
         let price = 0;
         if (item._id in this.databaseTables.templates.prices)
         {
             price = this.databaseTables.templates.prices[item._id];
         }
         
+        // Get required item properties from the server database
         const cost = Math.max(handbookPrice, price);
         const weight = item._props.Weight;
         const size = item._props.Width * item._props.Height;
         const maxDim = Math.max(item._props.Width, item._props.Height);
 
+        // Check if the item has a grid in which other items can be placed (i.e. a backpack)
+        let gridSize = 0;
+        if ((item._props.Grids !== undefined) && (item._props.Grids.length > 0))
+        {
+            gridSize = item._props.Grids[0]._props.cellsH * item._props.Grids[0]._props.cellsV;
+        }
+        const netSize =  gridSize - size;
+
+        let armorClass = 0;
+        if (item._props.armorClass !== undefined)
+        {
+            armorClass = Number(item._props.armorClass);
+        }
+
+        // Generate the loot-ranking value based on the item properties and weighting in config.json
         let value = (cost / size) * modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot;
         value += weight * modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight;
-        value += size * modConfig.destroy_loot_during_raid.loot_ranking.weighting.size;
+        value += netSize * modConfig.destroy_loot_during_raid.loot_ranking.weighting.net_size;
         value += maxDim * modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim;
+        value += armorClass * modConfig.destroy_loot_during_raid.loot_ranking.weighting.armor_class;
 
+        // Determine how much additional weighting to apply if the item is a parent of any defined in config.json
         let parentWeighting = 0;
         for (const parentID in modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents)
         {
@@ -127,14 +155,16 @@ export class LootRankingGenerator
         }
         value += parentWeighting;
 
+        // Create the object to store in lootRanking.json 
         const data: LootRankingData = {
             id: item._id,
             name: this.commonUtils.getItemName(item._id),
             value: value,
             costPerSlot: cost / size,
             weight: weight,
-            size: size,
+            netSize: netSize,
             maxDim: maxDim,
+            armorClass: armorClass,
             parentWeighting: parentWeighting
         }
 
@@ -156,8 +186,10 @@ export class LootRankingGenerator
             return false;
         }
 
+        // Get the current file data
         const rankingData: LootRankingContainer = this.getLootRankingDataFromFile();
 
+        // Check if the parent weighting in config.json matches the file data
         let parentParametersMatch = true;
         for (const parentID in modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents)
         {
@@ -174,11 +206,13 @@ export class LootRankingGenerator
             }
         }
 
+        // Check if the general weighting parameters in config.json match the file data
         if (
             rankingData.costPerSlot != modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot ||
             rankingData.maxDim != modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim ||
-            rankingData.size != modConfig.destroy_loot_during_raid.loot_ranking.weighting.size ||
+            rankingData.netSize != modConfig.destroy_loot_during_raid.loot_ranking.weighting.net_size ||
             rankingData.weight != modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight ||
+            rankingData.armorClass != modConfig.destroy_loot_during_raid.loot_ranking.weighting.armor_class ||
             !parentParametersMatch
         )
         {

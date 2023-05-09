@@ -50,8 +50,9 @@ namespace LookRankingDataReader
             dt.Columns.Add("Value", typeof(double));
             dt.Columns.Add("Cost Per Slot", typeof(double));
             dt.Columns.Add("Weight", typeof(double));
-            dt.Columns.Add("Size", typeof(double));
+            dt.Columns.Add("Net Size", typeof(double));
             dt.Columns.Add("Max Dimension", typeof(double));
+            dt.Columns.Add("Armor Class", typeof(double));
             dt.Columns.Add("Parent Weighting", typeof(double));
 
             foreach (LootRankingDataConfig item in lootRankingContainer.Items.Values)
@@ -62,8 +63,9 @@ namespace LookRankingDataReader
                 row["Value"] = item.Value;
                 row["Cost Per Slot"] = item.CostPerSlot;
                 row["Weight"] = item.Weight;
-                row["Size"] = item.Size;
+                row["Net Size"] = item.NetSize;
                 row["Max Dimension"] = item.MaxDim;
+                row["Armor Class"] = item.ArmorClass;
                 row["Parent Weighting"] = item.ParentWeighting;
                 dt.Rows.Add(row);
             }

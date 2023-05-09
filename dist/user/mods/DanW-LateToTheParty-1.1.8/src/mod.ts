@@ -7,6 +7,7 @@ import { LootRankingGenerator } from "./LootRankingGenerator";
 import { DependencyContainer } from "tsyringe";
 import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
 import type { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
+import type { IPostAkiLoadMod } from "@spt-aki/models/external/IPostAkiLoadMod";
 import type {StaticRouterModService} from "@spt-aki/services/mod/staticRouter/StaticRouterModService";
 import type {DynamicRouterModService} from "@spt-aki/services/mod/dynamicRouter/DynamicRouterModService";
 
@@ -56,7 +57,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
                     this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
-                    
+
+                    // This is done before the server is done loading in debug mode
+                    if (!modConfig.debug)
+                        this.generateLootRankingData();
 
                     return output;
                 }
@@ -154,14 +158,19 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
 
-        this.generateLootRankingData();
-
-        // Store the original static and loose loot multipliers
-        this.getLootMultipliers();
-
         // Make the Scav cooldown timer very short for debugging
         if (modConfig.debug)
             this.databaseTables.globals.config.SavagePlayCooldown = 1;
+    }
+
+    public postAkiLoad(): void
+    {
+        // Store the original static and loose loot multipliers
+        this.getLootMultipliers();
+
+        // In debug mode, generate loot ranking data before the server is done loading to make testing easier
+        if (modConfig.debug)
+            this.generateLootRankingData();
     }
 
     private getLootMultipliers(): void
@@ -249,7 +258,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     private generateLootRankingData(): void
     {
         this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs);
-
         this.lootRankingGenerator.generateLootRankingData();
     }
 }

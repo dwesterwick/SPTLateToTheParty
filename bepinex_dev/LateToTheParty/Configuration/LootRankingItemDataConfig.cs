@@ -24,8 +24,11 @@ namespace LateToTheParty.Configuration
         [JsonProperty("weight")]
         public double Weight { get; set; }
 
-        [JsonProperty("size")]
-        public double Size { get; set; }
+        [JsonProperty("netSize")]
+        public double NetSize { get; set; }
+
+        [JsonProperty("armorClass")]
+        public double ArmorClass { get; set; }
 
         [JsonProperty("maxDim")]
         public double MaxDim { get; set; }

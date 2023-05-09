@@ -15,11 +15,14 @@ namespace LookRankingDataReader.Models
         [JsonProperty("weight")]
         public double Weight { get; set; }
 
-        [JsonProperty("size")]
-        public double Size { get; set; }
+        [JsonProperty("netSize")]
+        public double NetSize { get; set; }
 
         [JsonProperty("maxDim")]
         public double MaxDim { get; set; }
+
+        [JsonProperty("armorClass")]
+        public double ArmorClass { get; set; }
 
         [JsonProperty("parents")]
         public Dictionary<string, LootRankingForParentConfig> Parents { get; set; } = new Dictionary<string, LootRankingForParentConfig>();
