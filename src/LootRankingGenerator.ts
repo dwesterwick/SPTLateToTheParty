@@ -4,6 +4,8 @@ import { CommonUtils } from "./CommonUtils";
 
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
+import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
@@ -119,9 +121,25 @@ export class LootRankingGenerator
         
         // Get required item properties from the server database
         const cost = Math.max(handbookPrice, price);
-        const weight = item._props.Weight;
-        const size = item._props.Width * item._props.Height;
-        const maxDim = Math.max(item._props.Width, item._props.Height);
+        let weight = item._props.Weight;
+        let size = item._props.Width * item._props.Height;
+        let maxDim = Math.max(item._props.Width, item._props.Height);
+
+        // If the item is a weapon, find the most desirable properties for a fully assembled version of it in trader assorts
+        if (item._props.weapClass !== undefined)
+        {
+            const bestWeaponMatch = this.findBestWeaponMatch(item._id);
+            if (bestWeaponMatch !== undefined)
+            {
+                weight = bestWeaponMatch.weight;
+                size = bestWeaponMatch.netSize;
+                maxDim = bestWeaponMatch.maxDim;
+            }
+            else
+            {
+                this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
+            }
+        }
 
         // Check if the item has a grid in which other items can be placed (i.e. a backpack)
         let gridSize = 0;
@@ -172,6 +190,99 @@ export class LootRankingGenerator
         }
 
         return data;
+    }
+
+    private findBestWeaponMatch(itemID: string): LootRankingData
+    {
+        const bestMatch: LootRankingData = {
+            id: "",
+            name: "",
+            value: 0,
+            costPerSlot: 0,
+            weight: 0,
+            netSize: 0,
+            maxDim: 0,
+            armorClass: 0,
+            parentWeighting: 0
+        }
+
+        let width = 0;
+        let height = 0;
+        let weight = 0;
+        for (const traderID in this.databaseTables.traders)
+        {
+            const assort = this.databaseTables.traders[traderID].assort;
+
+            // Ignore traders who don't sell anything (i.e. Lightkeeper)
+            if ((assort === null) || (assort === undefined))
+                continue;
+
+            //this.commonUtils.logInfo(`Searching ${this.databaseTables.traders[traderID].base.nickname}...`);
+            for (const assortID in assort.items)
+            {
+                if (assort.items[assortID]._tpl == itemID)
+                {
+                    width = this.databaseTables.templates.items[itemID]._props.Width;
+                    height = this.databaseTables.templates.items[itemID]._props.Height;
+                    weight = this.databaseTables.templates.items[itemID]._props.Weight;
+                    
+                    const matchingSlots = this.findChildSlotIndexesInTraderAssort(assort, assortID);
+                    //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...Matching slots: ${matchingSlots.join(",")}`);
+
+                    if (matchingSlots.length == 0)
+                    {
+                        continue;
+                    }
+
+                    //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...`);
+
+                    for (const matchingSlot in matchingSlots)
+                    {
+                        const templateID = assort.items[matchingSlots[matchingSlot]]._tpl;
+                        width += this.databaseTables.templates.items[templateID]._props.ExtraSizeLeft ?? 0;
+                        width += this.databaseTables.templates.items[templateID]._props.ExtraSizeRight ?? 0;
+                        height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
+                        height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
+                        weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
+                        //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+                    }
+
+                    if (width * height < bestMatch.netSize)
+                    {
+                        continue;
+                    }
+
+                    bestMatch.netSize = width * height;
+                    bestMatch.maxDim = Math.max(width, height);
+                    bestMatch.weight = weight;
+                }
+            }
+        }
+
+        if (bestMatch.netSize == 0)
+        {
+            return undefined;
+        }
+
+        this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...Size=${bestMatch.netSize},MaxDim=${bestMatch.maxDim},Weight=${bestMatch.weight}`);
+        return bestMatch;
+    }
+
+    private findChildSlotIndexesInTraderAssort(assort: ITraderAssort, parentIndex: number | string): string[]
+    {
+        let matchingSlots: string[] = [];
+
+        const parentID = assort.items[parentIndex]._id;
+        for (const assortID in assort.items)
+        {
+            if (assort.items[assortID].parentId == parentID)
+            {
+                matchingSlots.push(assortID);
+                matchingSlots = matchingSlots.concat(this.findChildSlotIndexesInTraderAssort(assort, assortID));
+            }
+        }
+
+        return matchingSlots;
     }
 
     private validLootRankingDataExists(): boolean
