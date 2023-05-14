@@ -1,11 +1,14 @@
-import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
+import { ITemplateItem, Slot } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
-import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
+import { EquipmentSlots } from "@spt-aki/models/enums/EquipmentSlots";
+import { Item, Upd } from "@spt-aki/models/eft/common/tables/IItem";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
+import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponResult";
 
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
@@ -44,7 +47,7 @@ export interface LootRankingData
 
 export class LootRankingGenerator
 {
-    constructor(private commonUtils: CommonUtils, private databaseTables: IDatabaseTables, private vfs: VFS)
+    constructor(private commonUtils: CommonUtils, private databaseTables: IDatabaseTables, private vfs: VFS, private botWeaponGenerator: BotWeaponGenerator)
     { }
 
     public getLootRankingDataFromFile(): LootRankingContainer
@@ -53,7 +56,7 @@ export class LootRankingGenerator
         return JSON.parse(rankingDataStr);
     }
 
-    public generateLootRankingData(): void
+    public generateLootRankingData(sessionId: string): void
     {
         if (!modConfig.destroy_loot_during_raid.loot_ranking)
         {
@@ -83,7 +86,7 @@ export class LootRankingGenerator
                 continue;
             }
 
-            items[this.databaseTables.templates.items[itemID]._id] = this.generateLookRankingForItem(this.databaseTables.templates.items[itemID]);
+            items[this.databaseTables.templates.items[itemID]._id] = this.generateLookRankingForItem(this.databaseTables.templates.items[itemID], sessionId);
         }
 
         // Generate the file contents
@@ -102,7 +105,7 @@ export class LootRankingGenerator
         this.commonUtils.logInfo("Creating loot ranking data...done.");
     }
 
-    private generateLookRankingForItem(item: ITemplateItem): LootRankingData
+    private generateLookRankingForItem(item: ITemplateItem, sessionId: string): LootRankingData
     {
         // Get the handbook.json price, if any exists
         const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((item) => item.Id == item.Id);
@@ -128,16 +131,21 @@ export class LootRankingGenerator
         // If the item is a weapon, find the most desirable properties for a fully assembled version of it in trader assorts
         if (item._props.weapClass !== undefined)
         {
-            const bestWeaponMatch = this.findBestWeaponMatch(item._id);
-            if (bestWeaponMatch !== undefined)
+            let bestWeaponMatch = this.findBestWeaponMatchfromTraders(item._id);
+            if (bestWeaponMatch === undefined)
+            {
+                this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
+                bestWeaponMatch = this.generateRandonWeapon(item, sessionId);
+            }
+            if (bestWeaponMatch === undefined)
+            {
+                this.commonUtils.logError(`Could generate random weapon for ${this.commonUtils.getItemName(item._id)}`);
+            }
+            else
             {
                 weight = bestWeaponMatch.weight;
                 size = bestWeaponMatch.netSize;
                 maxDim = bestWeaponMatch.maxDim;
-            }
-            else
-            {
-                this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
             }
         }
 
@@ -192,7 +200,79 @@ export class LootRankingGenerator
         return data;
     }
 
-    private findBestWeaponMatch(itemID: string): LootRankingData
+    private generateRandonWeapon(item: ITemplateItem, sessionId: string): LootRankingData
+    {
+        const randomWeaponProperties: LootRankingData = {
+            id: "",
+            name: "",
+            value: 0,
+            costPerSlot: 0,
+            weight: 0,
+            netSize: 0,
+            maxDim: 0,
+            armorClass: 0,
+            parentWeighting: 0
+        }
+
+        const possibleSlots: string[] = [
+            EquipmentSlots.FIRST_PRIMARY_WEAPON,
+            EquipmentSlots.SECOND_PRIMARY_WEAPON,
+            EquipmentSlots.HOLSTER
+        ];
+        
+        const botType = "assault";
+        let randomWeapon: GenerateWeaponResult;
+        for (const possibleSlot in possibleSlots)
+        {
+            randomWeapon = this.botWeaponGenerator.generateWeaponByTpl(sessionId, item._id, possibleSlots[possibleSlot], this.databaseTables.bots.types[botType].inventory, item._parent, this.databaseTables.bots.types[botType].chances.mods, botType, false, 1);
+            if ((randomWeapon.weapon !== undefined) && (randomWeapon.weapon.length > 0))
+            {
+                break;
+            }
+        }
+
+        let width = item._props.Width;
+        let height = item._props.Height;
+        let weight = item._props.Weight;
+        this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(item._id)}... => Width=${width},Height=${height},Weight=${weight}`);
+        for (const weaponPart in randomWeapon.weapon)
+        {
+            const templateID = randomWeapon.weapon[weaponPart]._tpl;
+            const slotID = randomWeapon.weapon[weaponPart].slotId;
+
+            if (item._id == templateID)
+            {
+                continue;
+            }
+
+            weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
+
+            if (item._props.FoldedSlot !== undefined)
+            {
+                if (item._props.FoldedSlot == slotID)
+                {
+                    this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(item._id)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+                    continue;
+                }
+            }
+
+            width += this.databaseTables.templates.items[templateID]._props.ExtraSizeLeft ?? 0;
+            width += this.databaseTables.templates.items[templateID]._props.ExtraSizeRight ?? 0;
+            height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
+            height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
+
+            this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(item._id)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+        }
+
+        randomWeaponProperties.netSize = width * height;
+        randomWeaponProperties.maxDim = Math.max(width, height);
+        randomWeaponProperties.weight = weight;
+
+        this.commonUtils.logInfo(`Generated random weapon ${this.commonUtils.getItemName(item._id)}...Size=${randomWeaponProperties.netSize},MaxDim=${randomWeaponProperties.maxDim},Weight=${randomWeaponProperties.weight}`);
+        return randomWeaponProperties;
+    }
+
+    private findBestWeaponMatchfromTraders(itemID: string): LootRankingData
     {
         const bestMatch: LootRankingData = {
             id: "",
@@ -227,23 +307,33 @@ export class LootRankingGenerator
                     weight = this.databaseTables.templates.items[itemID]._props.Weight;
                     
                     const matchingSlots = this.findChildSlotIndexesInTraderAssort(assort, assortID);
-                    //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...Matching slots: ${matchingSlots.join(",")}`);
 
                     if (matchingSlots.length == 0)
                     {
                         continue;
                     }
 
-                    //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...`);
-
                     for (const matchingSlot in matchingSlots)
                     {
                         const templateID = assort.items[matchingSlots[matchingSlot]]._tpl;
+                        const slotID = assort.items[matchingSlots[matchingSlot]].slotId;
+
+                        weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
+
+                        if (this.databaseTables.templates.items[itemID]._props.FoldedSlot !== undefined)
+                        {
+                            if (this.databaseTables.templates.items[itemID]._props.FoldedSlot == slotID)
+                            {
+                                //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+                                continue;
+                            }
+                        }
+
                         width += this.databaseTables.templates.items[templateID]._props.ExtraSizeLeft ?? 0;
                         width += this.databaseTables.templates.items[templateID]._props.ExtraSizeRight ?? 0;
                         height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
                         height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
-                        weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
+
                         //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
                     }
 

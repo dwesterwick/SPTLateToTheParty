@@ -21,6 +21,7 @@ import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
 import { LocaleService } from "@spt-aki/services/LocaleService";
+import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 
 const modName = "LateToTheParty";
 
@@ -39,6 +40,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     private databaseTables: IDatabaseTables;
     private vfs: VFS;
     private localeService: LocaleService;
+    private botWeaponGenerator: BotWeaponGenerator;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -57,10 +59,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
                     this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
-
-                    // This is done before the server is done loading in debug mode
-                    if (!modConfig.debug)
-                        this.generateLootRankingData();
+                    this.generateLootRankingData(sessionId);
 
                     return output;
                 }
@@ -151,6 +150,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
         this.vfs = container.resolve<VFS>("VFS");
         this.localeService = container.resolve<LocaleService>("LocaleService");
+        this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -167,10 +167,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
     {
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
-
-        // In debug mode, generate loot ranking data before the server is done loading to make testing easier
-        if (modConfig.debug)
-            this.generateLootRankingData();
     }
 
     private getLootMultipliers(): void
@@ -255,10 +251,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
         this.locationConfig.staticLootMultiplier.woods = this.originalStaticLootMultipliers.woods * factor;
     }
 
-    private generateLootRankingData(): void
+    private generateLootRankingData(sessionId: string): void
     {
-        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs);
-        this.lootRankingGenerator.generateLootRankingData();
+        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs, this.botWeaponGenerator);
+        this.lootRankingGenerator.generateLootRankingData(sessionId);
     }
 }
 module.exports = {mod: new LateToTheParty()}

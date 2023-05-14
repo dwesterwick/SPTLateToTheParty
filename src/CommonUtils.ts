@@ -37,7 +37,12 @@ export class CommonUtils
         if (translationKey in this.translations)
             return this.translations[translationKey];
 		
-        // If a key can't be found in the translations dictionary, fall back to the template data
+        // If a key can't be found in the translations dictionary, fall back to the template data if possible
+        if (!(itemID in this.databaseTables.templates.items))
+        {
+            return undefined;
+        }
+
         const item = this.databaseTables.templates.items[itemID];
         return item._name;
     }
