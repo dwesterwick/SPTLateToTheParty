@@ -10,7 +10,7 @@ import { Item } from "@spt-aki/models/eft/common/tables/IItem";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponResult";
 
-const verboseLogging = true;
+const verboseLogging = false;
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
 // Overall file structure
@@ -141,7 +141,7 @@ export class LootRankingGenerator
             // If the weapon isn't offered by any traders, generate a random version of it
             if (bestWeaponMatch.length == 0)
             {
-                //this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
+                if (verboseLogging) this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
                 bestWeaponMatch = this.generateRandomWeapon(item, sessionId);
             }
 
@@ -293,7 +293,7 @@ export class LootRankingGenerator
             if ((assort === null) || (assort === undefined))
                 continue;
 
-            //this.commonUtils.logInfo(`Searching ${this.databaseTables.traders[traderID].base.nickname}...`);
+            //if (verboseLogging) this.commonUtils.logInfo(`Searching ${this.databaseTables.traders[traderID].base.nickname}...`);
             for (const assortID in assort.items)
             {
                 const weaponCandidate: Item[] = [];
@@ -346,7 +346,7 @@ export class LootRankingGenerator
         let width = baseWeaponItem._props.Width;
         let height = baseWeaponItem._props.Height;
         let weight = baseWeaponItem._props.Weight;
-        if (verboseLogging) this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}... => Width=${width},Height=${height},Weight=${weight}`);
+        //if (verboseLogging) this.commonUtils.logInfo(`Getting properties for ${this.commonUtils.getItemName(baseWeaponItem._id)}... Base: Width=${width},Height=${height},Weight=${weight}`);
         for (const weaponPart in weaponParts)
         {
             const templateID = weaponParts[weaponPart]._tpl;
@@ -364,7 +364,7 @@ export class LootRankingGenerator
             {
                 if (baseWeaponItem._props.FoldedSlot == slotID)
                 {
-                    if (verboseLogging) this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+                    //if (verboseLogging) this.commonUtils.logInfo(`Getting properties for ${this.commonUtils.getItemName(baseWeaponItem._id)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
                     continue;
                 }
             }
@@ -374,10 +374,10 @@ export class LootRankingGenerator
             height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
             height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
 
-            if (verboseLogging) this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+            //if (verboseLogging) this.commonUtils.logInfo(`Getting properties for ${this.commonUtils.getItemName(baseWeaponItem._id)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
         }
 
-        if (verboseLogging) this.commonUtils.logInfo(`Generated random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}: Width=${width},Height=${height},Weight=${weight}`);
+        if (verboseLogging) this.commonUtils.logInfo(`Getting properties for ${this.commonUtils.getItemName(baseWeaponItem._id)}... Final: Width=${width},Height=${height},Weight=${weight}`);
         return [width, height, weight];
     }
 
