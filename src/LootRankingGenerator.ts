@@ -1,4 +1,3 @@
-import { ITemplateItem, Slot } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
@@ -6,10 +5,12 @@ import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { EquipmentSlots } from "@spt-aki/models/enums/EquipmentSlots";
-import { Item, Upd } from "@spt-aki/models/eft/common/tables/IItem";
+import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
+import { Item } from "@spt-aki/models/eft/common/tables/IItem";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponResult";
 
+const verboseLogging = true;
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
 // Overall file structure
@@ -131,24 +132,32 @@ export class LootRankingGenerator
         let size = item._props.Width * item._props.Height;
         let maxDim = Math.max(item._props.Width, item._props.Height);
 
-        // If the item is a weapon, find the most desirable properties for a fully assembled version of it in trader assorts
+        // If the item is a weapon, find a suitable assembled version of it
         if (item._props.weapClass !== undefined)
         {
-            let bestWeaponMatch = this.findBestWeaponMatchfromTraders(item._id);
-            if (bestWeaponMatch === undefined)
+            // First try to find the most desirable weapon from the traders
+            let bestWeaponMatch: Item[] = this.findBestWeaponMatchfromTraders(item);
+
+            // If the weapon isn't offered by any traders, generate a random version of it
+            if (bestWeaponMatch.length == 0)
             {
                 //this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
-                bestWeaponMatch = this.generateRandonWeapon(item, sessionId);
+                bestWeaponMatch = this.generateRandomWeapon(item, sessionId);
             }
-            if (bestWeaponMatch === undefined)
+
+            // Ensure a weapon has been generated
+            if (bestWeaponMatch.length == 0)
             {
-                this.commonUtils.logError(`Could not generate random weapon for ${this.commonUtils.getItemName(item._id)}`);
+                this.commonUtils.logError(`Could not generate a weapon for ${this.commonUtils.getItemName(item._id)}`);
             }
             else
             {
-                weight = bestWeaponMatch.weight;
-                size = bestWeaponMatch.size;
-                maxDim = bestWeaponMatch.maxDim;
+                const [weaponWidth, weaponHeight, weaponWeight]: number[] = this.getWeaponProperties(item, bestWeaponMatch);
+                if (verboseLogging) this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(item._id)}: Width=${weaponWidth},Height=${weaponHeight},Weight=${weaponWeight}`);
+
+                weight = weaponWeight;
+                size = weaponWidth * weaponHeight;
+                maxDim = Math.max(weaponWidth, weaponHeight);
             }
         }
 
@@ -162,18 +171,20 @@ export class LootRankingGenerator
             }
         }
 
+        // Get the armor class for the item if applicable
         let armorClass = 0;
         if (item._props.armorClass !== undefined)
         {
             armorClass = Number(item._props.armorClass);
         }
 
+        // Calculate the cost per slot
+        // If the item can be equipped (backpacks, weapons, etc.), use the inventory slot size (1) instead of the item's total size
         let costPerSlot = cost;
         if (!this.canEquipItem(item))
         {
             costPerSlot /= size;
         }
-        //this.commonUtils.logInfo(`Item ${this.commonUtils.getItemName(item._id)}: Cost = ${cost}, Cost per Slot = ${costPerSlot}`);
 
         // Generate the loot-ranking value based on the item properties and weighting in config.json
         let value = costPerSlot * modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot;
@@ -211,97 +222,69 @@ export class LootRankingGenerator
         return data;
     }
 
-    private generateRandonWeapon(item: ITemplateItem, sessionId: string): LootRankingData
+    private generateRandomWeapon(item: ITemplateItem, sessionId: string): Item[]
     {
-        const randomWeaponProperties: LootRankingData = {
-            id: "",
-            name: "",
-            value: 0,
-            costPerSlot: 0,
-            weight: 0,
-            size: 0,
-            gridSize: 0,
-            maxDim: 0,
-            armorClass: 0,
-            parentWeighting: 0
-        }
-
+        const iterations = 5;
+        const botType = "assault";
         const possibleSlots: string[] = [
             EquipmentSlots.FIRST_PRIMARY_WEAPON,
             EquipmentSlots.SECOND_PRIMARY_WEAPON,
             EquipmentSlots.HOLSTER
         ];
         
-        const botType = "assault";
+        let weapon: Item[] = [];
         let randomWeapon: GenerateWeaponResult;
         for (const possibleSlot in possibleSlots)
         {
-            randomWeapon = this.botWeaponGenerator.generateWeaponByTpl(sessionId, item._id, possibleSlots[possibleSlot], this.databaseTables.bots.types[botType].inventory, item._parent, this.databaseTables.bots.types[botType].chances.mods, botType, false, 1);
-            if ((randomWeapon.weapon !== undefined) && (randomWeapon.weapon.length > 0))
+            for (let iteration = 0; iteration < iterations; iteration++)
+            {
+                randomWeapon = this.botWeaponGenerator.generateWeaponByTpl(
+                    sessionId,
+                    item._id,
+                    possibleSlots[possibleSlot],
+                    this.databaseTables.bots.types[botType].inventory,
+                    item._parent,
+                    this.databaseTables.bots.types[botType].chances.mods,
+                    botType,
+                    false,
+                    1
+                );
+                
+                // If the random weapon is invalid, don't bother running more iterations; the weapon slot is wrong
+                if ((randomWeapon.weapon === undefined) && (randomWeapon.weapon.length == 0))
+                {
+                    break;
+                }
+
+                // Store the initial weapon selection
+                if (weapon.length == 0)
+                {
+                    weapon = randomWeapon.weapon;
+                    continue;
+                }
+
+                // Determine if the weapon is better than the previous one found
+                if (this.weaponBaseValue(item, randomWeapon.weapon) > this.weaponBaseValue(item, weapon))
+                {
+                    weapon = randomWeapon.weapon;
+                }
+            }
+
+            // Check if a valid weapon was generated
+            if (weapon.length > 0)
             {
                 break;
             }
         }
 
-        let width = item._props.Width;
-        let height = item._props.Height;
-        let weight = item._props.Weight;
-        //this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(item._id)}... => Width=${width},Height=${height},Weight=${weight}`);
-        for (const weaponPart in randomWeapon.weapon)
-        {
-            const templateID = randomWeapon.weapon[weaponPart]._tpl;
-            const slotID = randomWeapon.weapon[weaponPart].slotId;
-
-            if (item._id == templateID)
-            {
-                continue;
-            }
-
-            weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
-
-            if (item._props.FoldedSlot !== undefined)
-            {
-                if (item._props.FoldedSlot == slotID)
-                {
-                    //this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(item._id)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
-                    continue;
-                }
-            }
-
-            width += this.databaseTables.templates.items[templateID]._props.ExtraSizeLeft ?? 0;
-            width += this.databaseTables.templates.items[templateID]._props.ExtraSizeRight ?? 0;
-            height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
-            height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
-
-            //this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(item._id)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
-        }
-
-        randomWeaponProperties.size = width * height;
-        randomWeaponProperties.maxDim = Math.max(width, height);
-        randomWeaponProperties.weight = weight;
-
-        //this.commonUtils.logInfo(`Generated random weapon ${this.commonUtils.getItemName(item._id)}...Size=${randomWeaponProperties.size},MaxDim=${randomWeaponProperties.maxDim},Weight=${randomWeaponProperties.weight}`);
-        return randomWeaponProperties;
+        return weapon;
     }
 
-    private findBestWeaponMatchfromTraders(itemID: string): LootRankingData
+    private findBestWeaponMatchfromTraders(item: ITemplateItem): Item[]
     {
-        const bestMatch: LootRankingData = {
-            id: "",
-            name: "",
-            value: 0,
-            costPerSlot: 0,
-            weight: 0,
-            size: 0,
-            gridSize: 0,
-            maxDim: 0,
-            armorClass: 0,
-            parentWeighting: 0
-        }
+        let weapon: Item[] = [];
 
-        let width = 0;
-        let height = 0;
-        let weight = 0;
+        // Search all traders to see if they sell the weapon
         for (const traderID in this.databaseTables.traders)
         {
             const assort = this.databaseTables.traders[traderID].assort;
@@ -313,62 +296,89 @@ export class LootRankingGenerator
             //this.commonUtils.logInfo(`Searching ${this.databaseTables.traders[traderID].base.nickname}...`);
             for (const assortID in assort.items)
             {
-                if (assort.items[assortID]._tpl == itemID)
+                const weaponCandidate: Item[] = [];
+                if (assort.items[assortID]._tpl == item._id)
                 {
-                    width = this.databaseTables.templates.items[itemID]._props.Width;
-                    height = this.databaseTables.templates.items[itemID]._props.Height;
-                    weight = this.databaseTables.templates.items[itemID]._props.Weight;
-                    
+                    // Get all parts attached to the weapon
                     const matchingSlots = this.findChildSlotIndexesInTraderAssort(assort, assortID);
-
-                    if (matchingSlots.length == 0)
-                    {
-                        continue;
-                    }
-
                     for (const matchingSlot in matchingSlots)
                     {
-                        const templateID = assort.items[matchingSlots[matchingSlot]]._tpl;
-                        const slotID = assort.items[matchingSlots[matchingSlot]].slotId;
-
-                        weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
-
-                        if (this.databaseTables.templates.items[itemID]._props.FoldedSlot !== undefined)
-                        {
-                            if (this.databaseTables.templates.items[itemID]._props.FoldedSlot == slotID)
-                            {
-                                //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
-                                continue;
-                            }
-                        }
-
-                        width += this.databaseTables.templates.items[templateID]._props.ExtraSizeLeft ?? 0;
-                        width += this.databaseTables.templates.items[templateID]._props.ExtraSizeRight ?? 0;
-                        height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
-                        height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
-
-                        //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+                        weaponCandidate.push(assort.items[matchingSlots[matchingSlot]]);
                     }
 
-                    if (width * height < bestMatch.size)
+                    // Store the initial weapon selection
+                    if (weapon.length == 0)
                     {
+                        weapon = weaponCandidate;
                         continue;
                     }
 
-                    bestMatch.size = width * height;
-                    bestMatch.maxDim = Math.max(width, height);
-                    bestMatch.weight = weight;
+                    // Determine if the weapon is better than the previous one found
+                    if (this.weaponBaseValue(item, weaponCandidate) > this.weaponBaseValue(item, weapon))
+                    {
+                        weapon = weaponCandidate;
+                    }
                 }
             }
         }
 
-        if (bestMatch.size == 0)
+        return weapon;
+    }
+
+    private weaponBaseValue(baseWeaponItem: ITemplateItem, weaponParts: Item[]): number
+    {
+        const [width, height, weight]: number[] = this.getWeaponProperties(baseWeaponItem, weaponParts);
+
+        let value = weight * modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight;
+        value += width * height * modConfig.destroy_loot_during_raid.loot_ranking.weighting.size;
+
+        return value;
+    }
+
+    /**
+     * Gets relevant weapon properties
+     * @param baseWeaponItem The base weapon template (namely the receiver)
+     * @param weaponParts All parts attached to the weapon (which may include the base weapon item itself)
+     * @returns [length, width, weight] of the assembled weapon
+     */
+    private getWeaponProperties(baseWeaponItem: ITemplateItem, weaponParts: Item[]): [number, number, number]
+    {
+        let width = baseWeaponItem._props.Width;
+        let height = baseWeaponItem._props.Height;
+        let weight = baseWeaponItem._props.Weight;
+        if (verboseLogging) this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}... => Width=${width},Height=${height},Weight=${weight}`);
+        for (const weaponPart in weaponParts)
         {
-            return undefined;
+            const templateID = weaponParts[weaponPart]._tpl;
+            const slotID = weaponParts[weaponPart].slotId;
+
+            if (baseWeaponItem._id == templateID)
+            {
+                continue;
+            }
+
+            weight += this.databaseTables.templates.items[templateID]._props.Weight ?? 0;
+
+            // Fold the weapon if possible
+            if (baseWeaponItem._props.FoldedSlot !== undefined)
+            {
+                if (baseWeaponItem._props.FoldedSlot == slotID)
+                {
+                    if (verboseLogging) this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
+                    continue;
+                }
+            }
+
+            width += this.databaseTables.templates.items[templateID]._props.ExtraSizeLeft ?? 0;
+            width += this.databaseTables.templates.items[templateID]._props.ExtraSizeRight ?? 0;
+            height += this.databaseTables.templates.items[templateID]._props.ExtraSizeUp ?? 0;
+            height += this.databaseTables.templates.items[templateID]._props.ExtraSizeDown ?? 0;
+
+            if (verboseLogging) this.commonUtils.logInfo(`Generating random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}...found ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
         }
 
-        //this.commonUtils.logInfo(`Found weapon ${this.commonUtils.getItemName(itemID)}...Size=${bestMatch.size},MaxDim=${bestMatch.maxDim},Weight=${bestMatch.weight}`);
-        return bestMatch;
+        if (verboseLogging) this.commonUtils.logInfo(`Generated random weapon ${this.commonUtils.getItemName(baseWeaponItem._id)}: Width=${width},Height=${height},Weight=${weight}`);
+        return [width, height, weight];
     }
 
     private findChildSlotIndexesInTraderAssort(assort: ITraderAssort, parentIndex: number | string): string[]
