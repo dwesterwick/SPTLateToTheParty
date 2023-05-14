@@ -339,7 +339,13 @@ namespace LateToTheParty.Models
                     continue;
                 }
 
-                LoggingController.LogInfo("Destroying " + LootInfo[item].LootType + " loot" + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() + " (" + parentItem.TemplateId + ")" : "") + ": " + containedItem.LocalizedName());
+                LoggingController.LogInfo(
+                    "Destroying "+ LootInfo[item].LootType + " loot"
+                    + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() : "")
+                    + (ConfigController.LootRanking.Items.ContainsKey(containedItem.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[containedItem.TemplateId].Value + ")" : "")
+                    + ": " + containedItem.LocalizedName()
+                );
+
                 try
                 {
                     LootInfo[containedItem].TraderController.DestroyItem(containedItem);
