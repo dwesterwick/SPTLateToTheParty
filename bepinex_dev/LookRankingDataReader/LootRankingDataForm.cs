@@ -42,6 +42,7 @@ namespace LookRankingDataReader
                 return;
             }
 
+            this.Cursor = Cursors.WaitCursor;
             lootRankingDataGridView.SuspendLayout();
 
             DataTable dt = new DataTable();
@@ -50,7 +51,8 @@ namespace LookRankingDataReader
             dt.Columns.Add("Value", typeof(double));
             dt.Columns.Add("Cost Per Slot", typeof(double));
             dt.Columns.Add("Weight", typeof(double));
-            dt.Columns.Add("Net Size", typeof(double));
+            dt.Columns.Add("Size", typeof(double));
+            dt.Columns.Add("Grid Size", typeof(double));
             dt.Columns.Add("Max Dimension", typeof(double));
             dt.Columns.Add("Armor Class", typeof(double));
             dt.Columns.Add("Parent Weighting", typeof(double));
@@ -63,7 +65,8 @@ namespace LookRankingDataReader
                 row["Value"] = item.Value;
                 row["Cost Per Slot"] = item.CostPerSlot;
                 row["Weight"] = item.Weight;
-                row["Net Size"] = item.NetSize;
+                row["Size"] = item.Size;
+                row["Grid Size"] = item.GridSize;
                 row["Max Dimension"] = item.MaxDim;
                 row["Armor Class"] = item.ArmorClass;
                 row["Parent Weighting"] = item.ParentWeighting;
@@ -73,6 +76,7 @@ namespace LookRankingDataReader
             lootRankingDataGridView.DataSource = dt;
 
             lootRankingDataGridView.ResumeLayout();
+            this.Cursor = Cursors.Default;
         }
     }
 }

@@ -41,9 +41,11 @@
 			"randomness": 30,
 			"alwaysRegenerate": true,
 			"weighting": {
+				"default_inventory_id": "55d7217a4bdc2d86028b456d",
 				"cost_per_slot": 0.001,
 				"weight": -0.2,
-				"net_size": -3,
+				"size": -3,
+				"gridSize": 3.5,
 				"max_dim": -2,
 				"armor_class": 10,
 				"parents": {

@@ -15,9 +15,9 @@ export class CommonUtils
         this.translations = this.localeService.getLocaleDb();
     }
 	
-    public logInfo(message: string): void
+    public logInfo(message: string, alwaysShow = false): void
     {
-        if (modConfig.debug)
+        if (modConfig.debug || alwaysShow)
             this.logger.info(this.debugMessagePrefix + message);
     }
 

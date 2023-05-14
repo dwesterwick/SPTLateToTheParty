@@ -15,9 +15,9 @@ export class CommonUtils
         this.translations = this.localeService.getLocaleDb();
     }
 	
-    public logInfo(message: string): void
+    public logInfo(message: string, alwaysShow = false): void
     {
-        if (modConfig.debug)
+        if (modConfig.debug || alwaysShow)
             this.logger.info(this.debugMessagePrefix + message);
     }
 
@@ -37,7 +37,12 @@ export class CommonUtils
         if (translationKey in this.translations)
             return this.translations[translationKey];
 		
-        // If a key can't be found in the translations dictionary, fall back to the template data
+        // If a key can't be found in the translations dictionary, fall back to the template data if possible
+        if (!(itemID in this.databaseTables.templates.items))
+        {
+            return undefined;
+        }
+
         const item = this.databaseTables.templates.items[itemID];
         return item._name;
     }

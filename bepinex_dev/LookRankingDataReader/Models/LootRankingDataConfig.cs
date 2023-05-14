@@ -24,8 +24,11 @@ namespace LookRankingDataReader.Models
         [JsonProperty("weight")]
         public double Weight { get; set; }
 
-        [JsonProperty("netSize")]
-        public double NetSize { get; set; }
+        [JsonProperty("size")]
+        public double Size { get; set; }
+
+        [JsonProperty("gridSize")]
+        public double GridSize { get; set; }
 
         [JsonProperty("armorClass")]
         public double ArmorClass { get; set; }
