@@ -12,7 +12,7 @@ namespace LateToTheParty.Configuration
         [JsonProperty("default_inventory_id")]
         public string DefaultInventoryId { get; set; } = "";
 
-        [JsonProperty("costPerSlot")]
+        [JsonProperty("cost_per_slot")]
         public double CostPerSlot { get; set; }
 
         [JsonProperty("weight")]
@@ -24,10 +24,10 @@ namespace LateToTheParty.Configuration
         [JsonProperty("gridSize")]
         public double GridSize { get; set; }
 
-        [JsonProperty("maxDim")]
+        [JsonProperty("max_dim")]
         public double MaxDim { get; set; }
 
-        [JsonProperty("armorClass")]
+        [JsonProperty("armor_class")]
         public double ArmorClass { get; set; }
 
         [JsonProperty("parents")]

@@ -9,9 +9,6 @@ namespace LookRankingDataReader.Models
 {
     internal class LootRankingContainerConfig
     {
-        [JsonProperty("default_inventory_id")]
-        public string DefaultInventoryId { get; set; } = "";
-
         [JsonProperty("costPerSlot")]
         public double CostPerSlot { get; set; }
 
