@@ -25,7 +25,7 @@ import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 
 const modName = "LateToTheParty";
 
-class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod
+class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 {
     private commonUtils: CommonUtils
     private botConversionHelper: BotConversionHelper
