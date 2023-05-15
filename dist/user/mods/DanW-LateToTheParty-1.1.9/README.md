@@ -35,6 +35,19 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **destroy_loot_during_raid.ignore_items_on_dead_bots.only_if_you_killed_them**: If the mod should not be allowed to despawn items on dead bots only if you killed the bot. If you did not kill the bot, items in its inventory are still eligible for despawning. This is **true** by default. 
 * **destroy_loot_during_raid.excluded_parents**: Items that are children of these parent-item ID's will not be allowed to despawn. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
+* **destroy_loot_during_raid.loot_ranking.enabled**: If loot should be ranked and destroyed in order of its calculated "value" (which is more complicated than simply cost). 
+* **destroy_loot_during_raid.loot_ranking.randomness**: The amount of "randomness" (defined as a percentage of the total loot-value range in the map) to apply when destroying ranked loot. A value of 0 is like playing in a lobby full of cheaters, and loot will be despawned exactly in order of its calculated value. A value of 100 means that the worst loot in the map has a small chance of despawning first, and vice versa. A value of >>100 is like playing in a lobby full of noobs who have no idea what to pick up (in which case you might as well simply disable loot ranking). 
+* **destroy_loot_during_raid.loot_ranking.alwaysRegenerate**: If the loot-ranking data is forced to generate every time the game starts. If you tend to check out new mods that may adjust item values, add new items, etc., you should make this **true** to ensure the loot-ranking data is valid for your specific SPT configuration. If you tend to install a few mods and stick with them, it should be safe to leave this at **false**. If any of the following loot-ranking parameters are changed, the loot-ranking data will be forced to regenerate.
+* **destroy_loot_during_raid.loot_ranking.weighting.default_inventory_id**: The ID of the default inventory for the player, which is needed to see what items are allowed to be equipped. **This should NOT be changed, or the mod may not work properly.** 
+* **destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot**: How much the calculated loot-ranking value of each item should be affected by its cost-per-slot. If the item can be directly equipped (backpacks, weapons, helmets, etc.), it's treated as occupying a single slot. Otherwise, the mod takes the price of the item (the maximum found in *handbook.json* and *prices.json*) and divides that by its size (*length* * *width*) to determine its cost-per-slot.
+* **destroy_loot_during_raid.loot_ranking.weighting.weight**: How much the calculated loot-ranking value of each item should be affected by its weight.
+* **destroy_loot_during_raid.loot_ranking.weighting.size**: How much the calculated loot-ranking value of each item should be affected by its size (*length* * *width*).
+* **destroy_loot_during_raid.loot_ranking.weighting.gridSize**: How much the calculated loot-ranking value of each item should be affected by the number of grid slots it has (for rigs, backpacks, etc.).
+* **destroy_loot_during_raid.loot_ranking.weighting.max_dim**: How much the calculated loot-ranking value of each item should be affected by its maximum dimension (either *length* or *width*).
+* **destroy_loot_during_raid.loot_ranking.weighting.armor_class**: How much the calculated loot-ranking value of each item should be affected by its armor class (which is 0 if not applicable). 
+* **destroy_loot_during_raid.loot_ranking.weighting.parents.xxx.name**: If **xxx** is a parent of the item, its calculated loot-ranking value has an additional value applied to it. For each entry in the **parents** dictionary, **name** simply exists for readability. You can make this whatever you want to help you remember what the ID (key) for the dictionary is.
+* **destroy_loot_during_raid.loot_ranking.weighting.parents.xxx.weighting**: If **xxx** is a parent of the item, its calculated loot-ranking value is adjusted by this value.
+
 * **open_doors_during_raid.enabled**: If the mod can open/close doors throughout the raid. This is **true** by default. 
 * **open_doors_during_raid.can_open_locked_doors**: If the mod is allowed to open locked doors. This is **true** by default. 
 * **open_doors_during_raid.can_breach_doors**: If the mod is allowed to open doors that can only be breached. This is **true** by default. 
@@ -56,7 +69,14 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 
-For a future release, I plan on creating a ranking system for which loot to remove from the map first. Currently, the loot that's despawned is completely random. 
+The loot-ranking system uses the following logic to determine the "value" of each item:
+* Quest items and items of type "Node" are excluded from the loot-ranking data because the mod will never despawn them. 
+* The cost of each item is the maximum value for it found in *handbook.json* and *prices.json*. 
+* To determine the cost-per-slot of an item, its cost (determined above) is divided by its size. Items that can be directly equipped (rigs, backpacks, weapons, etc.) are treated as having a size of 1. 
+* If the item is a weapon, the mod first tries finding the most desirable version of it (in terms of size and weight) available from traders. If no traders sell it, the mod will then randomly generate a version of the weapon that may be used by an "assault" Scav bot. 
+* When the mod determines the size of a weapon, it's folded if possible. 
+
+After the loot-ranking data is generated, it's saved in *user\mods\DanW-LateToTheParty-#.#.#\db*. The ranking data can then be viewed using *user\mods\DanW-LateToTheParty-#.#.#\db\LootRankingDataReader.exe*. The program requires .NET 6.0 to run. 
 
 If you're using this mod along with Kobrakon's Immersive Raids mod, please change the following in *config.json*:
 * **adjust_raid_times.enabled** to false
@@ -69,4 +89,6 @@ Known issues:
 * Airdrop loot will never despawn unless you pick it up and drop it elsewhere while **only_items_brought_into_raid=true**
 * If **debug=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug=false**, the script is called twice unless you press "Ready" early. 
 * Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
-* Occasional exceptions in the bepinex console (if enabled) when ending a raid. These can be ignored for now. 
+* Occasional exceptions in the bepinex console (if enabled) when ending a raid. These can be ignored for now.
+* Numerous warnings or errors may occur when loot-ranking data is generated. These can be ignored. 
+* Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 

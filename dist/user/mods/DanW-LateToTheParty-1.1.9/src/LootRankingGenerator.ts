@@ -73,7 +73,7 @@ export class LootRankingGenerator
             return;
         }
 
-        this.commonUtils.logInfo("Creating loot ranking data...", true);
+        this.commonUtils.logInfo("Creating loot ranking data... [BEGIN IGNORING ERRORS AND WARNINGS]", true);
 
         // Create ranking data for each item found in the server database
         const items: Record<string, LootRankingData> = {};
@@ -106,7 +106,7 @@ export class LootRankingGenerator
         const rankingDataStr = JSON.stringify(rankingData);
 
         this.vfs.writeFile(lootFilePath, rankingDataStr);
-        this.commonUtils.logInfo("Creating loot ranking data...done.", true);
+        this.commonUtils.logInfo("Creating loot ranking data...done. [STOP IGNORING ERRORS AND WARNINGS]", true);
     }
 
     private generateLookRankingForItem(item: ITemplateItem, sessionId: string): LootRankingData
