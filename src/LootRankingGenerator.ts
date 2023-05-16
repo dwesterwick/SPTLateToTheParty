@@ -9,6 +9,8 @@ import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import { Item } from "@spt-aki/models/eft/common/tables/IItem";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponResult";
+import { HashUtil } from "@spt-aki/utils/HashUtil";
+import { Preset } from "@spt-aki/models/eft/common/IGlobals";
 
 const verboseLogging = false;
 const lootFilePath = __dirname + "/../db/lootRanking.json";
@@ -50,7 +52,13 @@ export interface LootRankingData
 
 export class LootRankingGenerator
 {
-    constructor(private commonUtils: CommonUtils, private databaseTables: IDatabaseTables, private vfs: VFS, private botWeaponGenerator: BotWeaponGenerator)
+    constructor(
+        private commonUtils: CommonUtils,
+        private databaseTables: IDatabaseTables,
+        private vfs: VFS,
+        private botWeaponGenerator: BotWeaponGenerator,
+        private hashUtil: HashUtil
+    )
     { }
 
     public getLootRankingDataFromFile(): LootRankingContainer
@@ -111,23 +119,8 @@ export class LootRankingGenerator
 
     private generateLookRankingForItem(item: ITemplateItem, sessionId: string): LootRankingData
     {
-        // Get the handbook.json price, if any exists
-        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((item) => item.Id == item.Id);
-        let handbookPrice = 0;
-        if (matchingHandbookItems.length == 1)
-        {
-            handbookPrice = matchingHandbookItems[0].Price;
-        }
-
-        // Get the prices.json price, if any exists
-        let price = 0;
-        if (item._id in this.databaseTables.templates.prices)
-        {
-            price = this.databaseTables.templates.prices[item._id];
-        }
-        
         // Get required item properties from the server database
-        const cost = Math.max(handbookPrice, price);
+        const cost = this.getItemPrice(item);
         let weight = item._props.Weight;
         let size = item._props.Width * item._props.Height;
         let maxDim = Math.max(item._props.Width, item._props.Height);
@@ -138,11 +131,11 @@ export class LootRankingGenerator
             // First try to find the most desirable weapon from the traders
             let bestWeaponMatch: Item[] = this.findBestWeaponMatchfromTraders(item);
 
-            // If the weapon isn't offered by any traders, generate a random version of it
+            // If the weapon isn't offered by any traders, find the most desirable version in the presets
             if (bestWeaponMatch.length == 0)
             {
                 if (verboseLogging) this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
-                bestWeaponMatch = this.generateRandomWeapon(item, sessionId);
+                bestWeaponMatch = this.findBestWeaponInPresets(item);
             }
 
             // Ensure a weapon has been generated
@@ -222,8 +215,33 @@ export class LootRankingGenerator
         return data;
     }
 
+    private getItemPrice(item: ITemplateItem): number
+    {
+        // Get the handbook.json price, if any exists
+        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((item) => item.Id == item.Id);
+        let handbookPrice = 0;
+        if (matchingHandbookItems.length == 1)
+        {
+            handbookPrice = matchingHandbookItems[0].Price;
+        }
+
+        // Get the prices.json price, if any exists
+        let price = 0;
+        if (item._id in this.databaseTables.templates.prices)
+        {
+            price = this.databaseTables.templates.prices[item._id];
+        }
+        
+        return Math.max(handbookPrice, price);
+    }
+
     private generateRandomWeapon(item: ITemplateItem, sessionId: string): Item[]
     {
+        if (!this.weaponPresetExists(item))
+        {
+            return [];
+        }
+
         const iterations = 5;
         const botType = "assault";
         const possibleSlots: string[] = [
@@ -278,6 +296,158 @@ export class LootRankingGenerator
         }
 
         return weapon;
+    }
+
+    private findBestWeaponInPresets(item: ITemplateItem): Item[]
+    {
+        let weapon: Item[] = [];
+
+        for (const presetID in this.databaseTables.globals.ItemPresets)
+        {
+            const preset = this.databaseTables.globals.ItemPresets[presetID];
+            if (preset._items[0]._tpl == item._id)
+            {
+                // Store the initial weapon selection
+                if (weapon.length == 0)
+                {
+                    weapon = preset._items;
+                    continue;
+                }
+
+                // Determine if the weapon is better than the previous one found
+                if (this.weaponBaseValue(item, preset._items) > this.weaponBaseValue(item, weapon))
+                {
+                    weapon = preset._items;
+                }
+            }
+        }
+
+        if (weapon.length == 0)
+        {
+            return this.generateWeaponPreset(item)._items;
+        }
+
+        return weapon;
+    }
+
+    private weaponPresetExists(item: ITemplateItem): boolean
+    {
+        for (const presetID in this.databaseTables.globals.ItemPresets)
+        {
+            if (this.databaseTables.globals.ItemPresets[presetID]._items[0]._tpl == item._id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private generateWeaponPreset(item: ITemplateItem): Preset
+    {
+        const baseItem: Item = {
+            _id: this.hashUtil.generate(),
+            _tpl: item._id
+        };
+        const weapon: Item[] = this.fillItemSlots(baseItem);
+
+        if (verboseLogging) this.commonUtils.logInfo(`Creating preset for ${this.commonUtils.getItemName(item._id)}...`);
+        for (const weaponPart in weapon)
+        {
+            if (verboseLogging) this.commonUtils.logInfo(`Creating preset for ${this.commonUtils.getItemName(item._id)}...found ${this.commonUtils.getItemName(weapon[weaponPart]._tpl)}`);
+        }
+
+        const preset: Preset = {
+            _id: this.hashUtil.generate(),
+            _type: "Preset",
+            _changeWeaponName: false,
+            _name: item._name + "_autoGen",
+            _parent: weapon[0]._id,
+            _items: weapon
+        }
+
+        return preset;
+    }
+
+    private fillItemSlots(item: Item): Item[]
+    {
+        const itemTemplate = this.databaseTables.templates.items[item._tpl];
+
+        let isValid = false;
+        let filledItem: Item[];
+        const bannedParts: string[] = [];
+        while (!isValid)
+        {
+            filledItem = [];
+            filledItem.push(item);
+
+            for (const slot in itemTemplate._props.Slots)
+            {
+                if (!itemTemplate._props.Slots[slot]._required)
+                {
+                    continue;
+                }
+
+                const filters = itemTemplate._props.Slots[slot]._props.filters[0].Filter;
+                const filtersSorted = filters.sort(
+                    (f1, f2) => 
+                    {
+                        const f1Price = this.getItemPrice(this.databaseTables.templates.items[f1]);
+                        const f2Price = this.getItemPrice(this.databaseTables.templates.items[f2]);
+
+                        if (f1Price > f2Price) return -1;
+                        if (f1Price < f2Price) return 1;
+                        return 0;
+                    }
+                );
+
+                let itemPart: Item;
+                for (const filter in filtersSorted)
+                {
+                    if (!(filters[filter] in bannedParts))
+                    {
+                        itemPart = {
+                            _id: this.hashUtil.generate(),
+                            _tpl: filters[filter],
+                            parentId: item._id,
+                            slotId: itemTemplate._props.Slots[slot]._name
+                        }
+                        filledItem = filledItem.concat(this.fillItemSlots(itemPart));
+
+                        break;
+                    }
+                }
+
+                if (itemPart === undefined)
+                {
+                    this.commonUtils.logError(`Could not find valid part to put in ${itemTemplate._props.Slots[slot]._name} for ${this.commonUtils.getItemName(item._tpl)}`);
+                }
+            }
+
+            isValid = true;
+            for (const itemPart in filledItem)
+            {
+                const conflictingItems = this.databaseTables.templates.items[filledItem[itemPart]._tpl]._props.ConflictingItems;
+                for (const conflictingItem in conflictingItems)
+                {
+                    if (conflictingItems[conflictingItem] in filledItem.map(p => p._tpl))
+                    {
+                        bannedParts.push(conflictingItems[conflictingItem]);
+                        isValid = false;
+                        break;
+                    }
+                }
+
+                if (!isValid)
+                {
+                    break;
+                }
+
+                //this.commonUtils.logInfo(`Finding parts for ${this.commonUtils.getItemName(item._tpl)}...found ${this.commonUtils.getItemName(filledItem[itemPart]._tpl)}`);
+            }
+        }
+
+        return filledItem;
     }
 
     private findBestWeaponMatchfromTraders(item: ITemplateItem): Item[]

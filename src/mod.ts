@@ -22,6 +22,7 @@ import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
 import { LocaleService } from "@spt-aki/services/LocaleService";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
+import { HashUtil } from "@spt-aki/utils/HashUtil";
 
 const modName = "LateToTheParty";
 
@@ -41,6 +42,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private vfs: VFS;
     private localeService: LocaleService;
     private botWeaponGenerator: BotWeaponGenerator;
+    private hashUtil: HashUtil;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -151,6 +153,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.vfs = container.resolve<VFS>("VFS");
         this.localeService = container.resolve<LocaleService>("LocaleService");
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
+        this.hashUtil = container.resolve<HashUtil>("HashUtil");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -253,7 +256,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
     private generateLootRankingData(sessionId: string): void
     {
-        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs, this.botWeaponGenerator);
+        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs, this.botWeaponGenerator, this.hashUtil);
         this.lootRankingGenerator.generateLootRankingData(sessionId);
     }
 }
