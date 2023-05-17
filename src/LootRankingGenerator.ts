@@ -81,7 +81,7 @@ export class LootRankingGenerator
             return;
         }
 
-        this.commonUtils.logInfo("Creating loot ranking data... [BEGIN IGNORING ERRORS AND WARNINGS]", true);
+        this.commonUtils.logInfo("Creating loot ranking data...", true);
 
         // Create ranking data for each item found in the server database
         const items: Record<string, LootRankingData> = {};
@@ -114,7 +114,7 @@ export class LootRankingGenerator
         const rankingDataStr = JSON.stringify(rankingData);
 
         this.vfs.writeFile(lootFilePath, rankingDataStr);
-        this.commonUtils.logInfo("Creating loot ranking data...done. [STOP IGNORING ERRORS AND WARNINGS]", true);
+        this.commonUtils.logInfo("Creating loot ranking data...done.", true);
     }
 
     private generateLookRankingForItem(item: ITemplateItem, sessionId: string): LootRankingData
@@ -235,6 +235,12 @@ export class LootRankingGenerator
         return Math.max(handbookPrice, price);
     }
 
+    /**
+     * [DEPRECATED] Generate a random weapon using the SPT botWeaponGenerator.generateWeaponByTpl method.
+     * @param item the base weapon template
+     * @param sessionId the sessionId from the HTTP router
+     * @returns a weapon represented by an array of Item objects
+     */
     private generateRandomWeapon(item: ITemplateItem, sessionId: string): Item[]
     {
         if (!this.weaponPresetExists(item))
@@ -322,6 +328,7 @@ export class LootRankingGenerator
             }
         }
 
+        // If there are no presets for the weapon, create one
         if (weapon.length == 0)
         {
             return this.generateWeaponPreset(item)._items;
@@ -345,11 +352,11 @@ export class LootRankingGenerator
 
     private generateWeaponPreset(item: ITemplateItem): Preset
     {
-        const baseItem: Item = {
+        const baseWeapon: Item = {
             _id: this.hashUtil.generate(),
             _tpl: item._id
         };
-        const weapon: Item[] = this.fillItemSlots(baseItem);
+        const weapon: Item[] = this.fillItemSlots(baseWeapon);
 
         if (verboseLogging) this.commonUtils.logInfo(`Creating preset for ${this.commonUtils.getItemName(item._id)}...`);
         for (const weaponPart in weapon)
@@ -369,6 +376,11 @@ export class LootRankingGenerator
         return preset;
     }
 
+    /**
+     * Iterate through all possible slots in the object and add an item for all that are required
+     * @param item the base item containing slots
+     * @returns an array of Item objects containing the base item and all required attachments generated for it
+     */
     private fillItemSlots(item: Item): Item[]
     {
         const itemTemplate = this.databaseTables.templates.items[item._tpl];
@@ -378,6 +390,7 @@ export class LootRankingGenerator
         const bannedParts: string[] = [];
         while (!isValid)
         {
+            // Create the initial candidate for the array that will be returned
             filledItem = [];
             filledItem.push(item);
 
@@ -388,6 +401,7 @@ export class LootRankingGenerator
                     continue;
                 }
 
+                // Sort the array of items that can be attached to the slot in order of ascending price
                 const filters = itemTemplate._props.Slots[slot]._props.filters[0].Filter;
                 const filtersSorted = filters.sort(
                     (f1, f2) => 
@@ -400,7 +414,8 @@ export class LootRankingGenerator
                         return 0;
                     }
                 );
-
+                
+                // Add the first valid item to the slot along with all of the items attached to its (child) slots
                 let itemPart: Item;
                 for (const filter in filtersSorted)
                 {
@@ -427,6 +442,7 @@ export class LootRankingGenerator
             isValid = true;
             for (const itemPart in filledItem)
             {
+                // Check if any conflicting parts exist in the Item array. If so, prevent the conflicting item from being used in the next candidate
                 const conflictingItems = this.databaseTables.templates.items[filledItem[itemPart]._tpl]._props.ConflictingItems;
                 for (const conflictingItem in conflictingItems)
                 {

@@ -73,7 +73,7 @@ The loot-ranking system uses the following logic to determine the "value" of eac
 * Quest items and items of type "Node" are excluded from the loot-ranking data because the mod will never despawn them. 
 * The cost of each item is the maximum value for it found in *handbook.json* and *prices.json*. 
 * To determine the cost-per-slot of an item, its cost (determined above) is divided by its size. Items that can be directly equipped (rigs, backpacks, weapons, etc.) are treated as having a size of 1. 
-* If the item is a weapon, the mod first tries finding the most desirable version of it (in terms of size and weight) available from traders. If no traders sell it, the mod will then randomly generate a version of the weapon that may be used by an "assault" Scav bot. 
+* If the item is a weapon, the mod first tries finding the most desirable version of it (in terms of size and weight) available from traders. If no traders sell it, the mod will then find the most desirable preset for the weapon. If there are no presets for the weapon (as may be the case for mod-generated weapons), one with the cheapest and fewest parts possible will be generated. 
 * When the mod determines the size of a weapon, it's folded if possible. 
 
 After the loot-ranking data is generated, it's saved in *user\mods\DanW-LateToTheParty-#.#.#\db*. The ranking data can then be viewed using *user\mods\DanW-LateToTheParty-#.#.#\db\LootRankingDataReader.exe*. The program requires .NET 6.0 to run. 
@@ -90,5 +90,4 @@ Known issues:
 * If **debug=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug=false**, the script is called twice unless you press "Ready" early. 
 * Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Occasional exceptions in the bepinex console (if enabled) when ending a raid. These can be ignored for now.
-* Numerous warnings or errors may occur when loot-ranking data is generated. These can be ignored. 
 * Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
