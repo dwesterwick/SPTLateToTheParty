@@ -419,7 +419,7 @@ export class LootRankingGenerator
                 let itemPart: Item;
                 for (const filter in filtersSorted)
                 {
-                    if (!(filters[filter] in bannedParts))
+                    if (!bannedParts.includes(filters[filter]))
                     {
                         itemPart = {
                             _id: this.hashUtil.generate(),
@@ -446,20 +446,16 @@ export class LootRankingGenerator
                 const conflictingItems = this.databaseTables.templates.items[filledItem[itemPart]._tpl]._props.ConflictingItems;
                 for (const conflictingItem in conflictingItems)
                 {
-                    const filledItemParts = filledItem.map(p => p._tpl);
-                    for (const filledItemPart in filledItemParts)
+                    if (filledItem.map(p => p._tpl).includes(conflictingItems[conflictingItem]))
                     {
-                        if (conflictingItems[conflictingItem] == filledItemParts[filledItemPart])
+                        if (!bannedParts.includes(conflictingItems[conflictingItem]))
                         {
-                            if (!(conflictingItems[conflictingItem] in bannedParts))
-                            {
-                                bannedParts.push(conflictingItems[conflictingItem]);
-                            }
-                            isValid = false;
-
-                            if (verboseLogging) this.commonUtils.logInfo(`Finding parts for ${this.commonUtils.getItemName(item._tpl)}...${conflictingItems[conflictingItem]} has a conflict in parts ${filledItemParts.join(",")}`);
-                            break;
+                            bannedParts.push(conflictingItems[conflictingItem]);
                         }
+                        isValid = false;
+
+                        if (verboseLogging) this.commonUtils.logInfo(`Finding parts for ${this.commonUtils.getItemName(item._tpl)}...${this.commonUtils.getItemName(conflictingItems[conflictingItem])} has a conflict with another part`);
+                        break;
                     }
                 }
 
