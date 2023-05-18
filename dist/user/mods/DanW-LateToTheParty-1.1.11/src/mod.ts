@@ -53,6 +53,17 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
         this.logger = container.resolve<ILogger>("WinstonLogger");
 
+        // Get config.json settings for the bepinex plugin
+        staticRouterModService.registerStaticRouter(`StaticGetConfig${modName}`,
+            [{
+                url: "/LateToTheParty/GetConfig",
+                action: () => 
+                {
+                    return JSON.stringify(modConfig);
+                }
+            }], "GetConfig"
+        );
+
         if (!modConfig.enabled)
         {
             return;
@@ -86,17 +97,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }], "aki"
         );
         
-        // Get config.json settings for the bepinex plugin
-        staticRouterModService.registerStaticRouter(`StaticGetConfig${modName}`,
-            [{
-                url: "/LateToTheParty/GetConfig",
-                action: () => 
-                {
-                    return JSON.stringify(modConfig);
-                }
-            }], "GetConfig"
-        );
-
         // Get lootRanking.json for loot ranking
         staticRouterModService.registerStaticRouter(`StaticGetLootRankingData${modName}`,
             [{
