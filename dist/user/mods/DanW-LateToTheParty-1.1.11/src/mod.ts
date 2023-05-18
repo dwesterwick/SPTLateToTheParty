@@ -53,6 +53,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
         this.logger = container.resolve<ILogger>("WinstonLogger");
 
+        if (!modConfig.enabled)
+        {
+            return;
+        }
+
         // Game start
         // Needed to initialize bot conversion helper instance and loot ranking generator after any other mods have potentially changed config settings
         staticRouterModService.registerStaticRouter(`StaticAkiGameStart${modName}`,
@@ -161,6 +166,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
 
+        if (!modConfig.enabled)
+        {
+            this.commonUtils.logInfo("Mod disabled in config.json.");
+            return;
+        }
+
         // Make the Scav cooldown timer very short for debugging
         if (modConfig.debug)
             this.databaseTables.globals.config.SavagePlayCooldown = 1;
@@ -168,6 +179,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
     public postAkiLoad(): void
     {
+        if (!modConfig.enabled)
+        {
+            return;
+        }
+
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
     }
