@@ -12,7 +12,7 @@ import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponRes
 import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { Preset } from "@spt-aki/models/eft/common/IGlobals";
 
-const verboseLogging = true;
+const verboseLogging = false;
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
 // Overall file structure
