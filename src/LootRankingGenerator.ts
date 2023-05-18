@@ -12,7 +12,7 @@ import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponRes
 import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { Preset } from "@spt-aki/models/eft/common/IGlobals";
 
-const verboseLogging = false;
+const verboseLogging = true;
 const lootFilePath = __dirname + "/../db/lootRanking.json";
 
 // Overall file structure
@@ -356,7 +356,7 @@ export class LootRankingGenerator
             _id: this.hashUtil.generate(),
             _tpl: item._id
         };
-        const weapon: Item[] = this.fillItemSlots(baseWeapon);
+        const weapon: Item[] = this.fillItemSlots(baseWeapon, []);
 
         if (verboseLogging) this.commonUtils.logInfo(`Creating preset for ${this.commonUtils.getItemName(item._id)}...`);
         for (const weaponPart in weapon)
@@ -381,13 +381,13 @@ export class LootRankingGenerator
      * @param item the base item containing slots
      * @returns an array of Item objects containing the base item and all required attachments generated for it
      */
-    private fillItemSlots(item: Item): Item[]
+    private fillItemSlots(item: Item, initialBannedParts: string[]): Item[]
     {
         const itemTemplate = this.databaseTables.templates.items[item._tpl];
 
         let isValid = false;
         let filledItem: Item[];
-        const bannedParts: string[] = [];
+        const bannedParts: string[] = [].concat(initialBannedParts);
         while (!isValid)
         {
             // Create the initial candidate for the array that will be returned
@@ -427,7 +427,7 @@ export class LootRankingGenerator
                             parentId: item._id,
                             slotId: itemTemplate._props.Slots[slot]._name
                         }
-                        filledItem = filledItem.concat(this.fillItemSlots(itemPart));
+                        filledItem = filledItem.concat(this.fillItemSlots(itemPart, bannedParts));
 
                         break;
                     }
@@ -446,11 +446,20 @@ export class LootRankingGenerator
                 const conflictingItems = this.databaseTables.templates.items[filledItem[itemPart]._tpl]._props.ConflictingItems;
                 for (const conflictingItem in conflictingItems)
                 {
-                    if (conflictingItems[conflictingItem] in filledItem.map(p => p._tpl))
+                    const filledItemParts = filledItem.map(p => p._tpl);
+                    for (const filledItemPart in filledItemParts)
                     {
-                        bannedParts.push(conflictingItems[conflictingItem]);
-                        isValid = false;
-                        break;
+                        if (conflictingItems[conflictingItem] == filledItemParts[filledItemPart])
+                        {
+                            if (!(conflictingItems[conflictingItem] in bannedParts))
+                            {
+                                bannedParts.push(conflictingItems[conflictingItem]);
+                            }
+                            isValid = false;
+
+                            if (verboseLogging) this.commonUtils.logInfo(`Finding parts for ${this.commonUtils.getItemName(item._tpl)}...${conflictingItems[conflictingItem]} has a conflict in parts ${filledItemParts.join(",")}`);
+                            break;
+                        }
                     }
                 }
 

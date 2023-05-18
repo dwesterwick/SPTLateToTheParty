@@ -39,7 +39,7 @@
 		"loot_ranking": {
 			"enabled": true,
 			"randomness": 30,
-			"alwaysRegenerate": false,
+			"alwaysRegenerate": true,
 			"weighting": {
 				"default_inventory_id": "55d7217a4bdc2d86028b456d",
 				"cost_per_slot": 0.001,
