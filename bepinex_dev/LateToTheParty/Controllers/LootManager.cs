@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using EFT.UI;
 using LateToTheParty.Controllers;
 using UnityEngine;
 
@@ -23,6 +25,8 @@ namespace LateToTheParty.Models
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
+        private static TaskWithReturnValueAndTimeLimit<IEnumerable<Item>> findLootToDestroyTask = null;
+        private static TaskWithTimeLimit destroyLootTask = null;
 
         public static int LootableContainerCount
         {
@@ -46,6 +50,11 @@ namespace LateToTheParty.Models
             ItemsDroppedByMainPlayer.Clear();
 
             lastLootDestroyedTimer.Restart();
+
+            if (findLootToDestroyTask != null)
+            {
+                findLootToDestroyTask.Abort();
+            }
         }
 
         public static int FindAllLootableContainers()
@@ -111,14 +120,27 @@ namespace LateToTheParty.Models
 
                 // Find loot based on target fraction remaining
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
-                TaskWithTimeLimit<IEnumerable<Item>> findLootToDestroyTask = new TaskWithTimeLimit<IEnumerable<Item>>(() =>
-                    FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET)
+                findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(
+                    ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame,
+                    () => FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET)
                 );
                 yield return findLootToDestroyTask.WaitForTask();
-                Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
+
+                Item[] itemsToDestroy = null;
+                try
+                {
+                    itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
+                }
+                catch (InvalidOperationException ioe)
+                {
+                    LoggingController.LogError(ioe.Message);
+                }
 
                 // Destroy sorted loot
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                if (itemsToDestroy != null)
+                {
+                    yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                }
             }
             finally
             {
@@ -231,6 +253,8 @@ namespace LateToTheParty.Models
 
         private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
         {
+            Thread.Sleep(7);
+
             System.Random randomGen = new System.Random();
 
             // Get the loot ranking data from the server, but this only needs to be done once
