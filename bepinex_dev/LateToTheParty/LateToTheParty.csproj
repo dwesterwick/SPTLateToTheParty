@@ -89,6 +89,7 @@
     <Compile Include="Controllers\LocationSettingsController.cs" />
     <Compile Include="Controllers\LoggingController.cs" />
     <Compile Include="Controllers\LootDestroyerController.cs" />
+    <Compile Include="Controllers\LootSorter.cs" />
     <Compile Include="Models\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />
     <Compile Include="Models\LootInfo.cs" />

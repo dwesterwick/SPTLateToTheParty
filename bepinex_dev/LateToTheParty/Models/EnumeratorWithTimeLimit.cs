@@ -1,4 +1,5 @@
-﻿using LateToTheParty.Controllers;
+﻿using EFT.InventoryLogic;
+using LateToTheParty.Controllers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -91,6 +92,76 @@ namespace LateToTheParty.Models
                     yield break;
                 }
             }
+
+            IsRunning = false;
+            IsCompleted = true;
+
+            if (hadToWait)
+            {
+                LoggingController.LogWarning("Waiting for next frame...done. (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
+            }
+        }
+
+        public IEnumerator<object> Sort<TItem>(IEnumerable<KeyValuePair<TItem, double>> dictionary)
+        {
+            yield return Sort_Internal(dictionary);
+        }
+
+        private IEnumerator<object> Sort_Internal<TItem>(IEnumerable<KeyValuePair<TItem, double>> dictionary)
+        {
+            if (IsRunning)
+            {
+                throw new InvalidOperationException("There is already a coroutine running.");
+            }
+
+            IsCompleted = false;
+            IsRunning = true;
+            hadToWait = false;
+
+            cycleTimer.Restart();
+
+            Dictionary<TItem, double> output = dictionary.ToDictionary(i => i.Key, i => i.Value);
+            TItem[] inputKeys = output.Keys.ToArray();
+            bool itemMoved = false;
+            do
+            {
+                try
+                {
+                    itemMoved = false;
+                    for (int i = 0; i < inputKeys.Count() - 1; i++)
+                    {
+                        if (output[inputKeys[i]] > output[inputKeys[i + 1]])
+                        {
+                            double lowerValue = output[inputKeys[i + 1]];
+                            output[inputKeys[i + 1]] = output[inputKeys[i]];
+                            output[inputKeys[i]] = lowerValue;
+                            itemMoved = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LoggingController.LogError("Aborting coroutine iteration");
+                    LoggingController.LogError(ex.ToString());
+                }
+                
+                if (cycleTimer.ElapsedMilliseconds > maxTimePerIteration)
+                {
+                    hadToWait = true;
+                    LoggingController.LogWarning("Waiting for next frame... (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
+
+                    yield return null;
+                    cycleTimer.Restart();
+                }
+
+                if (stopRequested)
+                {
+                    IsRunning = false;
+                    yield break;
+                }
+            } while (itemMoved);
+
+            yield return output;
 
             IsRunning = false;
             IsCompleted = true;

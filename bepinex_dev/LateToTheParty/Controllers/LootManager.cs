@@ -109,15 +109,57 @@ namespace LateToTheParty.Models
                     yield break;
                 }
 
+                // Sort eligible loot
+                LootSorter lootSorter = new LootSorter(LootInfo);
+                yield return lootSorter.SortLoot(yourPosition, raidET);
+
                 // Destroy loot based on target fraction remaining
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
-                Item[] itemsToDestroy = FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET).ToArray();
+                Item[] itemsToDestroy = lootSorter.FindLootToDestroy(targetLootRemainingFraction, lastLootDestroyedTimer.ElapsedMilliseconds).ToArray();
                 yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
             }
             finally
             {
                 IsFindingAndDestroyingLoot = false;
             }
+        }
+
+        public static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
+        {
+            if (!LootInfo.ContainsKey(item))
+            {
+                return false;
+            }
+
+            if (LootInfo[item].IsDestroyed)
+            {
+                return false;
+            }
+
+            // Ensure enough time has elapsed since the loot was first placed on the map (to prevent loot on dead bots from being destroyed too soon)
+            double lootAge = raidET - LootInfo[item].RaidETWhenFound;
+            if (lootAge < ConfigController.Config.DestroyLootDuringRaid.MinLootAge)
+            {
+                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot age: " + lootAge + ")");
+                return false;
+            }
+
+            // Ignore loot that's too close to you
+            float lootDist = Vector3.Distance(yourPosition, LootInfo[item].Transform.position);
+            if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius)
+            {
+                return false;
+            }
+
+            // Ignore loot that players couldn't have possibly reached yet
+            double maxBotRunDistance = raidET * ConfigController.Config.DestroyLootDuringRaid.MapTraversalSpeed;
+            if (maxBotRunDistance < LootInfo[item].DistanceToNearestSpawnPoint)
+            {
+                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
+                return false;
+            }
+
+            return true;
         }
 
         private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
@@ -176,117 +218,6 @@ namespace LateToTheParty.Models
         private static double GetLootFoundTime(double raidET)
         {
             return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
-        }
-
-        private static IEnumerable<Item> FindLootToDestroy(Vector3 yourPosition, double targetLootRemainingFraction, double raidET)
-        {
-            // Calculate the fraction of loot that should be removed from the map
-            double currentLootRemainingFraction = (double)LootInfo.Values.Where(v => v.IsDestroyed == false).Count() / LootInfo.Count;
-            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
-
-            // Calculate the number of loot items to destroy
-            int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * LootInfo.Count);
-            if (lootItemsToDestroy == 0)
-            {
-                if (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0)
-                {
-                    LoggingController.LogInfo("Max time of " + ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot + "s elapsed since destroying loot. Forcing at least 1 item to be removed...");
-                    lootItemsToDestroy = 1;
-                }
-                else
-                {
-                    return Enumerable.Empty<Item>();
-                }
-            }
-
-            // Find all loot items eligible for destruction and sort them            
-            IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => CanDestroyItem(l.Key, yourPosition, raidET));
-            IEnumerable<KeyValuePair<Item, LootInfo>> sortedLoot = SortLoot(eligibleItems);
-            
-            // Generate a list of loot to be destroyed. This needs to be iterated because each item in the loot dictionaries has an unknown number of child items in it. 
-            int actualLootBeingDestroyed = 0;
-            IEnumerable<KeyValuePair<Item, LootInfo>> lootToDestroy = Enumerable.Empty<KeyValuePair<Item, LootInfo>>();
-            foreach (KeyValuePair<Item, LootInfo> lootInfo in sortedLoot)
-            {
-                if (actualLootBeingDestroyed >= lootItemsToDestroy)
-                {
-                    break;
-                }
-
-                lootToDestroy = lootToDestroy.Append(lootInfo);
-                actualLootBeingDestroyed += lootInfo.Key.ToEnumerable().FindAllRelatedItems().Count();
-            }
-
-            //LoggingController.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed);
-
-            return lootToDestroy.Select(l => l.Key);
-        }
-
-        private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
-        {
-            System.Random randomGen = new System.Random();
-
-            // Get the loot ranking data from the server, but this only needs to be done once
-            if (ConfigController.LootRanking == null)
-            {
-                ConfigController.GetLootRankingData();
-            }
-            if (ConfigController.LootRanking == null)
-            {
-                LoggingController.LogError("Cannot read loot ranking data from the server.");
-            }
-
-            // If loot ranking is disabled, simply sort the loot randomly
-            if ((!ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled) || (ConfigController.LootRanking == null))
-            {
-                return loot.OrderBy(i => randomGen.NextDouble());
-            }
-
-            // Determine how much randomness to apply to loot sorting
-            double lootValueRange = ConfigController.LootRanking.Items.Max(i => i.Value.Value) - ConfigController.LootRanking.Items.Min(i => i.Value.Value);
-            double lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
-
-            // Return loot sorted by value but with randomness applied
-            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
-        }
-
-        private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
-        {
-            if (!LootInfo.ContainsKey(item))
-            {
-                return false;
-            }
-
-            if (LootInfo[item].IsDestroyed)
-            {
-                return false;
-            }
-
-            // Ensure enough time has elapsed since the loot was first placed on the map (to prevent loot on dead bots from being destroyed too soon)
-            double lootAge = raidET - LootInfo[item].RaidETWhenFound;
-            if (lootAge < ConfigController.Config.DestroyLootDuringRaid.MinLootAge)
-            {
-                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot age: " + lootAge + ")");
-                return false;
-            }
-
-            // Ignore loot that's too close to you
-            float lootDist = Vector3.Distance(yourPosition, LootInfo[item].Transform.position);
-            if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius)
-            {
-                return false;
-            }
-
-            // Ignore loot that players couldn't have possibly reached yet
-            double maxBotRunDistance = raidET * ConfigController.Config.DestroyLootDuringRaid.MapTraversalSpeed;
-            if (maxBotRunDistance < LootInfo[item].DistanceToNearestSpawnPoint)
-            {
-                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
-                return false;
-            }
-
-            return true;
         }
 
         private static void DestroyLoot(Item item)
