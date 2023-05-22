@@ -95,6 +95,7 @@
     <Compile Include="Models\LootInfo.cs" />
     <Compile Include="Models\LocationSettings.cs" />
     <Compile Include="Controllers\LootManager.cs" />
+    <Compile Include="Models\TaskWithTimeLimit.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\OnGameStartedPatch.cs" />
     <Compile Include="Patches\OnBeenKilledByAggressorPatch.cs" />
