@@ -37,7 +37,7 @@ namespace LateToTheParty.Configuration
         public double ChanceOfClosingDoors { get; set; } = 30;
 
         [JsonProperty("max_calc_time_per_frame_ms")]
-        public double MaxCalcTimePerFrame { get; set; } = 5;
+        public int MaxCalcTimePerFrame { get; set; } = 5;
 
         public OpenDoorsDuringRaidConfig()
         {

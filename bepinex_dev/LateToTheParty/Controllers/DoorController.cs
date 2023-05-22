@@ -17,14 +17,29 @@ namespace LateToTheParty.Controllers
 {
     public class DoorController : MonoBehaviour
     {
+        public static bool IsTogglingDoors { get; private set; } = false;
         public static int InteractiveLayer { get; set; }
 
         private static List<Door> validDoors = new List<Door>();
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static TaskWithTimeLimit toggleDoorsTask = null;
         private static int doorsToToggle = 1;
         private static int validDoorCount = -1;
+
+        public static void Clear()
+        {
+            if (toggleDoorsTask != null)
+            {
+                toggleDoorsTask.Abort();
+            }
+
+            validDoors.Clear();
+            updateTimer.Restart();
+
+            validDoorCount = -1;
+        }
 
         private void Update()
         {
@@ -36,11 +51,13 @@ namespace LateToTheParty.Controllers
             // Clear all arrays if not in a raid to reset them for the next raid
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
-                validDoors.Clear();
-                updateTimer.Restart();
+                Clear();
+                return;
+            }
 
-                validDoorCount = -1;
-
+            // Wait until the previous task completes
+            if (IsTogglingDoors)
+            {
                 return;
             }
 
@@ -90,9 +107,23 @@ namespace LateToTheParty.Controllers
 
         private IEnumerator ToggleDoors(int doorsToToggle)
         {
-            // Spread the work across multiple frames based on a maximum calculation time per frame
-            EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-            yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor, doorsToToggle);
+            try
+            {
+                IsTogglingDoors = true;
+
+                // Spread the work across multiple frames based on a maximum calculation time per frame
+                //EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                //yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor, doorsToToggle);
+                toggleDoorsTask = new TaskWithTimeLimit(
+                        ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame,
+                        () => ToggleRandomDoors(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle)
+                    );
+                yield return toggleDoorsTask.WaitForTask();
+            }
+            finally
+            {
+                IsTogglingDoors = false;
+            }
         }
 
         private void FindAllValidDoors()
@@ -171,6 +202,14 @@ namespace LateToTheParty.Controllers
             }
 
             return true;
+        }
+
+        private void ToggleRandomDoors(int maxCalcTime_ms, int totalDoorsToToggle)
+        {
+            for (int door = 0; door < totalDoorsToToggle; door++)
+            {
+                ToggleRandomDoor(maxCalcTime_ms, totalDoorsToToggle);
+            }
         }
 
         private void ToggleRandomDoor(int maxCalcTime_ms, int totalDoorsToToggle)

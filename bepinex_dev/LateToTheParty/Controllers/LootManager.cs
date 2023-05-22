@@ -45,16 +45,20 @@ namespace LateToTheParty.Models
 
         public static void Clear()
         {
+            if (findLootToDestroyTask != null)
+            {
+                findLootToDestroyTask.Abort();
+            }
+            if (destroyLootTask != null)
+            {
+                destroyLootTask.Abort();
+            }
+
             AllLootableContainers.Clear();
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
 
             lastLootDestroyedTimer.Restart();
-
-            if (findLootToDestroyTask != null)
-            {
-                findLootToDestroyTask.Abort();
-            }
         }
 
         public static int FindAllLootableContainers()
@@ -126,21 +130,14 @@ namespace LateToTheParty.Models
                 );
                 yield return findLootToDestroyTask.WaitForTask();
 
-                Item[] itemsToDestroy = null;
-                try
-                {
-                    itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
-                }
-                catch (InvalidOperationException ioe)
-                {
-                    LoggingController.LogError(ioe.Message);
-                }
-
                 // Destroy sorted loot
-                if (itemsToDestroy != null)
-                {
-                    yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-                }
+                Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
+                //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                destroyLootTask = new TaskWithTimeLimit(
+                    ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame,
+                    () => DestroyLoot(itemsToDestroy)
+                );
+                yield return destroyLootTask.WaitForTask();
             }
             finally
             {
@@ -253,8 +250,6 @@ namespace LateToTheParty.Models
 
         private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
         {
-            Thread.Sleep(7);
-
             System.Random randomGen = new System.Random();
 
             // Get the loot ranking data from the server, but this only needs to be done once
@@ -317,6 +312,14 @@ namespace LateToTheParty.Models
             }
 
             return true;
+        }
+
+        private static void DestroyLoot(IEnumerable<Item> items)
+        {
+            foreach(Item item in items)
+            {
+                DestroyLoot(item);
+            }
         }
 
         private static void DestroyLoot(Item item)
