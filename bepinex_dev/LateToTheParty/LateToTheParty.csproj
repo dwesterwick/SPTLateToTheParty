@@ -96,6 +96,7 @@
     <Compile Include="Controllers\LootManager.cs" />
     <Compile Include="Models\TaskWithReturnValueAndTimeLimit.cs" />
     <Compile Include="Models\TaskWithTimeLimit.cs" />
+    <Compile Include="Models\TimeLimit.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\OnGameStartedPatch.cs" />
     <Compile Include="Patches\OnBeenKilledByAggressorPatch.cs" />

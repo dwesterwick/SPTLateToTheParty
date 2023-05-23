@@ -1,4 +1,5 @@
-﻿using LateToTheParty.Controllers;
+﻿using EFT.Interactive;
+using LateToTheParty.Controllers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,71 +11,72 @@ using System.Threading.Tasks;
 
 namespace LateToTheParty.Models
 {
-    public class TaskWithTimeLimit
+    internal class TaskWithTimeLimit : MethodWithTimeLimit
     {
         protected virtual Task task
         {
             get { return _task; }
         }
 
-        protected Stopwatch cycleTimer = new Stopwatch();
         protected CancellationTokenSource cancellationTokenSource;
-        protected double maxTimePerIteration;
-        protected bool hadToWait = false;
-
         private Task _task;
 
-        protected TaskWithTimeLimit(double _maxTimePerIteration)
+        public TaskWithTimeLimit(double _maxTimePerIteration) : base(_maxTimePerIteration)
         {
-            maxTimePerIteration = _maxTimePerIteration;
             cancellationTokenSource = new CancellationTokenSource();
-            cycleTimer.Restart();
         }
 
-        public TaskWithTimeLimit(double _maxTimePerIteration, Action action) : this(_maxTimePerIteration)
+        public void Start(Action action)
         {
+            if (base.IsRunning)
+            {
+                throw new InvalidOperationException("There is already a task running.");
+            }
+
+            base.methodName = action.Method.Name;
             _task = Task.Run(action, cancellationTokenSource.Token);
+            base.cycleTimer.Restart();
+            base.IsRunning = true;
         }
 
         public IEnumerator WaitForTask()
         {
-            while (isRunning())
+            while (taskIsRunning())
             {
-                if (task.Wait(1))
+                if (task.Wait(1, cancellationTokenSource.Token))
                 {
                     break;
                 }
 
-                if (cycleTimer.ElapsedMilliseconds > maxTimePerIteration)
+                if (stopRequested)
                 {
-                    hadToWait = true;
-                    LoggingController.LogWarning("Waiting for next frame (task)... (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
+                    base.IsRunning = false;
+                    yield break;
+                }
 
-                    yield return null;
-                    cycleTimer.Restart();
+                if (base.cycleTimer.ElapsedMilliseconds > base.maxTimePerIteration)
+                {
+                    yield return base.WaitForNextFrame();
                 }
             }
 
-            if (hadToWait)
-            {
-                LoggingController.LogWarning("Waiting for next frame (task)...done. (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
-            }
+            base.FinishedWaitingForFrames();
+            base.IsRunning = false;
+            base.IsCompleted = true;
         }
 
         public void Abort()
         {
+            base.stopRequested = true;
             if (!task.IsCompleted)
             {
                 cancellationTokenSource.Cancel();
-
-                if (hadToWait)
-                {
-                    LoggingController.LogWarning("Waiting for next frame (task)...aborted. (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")", true);
-                }
+                base.AbortWaitingForFrames();
+                base.IsRunning = false;
             }
         }
 
-        protected bool isRunning()
+        protected bool taskIsRunning()
         {
             if (!task.IsCompleted)
             {

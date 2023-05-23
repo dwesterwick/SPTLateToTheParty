@@ -114,14 +114,13 @@ namespace LateToTheParty.Controllers
                 // Spread the work across multiple frames based on a maximum calculation time per frame
                 //EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
                 //yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor, doorsToToggle);
-                toggleDoorsTask = new TaskWithTimeLimit(
-                        ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame,
-                        () => ToggleRandomDoors(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle)
-                    );
+                toggleDoorsTask = new TaskWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                toggleDoorsTask.Start(() => ToggleRandomDoors(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
                 yield return toggleDoorsTask.WaitForTask();
             }
             finally
             {
+                LoggingController.LogInfo("No longer toggling doors.");
                 IsTogglingDoors = false;
             }
         }

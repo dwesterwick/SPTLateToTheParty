@@ -124,23 +124,20 @@ namespace LateToTheParty.Models
 
                 // Find loot based on target fraction remaining
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
-                findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(
-                    ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame,
-                    () => FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET)
-                );
+                findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                findLootToDestroyTask.Start(() => FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET));
                 yield return findLootToDestroyTask.WaitForTask();
 
                 // Destroy sorted loot
                 Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
                 //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-                destroyLootTask = new TaskWithTimeLimit(
-                    ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame,
-                    () => DestroyLoot(itemsToDestroy)
-                );
+                destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                destroyLootTask.Start(() => DestroyLoot(itemsToDestroy));
                 yield return destroyLootTask.WaitForTask();
             }
             finally
             {
+                LoggingController.LogInfo("No longer finding or destroying loot.");
                 IsFindingAndDestroyingLoot = false;
             }
         }

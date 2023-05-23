@@ -19,9 +19,21 @@ namespace LateToTheParty.Models
 
         private Task<TResult> _task;
 
-        public TaskWithReturnValueAndTimeLimit(double _maxTimePerIteration, Func<TResult> action): base(_maxTimePerIteration)
+        public TaskWithReturnValueAndTimeLimit(double _maxTimePerIteration): base(_maxTimePerIteration)
         {
-            _task = Task.Run(action, cancellationTokenSource.Token);
+            
+        }
+
+        public void Start(Func<TResult> action)
+        {
+            if (base.IsRunning)
+            {
+                throw new InvalidOperationException("There is already a task running.");
+            }
+
+            base.methodName = action.Method.Name;
+            _task = Task.Run(action, base.cancellationTokenSource.Token);
+            base.cycleTimer.Restart();
         }
 
         public TResult GetResult()
