@@ -19,26 +19,27 @@ namespace LateToTheParty.Models
 
         public IEnumerator Run<TItem>(IEnumerable<TItem> collection, Action<TItem> collectionItemAction)
         {
+            SetMethodName(collectionItemAction.Method.Name);
             Action<TItem> action = (item) => { collectionItemAction(item); };
             yield return Run_Internal(collection, action);
         }
 
         public IEnumerator Run<TItem, T1>(IEnumerable<TItem> collection, Action<TItem, T1> collectionItemAction, T1 param1)
         {
+            SetMethodName(collectionItemAction.Method.Name);
             Action<TItem> action = (item) => { collectionItemAction(item, param1); };
             yield return Run_Internal(collection, action);
         }
 
         public IEnumerator Run<TItem, T1, T2>(IEnumerable<TItem> collection, Action<TItem, T1, T2> collectionItemAction, T1 param1, T2 param2)
         {
+            SetMethodName(collectionItemAction.Method.Name);
             Action<TItem> action = (item) => { collectionItemAction(item, param1, param2); };
             yield return Run_Internal(collection, action);
         }
 
         private IEnumerator Run_Internal<TItem>(IEnumerable<TItem> collection, Action<TItem> action)
         {
-            methodName = action.Method.Name;
-
             if (base.IsRunning)
             {
                 throw new InvalidOperationException("There is already a coroutine running.");

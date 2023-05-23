@@ -120,7 +120,6 @@ namespace LateToTheParty.Controllers
             }
             finally
             {
-                LoggingController.LogInfo("No longer toggling doors.");
                 IsTogglingDoors = false;
             }
         }
@@ -207,11 +206,11 @@ namespace LateToTheParty.Controllers
         {
             for (int door = 0; door < totalDoorsToToggle; door++)
             {
-                ToggleRandomDoor(maxCalcTime_ms, totalDoorsToToggle);
+                ToggleRandomDoor(maxCalcTime_ms);
             }
         }
 
-        private void ToggleRandomDoor(int maxCalcTime_ms, int totalDoorsToToggle)
+        private void ToggleRandomDoor(int maxCalcTime_ms)
         {
             // Randomly sort eligible doors
             System.Random randomObj = new System.Random();
@@ -254,6 +253,13 @@ namespace LateToTheParty.Controllers
 
             // Ignore doors that are too close to you
             Vector3 yourPosition = Camera.main.transform.position;
+
+            // Ensure you're still in the raid to avoid NRE's when it ends
+            if ((yourPosition == null) || (door.transform.position == null))
+            {
+                return false;
+            }
+
             float doorDist = Vector3.Distance(yourPosition, door.transform.position);
             if (doorDist < ConfigController.Config.OpenDoorsDuringRaid.ExclusionRadius)
             {

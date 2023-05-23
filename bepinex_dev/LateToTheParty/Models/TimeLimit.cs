@@ -18,11 +18,20 @@ namespace LateToTheParty.Models
         protected double maxTimePerIteration;
         protected bool stopRequested = false;
         protected bool hadToWait = false;
-        protected string methodName = "";
+
+        private string methodName = "";
 
         protected MethodWithTimeLimit(double _maxTimePerIteration)
         {
             maxTimePerIteration = _maxTimePerIteration;
+        }
+
+        protected void SetMethodName(string _methodName)
+        {
+            if (methodName.Length == 0)
+            {
+                methodName = _methodName;
+            }
         }
 
         protected IEnumerator WaitForNextFrame(string extraDetail = "")
@@ -44,7 +53,7 @@ namespace LateToTheParty.Models
 
         protected void AbortWaitingForFrames(string extraDetail = "")
         {
-            if (hadToWait)
+            if (IsRunning)
             {
                 LoggingController.LogWarning(messageTextPrefix(extraDetail) + "aborted." + messageTextSuffix(), true);
             }

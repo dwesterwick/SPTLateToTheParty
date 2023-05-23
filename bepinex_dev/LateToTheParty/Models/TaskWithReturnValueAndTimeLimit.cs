@@ -31,9 +31,29 @@ namespace LateToTheParty.Models
                 throw new InvalidOperationException("There is already a task running.");
             }
 
-            base.methodName = action.Method.Name;
+            SetMethodName(action.Method.Name);
             _task = Task.Run(action, base.cancellationTokenSource.Token);
             base.cycleTimer.Restart();
+        }
+
+        public void StartAndIgnoreErrors(Func<TResult> action)
+        {
+            SetMethodName(action.Method.Name);
+            Func<TResult> actionWrapper = () =>
+            {
+                try
+                {
+                    return action();
+                }
+                catch (Exception ex)
+                {
+                    HandleError(ex);
+                }
+
+                return default;
+            };
+
+            this.Start(actionWrapper);
         }
 
         public TResult GetResult()
