@@ -277,6 +277,7 @@ namespace LateToTheParty.Controllers
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
             int minTimeBeforeActivation = 20;
 
+            LoggingController.LogInfo("Adjusting " + location.waves.Length + " bot-wave times...");
             foreach (WildSpawnWave wave in location.waves)
             {
                 wave.time_max -= timeReduction;
@@ -293,8 +294,9 @@ namespace LateToTheParty.Controllers
                     wave.time_max = wave.time_min + 1;
                 }
 
-                LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
+                //LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
             }
+            LoggingController.LogInfo("Adjusting " + location.waves.Length + " bot-wave times...done.");
         }
 
         private static void AdjustBossSpawnChances(LocationSettingsClass.Location location, double timeReductionFactor)

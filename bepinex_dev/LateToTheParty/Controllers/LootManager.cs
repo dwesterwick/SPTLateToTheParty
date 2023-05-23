@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -134,7 +135,7 @@ namespace LateToTheParty.Models
                     Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
                     //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
                     destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                    destroyLootTask.Start(() => DestroyLoot(itemsToDestroy));
+                    destroyLootTask.StartAndIgnoreErrors(() => DestroyLoot(itemsToDestroy));
                     yield return destroyLootTask.WaitForTask();
                 }
             }
@@ -144,6 +145,7 @@ namespace LateToTheParty.Models
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
         {
             // Ignore quest items like the bronze pocket watch for "Checking"
@@ -170,6 +172,7 @@ namespace LateToTheParty.Models
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static void ProcessStaticLootContainer(LootableContainer lootableContainer, double raidET)
         {
             if (lootableContainer.ItemOwner == null)
@@ -202,6 +205,7 @@ namespace LateToTheParty.Models
             return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static IEnumerable<Item> FindLootToDestroy(Vector3 yourPosition, double targetLootRemainingFraction, double raidET)
         {
             // Calculate the fraction of loot that should be removed from the map
@@ -247,6 +251,7 @@ namespace LateToTheParty.Models
             return lootToDestroy.Select(l => l.Key);
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
         {
             System.Random randomGen = new System.Random();
@@ -275,6 +280,7 @@ namespace LateToTheParty.Models
             return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
         {
             if (!LootInfo.ContainsKey(item))
@@ -296,7 +302,7 @@ namespace LateToTheParty.Models
             }
 
             // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((yourPosition == null) || (LootInfo[item].Transform.position == null))
+            if ((Camera.main == null) || (LootInfo[item].Transform == null))
             {
                 return false;
             }
@@ -319,6 +325,7 @@ namespace LateToTheParty.Models
             return true;
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static void DestroyLoot(IEnumerable<Item> items)
         {
             foreach(Item item in items)
@@ -327,6 +334,7 @@ namespace LateToTheParty.Models
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static void DestroyLoot(Item item)
         {
             // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
@@ -399,11 +407,13 @@ namespace LateToTheParty.Models
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items)
         {
             return items.Where(i => !ItemsDroppedByMainPlayer.Contains(i));
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private static IEnumerable<Item> RemoveExcludedItems(this IEnumerable<Item> items)
         {
             // This should only be run once to generate the array of secure container ID's

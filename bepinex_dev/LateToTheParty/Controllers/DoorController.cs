@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
@@ -115,7 +116,7 @@ namespace LateToTheParty.Controllers
                 //EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
                 //yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor, doorsToToggle);
                 toggleDoorsTask = new TaskWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-                toggleDoorsTask.Start(() => ToggleRandomDoors(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
+                toggleDoorsTask.StartAndIgnoreErrors(() => ToggleRandomDoors(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
                 yield return toggleDoorsTask.WaitForTask();
             }
             finally
@@ -202,6 +203,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private void ToggleRandomDoors(int maxCalcTime_ms, int totalDoorsToToggle)
         {
             for (int door = 0; door < totalDoorsToToggle; door++)
@@ -210,6 +212,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private void ToggleRandomDoor(int maxCalcTime_ms)
         {
             // Randomly sort eligible doors
@@ -251,15 +254,16 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            // Ignore doors that are too close to you
-            Vector3 yourPosition = Camera.main.transform.position;
+            
 
             // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((yourPosition == null) || (door.transform.position == null))
+            if ((Camera.main == null) || (door.transform == null))
             {
                 return false;
             }
 
+            // Ignore doors that are too close to you
+            Vector3 yourPosition = Camera.main.transform.position;
             float doorDist = Vector3.Distance(yourPosition, door.transform.position);
             if (doorDist < ConfigController.Config.OpenDoorsDuringRaid.ExclusionRadius)
             {

@@ -19,20 +19,30 @@ namespace LateToTheParty
 
             if (ConfigController.Config.Enabled)
             {
-                LoggingController.Logger.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
+                LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.GameWorldOnDestroyPatch().Enable();
                 new Patches.OnItemAddedOrRemovedPatch().Enable();
                 new Patches.OnBeenKilledByAggressorPatch().Enable();
                 new Patches.OnGameStartedPatch().Enable();
 
-                LoggingController.Logger.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
+                LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<LootDestroyerController>();
                 this.GetOrAddComponent<DoorController>();
                 this.GetOrAddComponent<BotConversionController>();
+
+                AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
             }
 
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
+        }
+
+        private void LogAndThrowUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = (Exception)e.ExceptionObject;
+            LoggingController.LogError("[ UNHANDLED EXCEPTION - PLEASE RESTART THE GAME ASAP ]");
+            LoggingController.LogError(ex.ToString());
+            throw ex;
         }
     }
 }

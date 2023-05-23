@@ -111,7 +111,7 @@ namespace LateToTheParty.Models
         {
             IgnoredErrors = true;
             LoggingController.LogError(ex.ToString());
-            LoggingController.LogWarning("The error above was ignored.");
+            LoggingController.LogWarning("The error above was ignored on purpose.");
         }
     }
 }
