@@ -77,6 +77,7 @@
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
+    <Compile Include="Configuration\LoggingPath.cs" />
     <Compile Include="Configuration\LootRankingConfig.cs" />
     <Compile Include="Configuration\LootRankingWeightingConfig.cs" />
     <Compile Include="Configuration\LootRankingItemDataConfig.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Controllers\LootDestroyerController.cs" />
     <Compile Include="Models\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />
+    <Compile Include="Models\LoggingBuffer.cs" />
     <Compile Include="Models\LootInfo.cs" />
     <Compile Include="Models\LocationSettings.cs" />
     <Compile Include="Controllers\LootManager.cs" />

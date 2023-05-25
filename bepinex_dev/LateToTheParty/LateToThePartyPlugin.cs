@@ -19,6 +19,9 @@ namespace LateToTheParty
 
             if (ConfigController.Config.Enabled)
             {
+                string loggingPath = ConfigController.GetLoggingPath();
+                LoggingController.InitializeLoggingBuffer(200, loggingPath, this.Info.Metadata.Name);
+
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.GameWorldOnDestroyPatch().Enable();
@@ -31,7 +34,10 @@ namespace LateToTheParty
                 this.GetOrAddComponent<DoorController>();
                 this.GetOrAddComponent<BotConversionController>();
 
-                AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
+                if (ConfigController.Config.Debug)
+                {
+                    AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
+                }
             }
 
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
@@ -40,8 +46,12 @@ namespace LateToTheParty
         private void LogAndThrowUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Exception ex = (Exception)e.ExceptionObject;
+
             LoggingController.LogError("[ UNHANDLED EXCEPTION - PLEASE RESTART THE GAME ASAP ]");
             LoggingController.LogError(ex.ToString());
+
+            LoggingController.WriteMessagesToLogFile();
+
             throw ex;
         }
     }

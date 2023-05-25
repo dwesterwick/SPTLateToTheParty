@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Aki.Reflection.Patching;
 using EFT;
 using EFT.UI;
+using LateToTheParty.Controllers;
 using UnityEngine;
 
 namespace LateToTheParty.Patches

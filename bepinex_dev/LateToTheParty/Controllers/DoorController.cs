@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
@@ -13,6 +14,7 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.Models;
 using UnityEngine;
+using static EFT.Interactive.Turnable;
 
 namespace LateToTheParty.Controllers
 {
@@ -22,6 +24,7 @@ namespace LateToTheParty.Controllers
         public static int InteractiveLayer { get; set; }
 
         private static List<Door> validDoors = new List<Door>();
+        private static Dictionary<Door, bool> canToggleDoorDict = new Dictionary<Door, bool>();
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
@@ -34,9 +37,11 @@ namespace LateToTheParty.Controllers
             if (toggleDoorsTask != null)
             {
                 toggleDoorsTask.Abort();
+                toggleDoorsTask.WaitUntilTaskIsComplete();
             }
-
+            
             validDoors.Clear();
+            canToggleDoorDict.Clear();
             updateTimer.Restart();
 
             validDoorCount = -1;
@@ -112,12 +117,15 @@ namespace LateToTheParty.Controllers
             {
                 IsTogglingDoors = true;
 
+                EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                yield return enumeratorWithTimeLimit.Run(validDoors.AsEnumerable(), UpdateIfDoorCanBeToggled);
+                IEnumerable<Door> doorsThatCanBeToggled = canToggleDoorDict.Where(d => d.Value).Select(d => d.Key);
+
                 // Spread the work across multiple frames based on a maximum calculation time per frame
-                //EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-                //yield return enumeratorWithTimeLimit.Run(Enumerable.Repeat(1, doorsToToggle), ToggleRandomDoor, doorsToToggle);
-                toggleDoorsTask = new TaskWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-                toggleDoorsTask.StartAndIgnoreErrors(() => ToggleRandomDoors(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
-                yield return toggleDoorsTask.WaitForTask();
+                yield return enumeratorWithTimeLimit.Repeat(doorsToToggle, ToggleRandomDoor, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                //toggleDoorsTask = new TaskWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                //toggleDoorsTask.StartAndIgnoreErrors(() => ToggleRandomDoors(doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
+                //yield return toggleDoorsTask.WaitForTask();
             }
             finally
             {
@@ -135,7 +143,7 @@ namespace LateToTheParty.Controllers
 
             foreach (Door door in allDoors)
             {
-                if (!CanToggleDoor(door, true))
+                if (!IsValidDoor(door, true))
                 {
                     continue;
                 }
@@ -147,7 +155,38 @@ namespace LateToTheParty.Controllers
             LoggingController.LogInfo("Searching for valid doors...found " + validDoors.Count + " doors.");
         }
 
-        private bool CanToggleDoor(Door door, bool logResult = false)
+        private void UpdateIfDoorCanBeToggled(Door door)
+        {
+            if (canToggleDoorDict.ContainsKey(door))
+            {
+                canToggleDoorDict[door] = CanToggleDoor(door);
+            }
+            else
+            {
+                canToggleDoorDict.Add(door, CanToggleDoor(door));
+            }
+        }
+
+        private bool CanToggleDoor(Door door)
+        {
+            // Ensure you're still in the raid to avoid NRE's when it ends
+            if ((Camera.main == null) || (door.transform == null))
+            {
+                return false;
+            }
+
+            // Ignore doors that are too close to you
+            Vector3 yourPosition = Camera.main.transform.position;
+            float doorDist = Vector3.Distance(yourPosition, door.transform.position);
+            if (doorDist < ConfigController.Config.OpenDoorsDuringRaid.ExclusionRadius)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsValidDoor(Door door, bool logResult = false)
         {
             // Redundant check
             /*if (!door.Operatable)
@@ -203,21 +242,21 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        [HandleProcessCorruptedStateExceptions]
-        private void ToggleRandomDoors(int maxCalcTime_ms, int totalDoorsToToggle)
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
+        private void ToggleRandomDoors(IEnumerable<Door> eligibleDoors, int maxCalcTime_ms, int totalDoorsToToggle)
         {
-            for (int door = 0; door < totalDoorsToToggle; door++)
+            for (int toggledDoors = 0; toggledDoors < totalDoorsToToggle; toggledDoors++)
             {
-                ToggleRandomDoor(maxCalcTime_ms);
+                ToggleRandomDoor(eligibleDoors, maxCalcTime_ms);
             }
         }
 
-        [HandleProcessCorruptedStateExceptions]
-        private void ToggleRandomDoor(int maxCalcTime_ms)
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
+        private void ToggleRandomDoor(IEnumerable<Door> eligibleDoors, int maxCalcTime_ms)
         {
             // Randomly sort eligible doors
             System.Random randomObj = new System.Random();
-            IEnumerable<Door> randomlyOrderedKeys = validDoors.OrderBy(e => randomObj.NextDouble());
+            IEnumerable<Door> randomlyOrderedKeys = eligibleDoors.OrderBy(e => randomObj.NextDouble());
 
             // Try to find a door to toggle, but do not wait too long
             Stopwatch calcTimer = Stopwatch.StartNew();
@@ -250,22 +289,6 @@ namespace LateToTheParty.Controllers
                 return false;
             }
             if (newState == EDoorState.Open && door.DoorState == EDoorState.Open)
-            {
-                return false;
-            }
-
-            
-
-            // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((Camera.main == null) || (door.transform == null))
-            {
-                return false;
-            }
-
-            // Ignore doors that are too close to you
-            Vector3 yourPosition = Camera.main.transform.position;
-            float doorDist = Vector3.Distance(yourPosition, door.transform.position);
-            if (doorDist < ConfigController.Config.OpenDoorsDuringRaid.ExclusionRadius)
             {
                 return false;
             }

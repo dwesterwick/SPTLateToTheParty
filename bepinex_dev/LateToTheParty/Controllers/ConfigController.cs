@@ -21,6 +21,13 @@ namespace LateToTheParty.Controllers
             return Config;
         }
 
+        public static string GetLoggingPath()
+        {
+            string json = RequestHandler.GetJson("/LateToTheParty/GetLoggingPath");
+            Configuration.LoggingPath path = JsonConvert.DeserializeObject<Configuration.LoggingPath>(json);
+            return path.Path;
+        }
+
         public static Configuration.LootRankingWeightingConfig GetLootRankingData()
         {
             string json = RequestHandler.GetJson("/LateToTheParty/GetLootRankingData");

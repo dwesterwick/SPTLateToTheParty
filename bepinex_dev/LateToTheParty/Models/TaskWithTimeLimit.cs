@@ -53,7 +53,7 @@ namespace LateToTheParty.Models
                 }
                 catch (Exception ex)
                 {
-                    HandleError(ex);
+                    IgnoreError(ex);
                 }
             };
 
@@ -62,6 +62,11 @@ namespace LateToTheParty.Models
 
         public IEnumerator WaitForTask()
         {
+            if (task == null)
+            {
+                throw new InvalidOperationException("The task has not been started");
+            }
+
             while (taskIsRunning())
             {
                 if (task.Wait(1, cancellationTokenSource.Token))
@@ -86,6 +91,23 @@ namespace LateToTheParty.Models
             base.IsCompleted = true;
         }
 
+        public void WaitUntilTaskIsComplete()
+        {
+            Task waitforTaskToCompleteTask = new Task(() => {
+                try
+                {
+                    while (WaitForTask().MoveNext()) { }
+                }
+                catch (InvalidOperationException) { }
+            });
+            waitforTaskToCompleteTask.Start();
+
+            if (!waitforTaskToCompleteTask.Wait(3000))
+            {
+                LoggingController.LogError("The task for " + MethodName + " timed out.");
+            }
+        }
+
         public void Abort()
         {
             base.stopRequested = true;
@@ -107,7 +129,7 @@ namespace LateToTheParty.Models
             return false;
         }
 
-        protected void HandleError(Exception ex)
+        protected void IgnoreError(Exception ex)
         {
             IgnoredErrors = true;
             LoggingController.LogError(ex.ToString());

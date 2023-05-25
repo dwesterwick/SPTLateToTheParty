@@ -47,7 +47,7 @@ namespace LateToTheParty.Models
                 }
                 catch (Exception ex)
                 {
-                    HandleError(ex);
+                    IgnoreError(ex);
                 }
 
                 return default;

@@ -64,6 +64,17 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }], "GetConfig"
         );
 
+        // Get the logging directory for bepinex crash reports
+        staticRouterModService.registerStaticRouter(`StaticGetLoggingPath${modName}`,
+            [{
+                url: "/LateToTheParty/GetLoggingPath",
+                action: () => 
+                {
+                    return JSON.stringify({ path: __dirname + "/../log/" });
+                }
+            }], "GetLoggingPath"
+        );
+
         if (!modConfig.enabled)
         {
             return;

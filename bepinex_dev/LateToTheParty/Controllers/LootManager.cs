@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,12 +50,14 @@ namespace LateToTheParty.Models
             if (findLootToDestroyTask != null)
             {
                 findLootToDestroyTask.Abort();
+                findLootToDestroyTask.WaitUntilTaskIsComplete();
             }
             if (destroyLootTask != null)
             {
                 destroyLootTask.Abort();
+                destroyLootTask.WaitUntilTaskIsComplete();
             }
-
+            
             AllLootableContainers.Clear();
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
@@ -123,21 +126,38 @@ namespace LateToTheParty.Models
                     yield break;
                 }
 
-                // Find loot based on target fraction remaining
+                // Find amount of loot to destroy
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
-                findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                findLootToDestroyTask.StartAndIgnoreErrors(() => FindLootToDestroy(yourPosition, targetLootRemainingFraction, raidET));
-                yield return findLootToDestroyTask.WaitForTask();
-
-                if (!findLootToDestroyTask.IgnoredErrors)
+                int lootItemsToDestroy = GetNumberOfLootItemsToDestroy(targetLootRemainingFraction);
+                if ((lootItemsToDestroy == 0) && (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0))
                 {
-                    // Destroy sorted loot
-                    Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
-                    //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-                    destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                    destroyLootTask.StartAndIgnoreErrors(() => DestroyLoot(itemsToDestroy));
-                    yield return destroyLootTask.WaitForTask();
+                    LoggingController.LogInfo("Max time of " + ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot + "s elapsed since destroying loot. Forcing at least 1 item to be removed...");
+                    lootItemsToDestroy = 1;
                 }
+                if (lootItemsToDestroy == 0)
+                {
+                    yield break;
+                }
+
+                // Determine which loot is eligible to destroy
+                //UpdateAllLootEligibility(yourPosition, raidET);
+                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
+                
+                // Determine which loot items to destroy
+                findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                findLootToDestroyTask.StartAndIgnoreErrors(() => FindLootToDestroy(lootItemsToDestroy));
+                yield return findLootToDestroyTask.WaitForTask();
+                if (findLootToDestroyTask.IgnoredErrors)
+                {
+                    yield break;
+                }
+
+                // Destroy sorted loot
+                Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
+                //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                destroyLootTask.StartAndIgnoreErrors(() => DestroyLoot(itemsToDestroy));
+                yield return destroyLootTask.WaitForTask();
             }
             finally
             {
@@ -145,7 +165,7 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
         {
             // Ignore quest items like the bronze pocket watch for "Checking"
@@ -172,7 +192,7 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void ProcessStaticLootContainer(LootableContainer lootableContainer, double raidET)
         {
             if (lootableContainer.ItemOwner == null)
@@ -205,31 +225,25 @@ namespace LateToTheParty.Models
             return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
         }
 
-        [HandleProcessCorruptedStateExceptions]
-        private static IEnumerable<Item> FindLootToDestroy(Vector3 yourPosition, double targetLootRemainingFraction, double raidET)
+        private static void UpdateAllLootEligibility(Vector3 yourPosition, double raidET)
         {
-            // Calculate the fraction of loot that should be removed from the map
-            double currentLootRemainingFraction = (double)LootInfo.Values.Where(v => v.IsDestroyed == false).Count() / LootInfo.Count;
-            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
-
-            // Calculate the number of loot items to destroy
-            int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * LootInfo.Count);
-            if (lootItemsToDestroy == 0)
+            Item[] items = LootInfo.Keys.ToArray();
+            foreach(Item item in items)
             {
-                if (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0)
-                {
-                    LoggingController.LogInfo("Max time of " + ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot + "s elapsed since destroying loot. Forcing at least 1 item to be removed...");
-                    lootItemsToDestroy = 1;
-                }
-                else
-                {
-                    return Enumerable.Empty<Item>();
-                }
+                UpdateLootEligibility(item, yourPosition, raidET);
             }
+        }
 
+        private static void UpdateLootEligibility(Item item, Vector3 yourPosition, double raidET)
+        {
+            LootInfo[item].CanDestroy = CanDestroyItem(item, yourPosition, raidET);
+        }
+
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
+        private static IEnumerable<Item> FindLootToDestroy(int lootItemsToDestroy)
+        {
             // Find all loot items eligible for destruction and sort them            
-            IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => CanDestroyItem(l.Key, yourPosition, raidET));
+            IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
             IEnumerable<KeyValuePair<Item, LootInfo>> sortedLoot = SortLoot(eligibleItems);
 
             // Generate a list of loot to be destroyed. This needs to be iterated because each item in the loot dictionaries has an unknown number of child items in it. 
@@ -251,7 +265,20 @@ namespace LateToTheParty.Models
             return lootToDestroy.Select(l => l.Key);
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
+        {
+            // Calculate the fraction of loot that should be removed from the map
+            double currentLootRemainingFraction = (double)LootInfo.Values.Where(v => v.IsDestroyed == false).Count() / LootInfo.Count;
+            double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
+            //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
+
+            // Calculate the number of loot items to destroy
+            int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * LootInfo.Count);
+
+            return lootItemsToDestroy;
+        }
+
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
         {
             System.Random randomGen = new System.Random();
@@ -280,7 +307,7 @@ namespace LateToTheParty.Models
             return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
         {
             if (!LootInfo.ContainsKey(item))
@@ -325,7 +352,7 @@ namespace LateToTheParty.Models
             return true;
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void DestroyLoot(IEnumerable<Item> items)
         {
             foreach(Item item in items)
@@ -334,7 +361,7 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void DestroyLoot(Item item)
         {
             // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
@@ -407,13 +434,13 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items)
         {
             return items.Where(i => !ItemsDroppedByMainPlayer.Contains(i));
         }
 
-        [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<Item> RemoveExcludedItems(this IEnumerable<Item> items)
         {
             // This should only be run once to generate the array of secure container ID's

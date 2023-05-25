@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace LateToTheParty.Models
 {
@@ -38,18 +39,29 @@ namespace LateToTheParty.Models
             yield return Run_Internal(collection, action);
         }
 
+        public IEnumerator Repeat(int repetitions, Action action)
+        {
+            SetMethodName(action.Method.Name);
+            yield return Repeat_Internal(repetitions, action);
+        }
+
+        public IEnumerator Repeat<T1>(int repetitions, Action<T1> action, T1 param1)
+        {
+            SetMethodName(action.Method.Name);
+            Action actionInternal = () => { action(param1); };
+            yield return Repeat_Internal(repetitions, actionInternal);
+        }
+
+        public IEnumerator Repeat<T1, T2>(int repetitions, Action<T1, T2> action, T1 param1, T2 param2)
+        {
+            SetMethodName(action.Method.Name);
+            Action actionInternal = () => { action(param1, param2); };
+            yield return Repeat_Internal(repetitions, actionInternal);
+        }
+
         private IEnumerator Run_Internal<TItem>(IEnumerable<TItem> collection, Action<TItem> action)
         {
-            if (base.IsRunning)
-            {
-                throw new InvalidOperationException("There is already a coroutine running.");
-            }
-
-            base.IsCompleted = false;
-            base.IsRunning = true;
-            base.hadToWait = false;
-
-            base.cycleTimer.Restart();
+            Run_Internal_Init();
 
             foreach (TItem item in collection)
             {
@@ -65,7 +77,7 @@ namespace LateToTheParty.Models
 
                 if (base.cycleTimer.ElapsedMilliseconds > base.maxTimePerIteration)
                 {
-                    yield return base.WaitForNextFrame(typeof(TItem).Name);
+                    yield return base.WaitForNextFrame();
                 }
 
                 if (base.stopRequested)
@@ -75,10 +87,60 @@ namespace LateToTheParty.Models
                 }
             }
 
+            Run_Internal_End();
+        }
+
+        private IEnumerator Repeat_Internal(int repetitions, Action action)
+        {
+            Run_Internal_Init();
+
+            for (int repetition = 0; repetition < repetitions; repetition++)
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    LoggingController.LogError("Aborting coroutine iteration #" + repetition.ToString());
+                    LoggingController.LogError(ex.ToString());
+                }
+
+                if (base.cycleTimer.ElapsedMilliseconds > base.maxTimePerIteration)
+                {
+                    yield return base.WaitForNextFrame();
+                }
+
+                if (base.stopRequested)
+                {
+                    base.IsRunning = false;
+                    yield break;
+                }
+            }
+
+            Run_Internal_End();
+        }
+
+        private void Run_Internal_Init()
+        {
+            if (base.IsRunning)
+            {
+                throw new InvalidOperationException("There is already a coroutine running.");
+            }
+
+            base.IsCompleted = false;
+            base.IsRunning = true;
+            base.hadToWait = false;
+
+            base.cycleTimer.Restart();
+        }
+
+        private void Run_Internal_End()
+        {
             base.IsRunning = false;
             base.IsCompleted = true;
 
-            base.FinishedWaitingForFrames(typeof(TItem).Name);
+            base.FinishedWaitingForFrames();
         }
 
         public void Abort()

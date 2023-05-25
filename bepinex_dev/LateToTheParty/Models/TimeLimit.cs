@@ -11,6 +11,7 @@ namespace LateToTheParty.Models
 {
     internal abstract class MethodWithTimeLimit
     {
+        public string MethodName { get; private set; } = "";
         public bool IsRunning { get; protected set; } = false;
         public bool IsCompleted { get; protected set; } = false;
 
@@ -19,8 +20,6 @@ namespace LateToTheParty.Models
         protected bool stopRequested = false;
         protected bool hadToWait = false;
 
-        private string methodName = "";
-
         protected MethodWithTimeLimit(double _maxTimePerIteration)
         {
             maxTimePerIteration = _maxTimePerIteration;
@@ -28,9 +27,9 @@ namespace LateToTheParty.Models
 
         protected void SetMethodName(string _methodName)
         {
-            if (methodName.Length == 0)
+            if (MethodName.Length == 0)
             {
-                methodName = _methodName;
+                MethodName = _methodName;
             }
         }
 
@@ -62,9 +61,9 @@ namespace LateToTheParty.Models
         private string messageTextPrefix(string extraDetail = "")
         {
             string message = "Waiting ";
-            if (methodName.Length > 0)
+            if (MethodName.Length > 0)
             {
-                message += "for " + methodName + " ";
+                message += "for " + MethodName + " ";
 
                 if (extraDetail.Length > 0)
                 {
