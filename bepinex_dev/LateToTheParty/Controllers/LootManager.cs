@@ -51,11 +51,13 @@ namespace LateToTheParty.Models
             {
                 findLootToDestroyTask.Abort();
                 findLootToDestroyTask.WaitUntilTaskIsComplete();
+                findLootToDestroyTask = null;
             }
             if (destroyLootTask != null)
             {
                 destroyLootTask.Abort();
                 destroyLootTask.WaitUntilTaskIsComplete();
+                destroyLootTask = null;
             }
             
             AllLootableContainers.Clear();
@@ -140,24 +142,38 @@ namespace LateToTheParty.Models
                 }
 
                 // Determine which loot is eligible to destroy
-                //UpdateAllLootEligibility(yourPosition, raidET);
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
-                
+
                 // Determine which loot items to destroy
-                findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                findLootToDestroyTask.StartAndIgnoreErrors(() => FindLootToDestroy(lootItemsToDestroy));
-                yield return findLootToDestroyTask.WaitForTask();
-                if (findLootToDestroyTask.IgnoredErrors)
+                Item[] itemsToDestroy;
+                if (ConfigController.UseTasksInCoroutines)
                 {
-                    yield break;
+                    findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                    findLootToDestroyTask.StartAndIgnoreErrors(() => FindLootToDestroy(lootItemsToDestroy));
+                    yield return findLootToDestroyTask.WaitForTask();
+                    if (findLootToDestroyTask.IgnoredErrors)
+                    {
+                        yield break;
+                    }
+
+                    itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
+                }
+                else
+                {
+                    itemsToDestroy = FindLootToDestroy(lootItemsToDestroy).ToArray();
                 }
 
                 // Destroy sorted loot
-                Item[] itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
-                //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-                destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                destroyLootTask.StartAndIgnoreErrors(() => DestroyLoot(itemsToDestroy));
-                yield return destroyLootTask.WaitForTask();
+                if (ConfigController.UseTasksInCoroutines)
+                {
+                    destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                    destroyLootTask.StartAndIgnoreErrors(() => DestroyLoot(itemsToDestroy));
+                    yield return destroyLootTask.WaitForTask();
+                }
+                else
+                {
+                    yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                }
             }
             finally
             {

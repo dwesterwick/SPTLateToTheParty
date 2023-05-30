@@ -52,7 +52,7 @@ namespace LateToTheParty
 
             LoggingController.WriteMessagesToLogFile();
 
-            throw ex;
+            //throw ex;
         }
     }
 }

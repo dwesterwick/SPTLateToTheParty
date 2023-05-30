@@ -19,6 +19,7 @@ namespace LateToTheParty.Models
         protected virtual Task task
         {
             get { return _task; }
+            set { _task = value; }
         }
 
         protected CancellationTokenSource cancellationTokenSource;
@@ -67,7 +68,7 @@ namespace LateToTheParty.Models
                 throw new InvalidOperationException("The task has not been started");
             }
 
-            while (taskIsRunning())
+            while (base.IsRunning && taskIsRunning())
             {
                 if (task.Wait(1, cancellationTokenSource.Token))
                 {
@@ -76,6 +77,7 @@ namespace LateToTheParty.Models
 
                 if (stopRequested)
                 {
+                    base.hadToWait = false;
                     base.IsRunning = false;
                     yield break;
                 }

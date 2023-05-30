@@ -34,6 +34,7 @@ namespace LateToTheParty.Models
             SetMethodName(action.Method.Name);
             _task = Task.Run(action, base.cancellationTokenSource.Token);
             base.cycleTimer.Restart();
+            base.IsRunning = true;
         }
 
         public void StartAndIgnoreErrors(Func<TResult> action)

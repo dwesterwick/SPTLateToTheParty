@@ -38,6 +38,7 @@ namespace LateToTheParty.Controllers
             {
                 toggleDoorsTask.Abort();
                 toggleDoorsTask.WaitUntilTaskIsComplete();
+                toggleDoorsTask = null;
             }
             
             validDoors.Clear();
@@ -122,10 +123,16 @@ namespace LateToTheParty.Controllers
                 IEnumerable<Door> doorsThatCanBeToggled = canToggleDoorDict.Where(d => d.Value).Select(d => d.Key);
 
                 // Spread the work across multiple frames based on a maximum calculation time per frame
-                yield return enumeratorWithTimeLimit.Repeat(doorsToToggle, ToggleRandomDoor, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-                //toggleDoorsTask = new TaskWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-                //toggleDoorsTask.StartAndIgnoreErrors(() => ToggleRandomDoors(doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
-                //yield return toggleDoorsTask.WaitForTask();
+                if (ConfigController.UseTasksInCoroutines)
+                {
+                    toggleDoorsTask = new TaskWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                    toggleDoorsTask.StartAndIgnoreErrors(() => ToggleRandomDoors(doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame, doorsToToggle));
+                    yield return toggleDoorsTask.WaitForTask();
+                }
+                else
+                {
+                    yield return enumeratorWithTimeLimit.Repeat(doorsToToggle, ToggleRandomDoor, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                }
             }
             finally
             {
