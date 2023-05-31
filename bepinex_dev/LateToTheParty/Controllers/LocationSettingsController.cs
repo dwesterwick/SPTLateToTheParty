@@ -15,7 +15,7 @@ namespace LateToTheParty.Controllers
 
         private static string[] CarExtractNames = new string[0];
         private static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
-        private static BackendConfigSettingsClass.GClass1307.GClass1314 matchEndConfig = null;
+        private static BackendConfigSettingsClass.GClass1306.GClass1313 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
         public static void ClearOriginalSettings()
@@ -130,7 +130,7 @@ namespace LateToTheParty.Controllers
 
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
-                foreach (GClass1198 exit in location.exits)
+                foreach (GClass1197 exit in location.exits)
                 {
                     if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                     {
@@ -157,7 +157,7 @@ namespace LateToTheParty.Controllers
 
             LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
             
-            foreach (GClass1198 exit in location.exits)
+            foreach (GClass1197 exit in location.exits)
             {
                 if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                 {
@@ -208,7 +208,7 @@ namespace LateToTheParty.Controllers
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
             int minTimeBeforeActivation = 60;
 
-            foreach (GClass1198 exit in location.exits)
+            foreach (GClass1197 exit in location.exits)
             {
                 if (exit.PassageRequirement != EFT.Interactive.ERequirementState.Train)
                 {
@@ -257,7 +257,7 @@ namespace LateToTheParty.Controllers
             double reductionFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
 
             // Find all VEX extracts and adjust their chances proportionally
-            foreach (GClass1198 exit in location.exits)
+            foreach (GClass1197 exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
