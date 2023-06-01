@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
-using System.Security;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
@@ -14,7 +13,6 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.Models;
 using UnityEngine;
-using static EFT.Interactive.Turnable;
 
 namespace LateToTheParty.Controllers
 {
@@ -28,11 +26,18 @@ namespace LateToTheParty.Controllers
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
         private static int validDoorCount = -1;
 
         public static void Clear()
         {
+            if (IsTogglingDoors)
+            {
+                enumeratorWithTimeLimit.Abort();
+                TaskWithTimeLimit.WaitForCondition(() => !IsTogglingDoors);
+            }
+
             validDoors.Clear();
             canToggleDoorDict.Clear();
             updateTimer.Restart();
@@ -111,12 +116,12 @@ namespace LateToTheParty.Controllers
                 IsTogglingDoors = true;
 
                 // Check which doors are eligible to be toggled
-                EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(validDoors.AsEnumerable(), UpdateIfDoorCanBeToggled);
                 IEnumerable<Door> doorsThatCanBeToggled = canToggleDoorDict.Where(d => d.Value).Select(d => d.Key);
 
                 // Toggle requested number of doors
-                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Repeat(doorsToToggle, ToggleRandomDoor, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
             }
             finally

@@ -1,5 +1,7 @@
 ﻿using EFT.Interactive;
 using EFT.InventoryLogic;
+using EFT.Quests;
+using EFT.UI;
 using LateToTheParty.Controllers;
 using System;
 using System.Collections;
@@ -28,6 +30,16 @@ namespace LateToTheParty.Models
         public TaskWithTimeLimit(double _maxTimePerIteration) : base(_maxTimePerIteration)
         {
             cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public static void WaitForCondition(Func<bool> conditionCheck)
+        {
+            TaskWithTimeLimit waitForConditionTask = new TaskWithTimeLimit(1);
+            waitForConditionTask.Start(() =>
+            {
+                while (!conditionCheck()) { Thread.Sleep(1); }
+            });
+            waitForConditionTask.WaitUntilTaskIsComplete();
         }
 
         public void Start(Action action)

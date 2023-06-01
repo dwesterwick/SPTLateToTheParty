@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +10,6 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using EFT.UI;
 using LateToTheParty.Controllers;
 using UnityEngine;
 
@@ -27,6 +24,7 @@ namespace LateToTheParty.Models
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
+        private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
 
         public static int LootableContainerCount
         {
@@ -45,6 +43,12 @@ namespace LateToTheParty.Models
 
         public static void Clear()
         {
+            if (IsFindingAndDestroyingLoot)
+            {
+                enumeratorWithTimeLimit.Abort();
+                TaskWithTimeLimit.WaitForCondition(() => !IsFindingAndDestroyingLoot);
+            }
+
             AllLootableContainers.Clear();
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
@@ -98,11 +102,11 @@ namespace LateToTheParty.Models
 
                 // Find all loose loot
                 LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
-                EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem, firstLootSearch ? 0 : raidET);
 
                 // Search all lootable containers for loot
-                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
 
                 // Ensure there is still loot on the map
@@ -126,7 +130,7 @@ namespace LateToTheParty.Models
                 }
 
                 // Determine which loot is eligible to destroy
-                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
                 // Sort eligible loot
@@ -135,11 +139,11 @@ namespace LateToTheParty.Models
 
                 // Identify items to destroy
                 List<Item> itemsToDestroy = new List<Item>();
-                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy, itemsToDestroy);
 
                 // Destroy items
-                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
 
                 itemsToDestroy.Clear();
