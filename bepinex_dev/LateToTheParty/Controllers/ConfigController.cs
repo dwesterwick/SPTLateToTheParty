@@ -11,7 +11,6 @@ namespace LateToTheParty.Controllers
 {
     public static class ConfigController
     {
-        public static bool UseTasksInCoroutines { get; } = false;
         public static Configuration.ModConfig Config { get; private set; } = null;
         public static Configuration.LootRankingWeightingConfig LootRanking { get; private set; } = null;
 

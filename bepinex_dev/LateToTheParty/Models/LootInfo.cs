@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EFT.InventoryLogic;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -23,6 +24,7 @@ namespace LateToTheParty.Controllers
         public double DistanceToNearestSpawnPoint { get; set; } = 0;
         public double RaidETWhenFound { get; set; } = -999;
         public bool CanDestroy { get; set; } = false;
+        public Item parentItem { get; set; } = null;
 
         public LootInfo(ELootType lootType)
         {

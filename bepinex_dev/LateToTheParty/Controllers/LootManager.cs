@@ -24,11 +24,10 @@ namespace LateToTheParty.Models
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
         private static Dictionary<Item, LootInfo> LootInfo = new Dictionary<Item, LootInfo>();
+        private static List<Item> itemsToDestroy = new List<Item>();
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
-        private static TaskWithReturnValueAndTimeLimit<IEnumerable<Item>> findLootToDestroyTask = null;
-        private static TaskWithTimeLimit destroyLootTask = null;
 
         public static int LootableContainerCount
         {
@@ -47,19 +46,6 @@ namespace LateToTheParty.Models
 
         public static void Clear()
         {
-            if (findLootToDestroyTask != null)
-            {
-                findLootToDestroyTask.Abort();
-                findLootToDestroyTask.WaitUntilTaskIsComplete();
-                findLootToDestroyTask = null;
-            }
-            if (destroyLootTask != null)
-            {
-                destroyLootTask.Abort();
-                destroyLootTask.WaitUntilTaskIsComplete();
-                destroyLootTask = null;
-            }
-            
             AllLootableContainers.Clear();
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
@@ -145,35 +131,22 @@ namespace LateToTheParty.Models
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
                 // Determine which loot items to destroy
-                Item[] itemsToDestroy;
-                if (ConfigController.UseTasksInCoroutines)
-                {
-                    findLootToDestroyTask = new TaskWithReturnValueAndTimeLimit<IEnumerable<Item>>(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                    findLootToDestroyTask.StartAndIgnoreErrors(() => FindLootToDestroy(lootItemsToDestroy));
-                    yield return findLootToDestroyTask.WaitForTask();
-                    if (findLootToDestroyTask.IgnoredErrors)
-                    {
-                        yield break;
-                    }
-
-                    itemsToDestroy = findLootToDestroyTask.GetResult().ToArray();
-                }
-                else
-                {
-                    itemsToDestroy = FindLootToDestroy(lootItemsToDestroy).ToArray();
-                }
+                //Item[] itemsToDestroy = FindLootToDestroy(lootItemsToDestroy).ToArray();
 
                 // Destroy sorted loot
-                if (ConfigController.UseTasksInCoroutines)
-                {
-                    destroyLootTask = new TaskWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-                    destroyLootTask.StartAndIgnoreErrors(() => DestroyLoot(itemsToDestroy));
-                    yield return destroyLootTask.WaitForTask();
-                }
-                else
-                {
-                    yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-                }
+                //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+
+                // Sort eligible loot       
+                IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
+                Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
+
+                // Identify items to destroy
+                yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy);
+
+                // Destroy items
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+
+                itemsToDestroy.Clear();
             }
             finally
             {
@@ -181,7 +154,6 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
         {
             // Ignore quest items like the bronze pocket watch for "Checking"
@@ -208,7 +180,6 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void ProcessStaticLootContainer(LootableContainer lootableContainer, double raidET)
         {
             if (lootableContainer.ItemOwner == null)
@@ -255,7 +226,6 @@ namespace LateToTheParty.Models
             LootInfo[item].CanDestroy = CanDestroyItem(item, yourPosition, raidET);
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<Item> FindLootToDestroy(int lootItemsToDestroy)
         {
             // Find all loot items eligible for destruction and sort them            
@@ -294,7 +264,6 @@ namespace LateToTheParty.Models
             return lootItemsToDestroy;
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
         {
             System.Random randomGen = new System.Random();
@@ -323,7 +292,6 @@ namespace LateToTheParty.Models
             return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
         {
             if (!LootInfo.ContainsKey(item))
@@ -368,7 +336,6 @@ namespace LateToTheParty.Models
             return true;
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static void DestroyLoot(IEnumerable<Item> items)
         {
             foreach(Item item in items)
@@ -377,8 +344,91 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
+        private static void FindItemsToDestroy(Item item, int totalItemsToDestroy)
+        {
+            // Do not search for more items if enough have already been identified
+            if (itemsToDestroy.Count >= totalItemsToDestroy)
+            {
+                return;
+            }
+
+            // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
+            // all of the mods, magazines, etc. on it will be orphaned and cause errors
+            IEnumerable<Item> parentItems = item.ToEnumerable();
+            try
+            {
+                IEnumerable<Item> _parentItems = item.GetAllParentItems();
+                parentItems = parentItems.Concat(_parentItems);
+            }
+            catch (Exception)
+            {
+                LoggingController.LogError("Could not get parents of " + item.LocalizedName() + " (" + item.TemplateId + ")");
+                throw;
+            }
+
+            // Remove all invalid items from the parent list (secure containers, fixed loot containers, etc.)
+            try
+            {
+                parentItems = parentItems.RemoveExcludedItems();
+            }
+            catch (Exception)
+            {
+                LoggingController.LogError("Could not removed excluded items from " + string.Join(",", parentItems.Select(i => i.LocalizedName())));
+                throw;
+            }
+
+            // Check if there aren't any items remaining after filtering
+            if (parentItems.Count() == 0)
+            {
+                return;
+            }
+
+            // Get all child items of the parent item. The array needs to be reversed to prevent any of the items from becoming orphaned. 
+            Item parentItem = parentItems.Last();
+            Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
+            foreach (Item containedItem in allItems)
+            {
+                if (!LootInfo.ContainsKey(containedItem))
+                {
+                    LoggingController.LogWarning("Could not find entry for " + containedItem.LocalizedName());
+                    continue;
+                }
+
+                if (containedItem.CurrentAddress == null)
+                {
+                    LoggingController.LogWarning("Invalid parent for " + containedItem.LocalizedName());
+                    continue;
+                }
+
+                LootInfo[item].parentItem = parentItem;
+                itemsToDestroy.Add(containedItem);
+            }
+        }
+
         private static void DestroyLoot(Item item)
+        {
+            LoggingController.LogInfo(
+                    "Destroying " + LootInfo[item].LootType + " loot"
+                    + (((LootInfo[item].parentItem != null) && (LootInfo[item].parentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].parentItem.LocalizedName() : "")
+                    + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
+                    + ": " + item.LocalizedName()
+                );
+
+            try
+            {
+                LootInfo[item].TraderController.DestroyItem(item);
+                LootInfo[item].IsDestroyed = true;
+                lastLootDestroyedTimer.Restart();
+            }
+            catch (Exception ex)
+            {
+                LoggingController.LogError("Could not destroy " + item);
+                LoggingController.LogError(ex.ToString());
+                LootInfo.Remove(item);
+            }
+        }
+
+        private static void DestroyLoot_OLD(Item item)
         {
             // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
             // all of the mods, magazines, etc. on it will be orphaned and cause errors
@@ -450,13 +500,11 @@ namespace LateToTheParty.Models
             }
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items)
         {
             return items.Where(i => !ItemsDroppedByMainPlayer.Contains(i));
         }
 
-        [HandleProcessCorruptedStateExceptions, SecurityCritical]
         private static IEnumerable<Item> RemoveExcludedItems(this IEnumerable<Item> items)
         {
             // This should only be run once to generate the array of secure container ID's
