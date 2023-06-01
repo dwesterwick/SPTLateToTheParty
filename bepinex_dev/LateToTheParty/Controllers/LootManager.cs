@@ -24,7 +24,6 @@ namespace LateToTheParty.Models
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
         private static Dictionary<Item, LootInfo> LootInfo = new Dictionary<Item, LootInfo>();
-        private static List<Item> itemsToDestroy = new List<Item>();
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
@@ -97,14 +96,13 @@ namespace LateToTheParty.Models
                 // Check if this is the first time looking for loot in the map
                 bool firstLootSearch = LootInfo.Count == 0;
 
-                // Spread the work across multiple frames based on a maximum calculation time per frame
-                EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-
                 // Find all loose loot
                 LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
+                EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
                 yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem, firstLootSearch ? 0 : raidET);
 
                 // Search all lootable containers for loot
+                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
                 yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
 
                 // Ensure there is still loot on the map
@@ -128,22 +126,20 @@ namespace LateToTheParty.Models
                 }
 
                 // Determine which loot is eligible to destroy
+                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
-                // Determine which loot items to destroy
-                //Item[] itemsToDestroy = FindLootToDestroy(lootItemsToDestroy).ToArray();
-
-                // Destroy sorted loot
-                //yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
-
-                // Sort eligible loot       
+                // Sort eligible loot
                 IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
 
                 // Identify items to destroy
-                yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy);
+                List<Item> itemsToDestroy = new List<Item>();
+                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+                yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy, itemsToDestroy);
 
                 // Destroy items
+                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
                 yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
 
                 itemsToDestroy.Clear();
@@ -212,43 +208,9 @@ namespace LateToTheParty.Models
             return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
         }
 
-        private static void UpdateAllLootEligibility(Vector3 yourPosition, double raidET)
-        {
-            Item[] items = LootInfo.Keys.ToArray();
-            foreach(Item item in items)
-            {
-                UpdateLootEligibility(item, yourPosition, raidET);
-            }
-        }
-
         private static void UpdateLootEligibility(Item item, Vector3 yourPosition, double raidET)
         {
             LootInfo[item].CanDestroy = CanDestroyItem(item, yourPosition, raidET);
-        }
-
-        private static IEnumerable<Item> FindLootToDestroy(int lootItemsToDestroy)
-        {
-            // Find all loot items eligible for destruction and sort them            
-            IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
-            IEnumerable<KeyValuePair<Item, LootInfo>> sortedLoot = SortLoot(eligibleItems);
-
-            // Generate a list of loot to be destroyed. This needs to be iterated because each item in the loot dictionaries has an unknown number of child items in it. 
-            int actualLootBeingDestroyed = 0;
-            IEnumerable<KeyValuePair<Item, LootInfo>> lootToDestroy = Enumerable.Empty<KeyValuePair<Item, LootInfo>>();
-            foreach (KeyValuePair<Item, LootInfo> lootInfo in sortedLoot)
-            {
-                if (actualLootBeingDestroyed >= lootItemsToDestroy)
-                {
-                    break;
-                }
-
-                lootToDestroy = lootToDestroy.Append(lootInfo);
-                actualLootBeingDestroyed += lootInfo.Key.ToEnumerable().FindAllRelatedItems().Count();
-            }
-
-            //LoggingController.LogInfo("Target loot to destroy: " + lootItemsToDestroy + ", Loot Being Destroyed: " + actualLootBeingDestroyed);
-
-            return lootToDestroy.Select(l => l.Key);
         }
 
         private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
@@ -336,18 +298,10 @@ namespace LateToTheParty.Models
             return true;
         }
 
-        private static void DestroyLoot(IEnumerable<Item> items)
-        {
-            foreach(Item item in items)
-            {
-                DestroyLoot(item);
-            }
-        }
-
-        private static void FindItemsToDestroy(Item item, int totalItemsToDestroy)
+        private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, List<Item> allItemsToDestroy)
         {
             // Do not search for more items if enough have already been identified
-            if (itemsToDestroy.Count >= totalItemsToDestroy)
+            if (allItemsToDestroy.Count >= totalItemsToDestroy)
             {
                 return;
             }
@@ -388,6 +342,11 @@ namespace LateToTheParty.Models
             Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
             foreach (Item containedItem in allItems)
             {
+                if (allItemsToDestroy.Contains(containedItem))
+                {
+                    continue;
+                }
+
                 if (!LootInfo.ContainsKey(containedItem))
                 {
                     LoggingController.LogWarning("Could not find entry for " + containedItem.LocalizedName());
@@ -400,8 +359,16 @@ namespace LateToTheParty.Models
                     continue;
                 }
 
+                // Ensure child items are destroyed before parent items
                 LootInfo[item].parentItem = parentItem;
-                itemsToDestroy.Add(containedItem);
+                if (allItemsToDestroy.Contains(parentItem))
+                {
+                    allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(parentItem) - 1, containedItem);
+                }
+                else
+                {
+                    allItemsToDestroy.Add(containedItem);
+                }
             }
         }
 
@@ -425,78 +392,6 @@ namespace LateToTheParty.Models
                 LoggingController.LogError("Could not destroy " + item);
                 LoggingController.LogError(ex.ToString());
                 LootInfo.Remove(item);
-            }
-        }
-
-        private static void DestroyLoot_OLD(Item item)
-        {
-            // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
-            // all of the mods, magazines, etc. on it will be orphaned and cause errors
-            IEnumerable<Item> parentItems = item.ToEnumerable();
-            try
-            {
-                IEnumerable<Item> _parentItems = item.GetAllParentItems();
-                parentItems = parentItems.Concat(_parentItems);
-            }
-            catch (Exception)
-            {
-                LoggingController.LogError("Could not get parents of " + item.LocalizedName() + " (" + item.TemplateId + ")");
-                throw;
-            }
-
-            // Remove all invalid items from the parent list (secure containers, fixed loot containers, etc.)
-            try
-            {
-                parentItems = parentItems.RemoveExcludedItems();
-            }
-            catch (Exception)
-            {
-                LoggingController.LogError("Could not removed excluded items from " + string.Join(",", parentItems.Select(i => i.LocalizedName())));
-                throw;
-            }
-
-            // Check if there aren't any items remaining after filtering
-            if (parentItems.Count() == 0)
-            {
-                return;
-            }
-
-            // Get all child items of the parent item. The array needs to be reversed to prevent any of the items from becoming orphaned. 
-            Item parentItem = parentItems.Last();
-            Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
-            foreach (Item containedItem in allItems)
-            {
-                if (!LootInfo.ContainsKey(containedItem))
-                {
-                    LoggingController.LogWarning("Could not find entry for " + containedItem.LocalizedName());
-                    continue;
-                }
-
-                if (containedItem.CurrentAddress == null)
-                {
-                    LoggingController.LogWarning("Invalid parent for " + containedItem.LocalizedName());
-                    continue;
-                }
-
-                LoggingController.LogInfo(
-                    "Destroying " + LootInfo[item].LootType + " loot"
-                    + ((item.Id != containedItem.Id) ? " in " + parentItem.LocalizedName() : "")
-                    + (ConfigController.LootRanking.Items.ContainsKey(containedItem.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[containedItem.TemplateId].Value + ")" : "")
-                    + ": " + containedItem.LocalizedName()
-                );
-
-                try
-                {
-                    LootInfo[containedItem].TraderController.DestroyItem(containedItem);
-                    LootInfo[containedItem].IsDestroyed = true;
-                    lastLootDestroyedTimer.Restart();
-                }
-                catch (Exception ex)
-                {
-                    LoggingController.LogError("Could not destroy " + containedItem);
-                    LoggingController.LogError(ex.ToString());
-                    LootInfo.Remove(containedItem);
-                }
             }
         }
 

@@ -18,6 +18,18 @@ namespace LateToTheParty.Models
             
         }
 
+        public void Reset()
+        {
+            if (base.IsRunning)
+            {
+                throw new InvalidOperationException("The iterator is still running");
+            }
+
+            base.IsCompleted = false;
+            base.hadToWait = false;
+            SetMethodName("");
+        }
+
         public IEnumerator Run<TItem>(IEnumerable<TItem> collection, Action<TItem> collectionItemAction)
         {
             SetMethodName(collectionItemAction.Method.Name);
@@ -65,6 +77,12 @@ namespace LateToTheParty.Models
 
             foreach (TItem item in collection)
             {
+                if (base.stopRequested)
+                {
+                    base.IsRunning = false;
+                    yield break;
+                }
+
                 try
                 {
                     action(item);
@@ -79,12 +97,6 @@ namespace LateToTheParty.Models
                 {
                     yield return base.WaitForNextFrame();
                 }
-
-                if (base.stopRequested)
-                {
-                    base.IsRunning = false;
-                    yield break;
-                }
             }
 
             Run_Internal_End();
@@ -96,6 +108,12 @@ namespace LateToTheParty.Models
 
             for (int repetition = 0; repetition < repetitions; repetition++)
             {
+                if (base.stopRequested)
+                {
+                    base.IsRunning = false;
+                    yield break;
+                }
+
                 try
                 {
                     action();
@@ -109,12 +127,6 @@ namespace LateToTheParty.Models
                 if (base.cycleTimer.ElapsedMilliseconds > base.maxTimePerIteration)
                 {
                     yield return base.WaitForNextFrame();
-                }
-
-                if (base.stopRequested)
-                {
-                    base.IsRunning = false;
-                    yield break;
                 }
             }
 

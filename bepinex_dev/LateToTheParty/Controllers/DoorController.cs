@@ -110,11 +110,13 @@ namespace LateToTheParty.Controllers
             {
                 IsTogglingDoors = true;
 
-                // Spread the work across multiple frames based on a maximum calculation time per frame
+                // Check which doors are eligible to be toggled
                 EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
                 yield return enumeratorWithTimeLimit.Run(validDoors.AsEnumerable(), UpdateIfDoorCanBeToggled);
                 IEnumerable<Door> doorsThatCanBeToggled = canToggleDoorDict.Where(d => d.Value).Select(d => d.Key);
 
+                // Toggle requested number of doors
+                enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
                 yield return enumeratorWithTimeLimit.Repeat(doorsToToggle, ToggleRandomDoor, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
             }
             finally
@@ -230,14 +232,6 @@ namespace LateToTheParty.Controllers
             }
 
             return true;
-        }
-
-        private void ToggleRandomDoors(IEnumerable<Door> eligibleDoors, int maxCalcTime_ms, int totalDoorsToToggle)
-        {
-            for (int toggledDoors = 0; toggledDoors < totalDoorsToToggle; toggledDoors++)
-            {
-                ToggleRandomDoor(eligibleDoors, maxCalcTime_ms);
-            }
         }
 
         private void ToggleRandomDoor(IEnumerable<Door> eligibleDoors, int maxCalcTime_ms)

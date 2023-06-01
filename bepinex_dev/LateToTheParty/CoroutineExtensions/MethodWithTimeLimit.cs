@@ -27,9 +27,14 @@ namespace LateToTheParty.Models
 
         protected void SetMethodName(string _methodName)
         {
-            if (MethodName.Length == 0)
+            if (MethodName == "")
             {
                 MethodName = _methodName;
+            }
+
+            if (_methodName == "")
+            {
+                MethodName = "";
             }
         }
 
