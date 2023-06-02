@@ -34,6 +34,9 @@
     <Reference Include="0Harmony">
       <HintPath>..\..\..\SPTHardcoreRules\bepinex_dev\Libraries\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="aki-custom">
+      <HintPath>..\Libraries\BepInEx\plugins\aki-custom.dll</HintPath>
+    </Reference>
     <Reference Include="Aki.Common">
       <HintPath>..\..\..\SPTHardcoreRules\bepinex_dev\Libraries\Managed\Aki.Common.dll</HintPath>
     </Reference>
@@ -100,6 +103,7 @@
     <Compile Include="CoroutineExtensions\TaskWithTimeLimit.cs" />
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
+    <Compile Include="Patches\OnBoxLandPatch.cs" />
     <Compile Include="Patches\OnGameStartedPatch.cs" />
     <Compile Include="Patches\OnBeenKilledByAggressorPatch.cs" />
     <Compile Include="Patches\OnItemAddedOrRemovedPatch.cs" />

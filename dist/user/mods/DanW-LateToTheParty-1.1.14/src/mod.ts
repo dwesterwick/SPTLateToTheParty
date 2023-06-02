@@ -16,6 +16,7 @@ import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
 import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
 import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
+import { IAirdropConfig } from "@spt-aki/models/spt/config/IAirdropConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
@@ -36,6 +37,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private locationConfig: ILocationConfig;
     private inRaidConfig: IInRaidConfig;
     private iBotConfig: IBotConfig;
+    private iAirdropConfig: IAirdropConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -174,6 +176,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
+        this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
 
@@ -183,9 +186,19 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             return;
         }
 
-        // Make the Scav cooldown timer very short for debugging
+        // Adjust parameters to make debugging easier
         if (modConfig.debug)
+        {
             this.databaseTables.globals.config.SavagePlayCooldown = 1;
+
+            //this.iAirdropConfig.airdropChancePercent.bigmap = 100;
+            //this.iAirdropConfig.airdropChancePercent.woods = 100;
+            //this.iAirdropConfig.airdropChancePercent.lighthouse = 100;
+            //this.iAirdropConfig.airdropChancePercent.shoreline = 100;
+            //this.iAirdropConfig.airdropChancePercent.interchange = 100;
+            //this.iAirdropConfig.airdropChancePercent.reserve = 100;
+            //this.iAirdropConfig.airdropChancePercent.tarkovStreets = 100;
+        }
     }
 
     public postAkiLoad(): void

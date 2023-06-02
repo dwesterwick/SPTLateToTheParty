@@ -6,7 +6,7 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.1.13.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.1.14.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private void Awake()
@@ -28,6 +28,7 @@ namespace LateToTheParty
                 new Patches.OnItemAddedOrRemovedPatch().Enable();
                 new Patches.OnBeenKilledByAggressorPatch().Enable();
                 new Patches.OnGameStartedPatch().Enable();
+                new Patches.OnBoxLandPatch().Enable();
 
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<LootDestroyerController>();

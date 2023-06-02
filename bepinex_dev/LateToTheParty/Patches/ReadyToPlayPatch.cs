@@ -4,7 +4,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
 using EFT;
-using LateToTheParty.Controllers;
 
 namespace LateToTheParty.Patches
 {
@@ -14,7 +13,7 @@ namespace LateToTheParty.Patches
         {
             // Method 45 always runs, but sometimes twice. Method 42 runs before pressing "Ready", but won't work if you press "Ready" early.
             string methodName = "method_45";
-            if (ConfigController.Config.Debug)
+            if (Controllers.ConfigController.Config.Debug)
             {
                 methodName = "method_42";
             }

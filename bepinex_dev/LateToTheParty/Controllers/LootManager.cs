@@ -20,6 +20,8 @@ namespace LateToTheParty.Controllers
         public static bool IsFindingAndDestroyingLoot { get; private set; } = false;
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
+        private static object lootableContainerLock = new object();
+
         private static Dictionary<Item, Models.LootInfo> LootInfo = new Dictionary<Item, Models.LootInfo>();
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
@@ -49,7 +51,10 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsFindingAndDestroyingLoot);
             }
 
-            AllLootableContainers.Clear();
+            lock (lootableContainerLock)
+            {
+                AllLootableContainers.Clear();
+            }
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
 
@@ -63,6 +68,15 @@ namespace LateToTheParty.Controllers
             LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
 
             return LootableContainerCount;
+        }
+
+        public static void AddLootableContainer(LootableContainer container)
+        {
+            lock (lootableContainerLock)
+            {
+                LoggingController.LogInfo("Including container " + container.name + " when searching for loot.");
+                AllLootableContainers.Add(container);
+            }
         }
 
         public static void RegisterItemDroppedByPlayer(Item item)
@@ -107,7 +121,10 @@ namespace LateToTheParty.Controllers
 
                 // Search all lootable containers for loot
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
+                lock (lootableContainerLock)
+                {
+                    yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
+                }
 
                 // Ensure there is still loot on the map
                 if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
