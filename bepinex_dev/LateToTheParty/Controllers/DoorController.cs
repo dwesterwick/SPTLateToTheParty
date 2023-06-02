@@ -11,7 +11,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using LateToTheParty.Models;
+using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers

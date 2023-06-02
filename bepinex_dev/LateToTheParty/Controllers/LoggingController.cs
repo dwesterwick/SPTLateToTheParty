@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BepInEx.Logging;
 using LateToTheParty.Models;
 
 namespace LateToTheParty.Controllers
 {
     public static class LoggingController
     {
-        public static ManualLogSource Logger { get; set; } = null;
+        public static BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
 
         private static LoggingBuffer loggingBuffer;
 

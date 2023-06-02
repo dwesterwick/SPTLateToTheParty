@@ -2,10 +2,9 @@
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 using Comfort.Common;
 using EFT;
-using LateToTheParty.Models;
+using UnityEngine;
 
 namespace LateToTheParty.Controllers
 {

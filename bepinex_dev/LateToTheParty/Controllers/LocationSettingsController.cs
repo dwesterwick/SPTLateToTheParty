@@ -14,7 +14,7 @@ namespace LateToTheParty.Controllers
         public static LocationSettingsClass.Location LastLocationSelected { get; private set; } = null;
 
         private static string[] CarExtractNames = new string[0];
-        private static Dictionary<string, LocationSettings> OriginalSettings = new Dictionary<string, LocationSettings>();
+        private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
         private static BackendConfigSettingsClass.GClass1306.GClass1313 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
@@ -155,7 +155,7 @@ namespace LateToTheParty.Controllers
 
             LoggingController.LogInfo("Storing original raid settings for " + location.Name + "...");
 
-            LocationSettings settings = new LocationSettings(location.EscapeTimeLimit);
+            Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
             
             foreach (GClass1197 exit in location.exits)
             {

@@ -33,7 +33,7 @@ namespace LateToTheParty.Patches
             // If you pick up an item, it needs to be removed from the loot lists to prevent it from being randomly despawned while in your inventory
             if (added)
             {
-                Models.LootManager.RegisterItemPickedUpByPlayer(item);
+                LootManager.RegisterItemPickedUpByPlayer(item);
                 return;
             }
 
@@ -49,7 +49,7 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            Models.LootManager.RegisterItemDroppedByPlayer(item);
+            LootManager.RegisterItemDroppedByPlayer(item);
         }
     }
 }

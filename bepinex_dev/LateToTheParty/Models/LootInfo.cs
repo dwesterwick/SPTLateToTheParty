@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using UnityEngine;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Models
 {
     public enum ELootType
     {

@@ -10,17 +10,17 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using LateToTheParty.Controllers;
+using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 
-namespace LateToTheParty.Models
+namespace LateToTheParty.Controllers
 {
     public static class LootManager
     {
         public static bool IsFindingAndDestroyingLoot { get; private set; } = false;
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
-        private static Dictionary<Item, LootInfo> LootInfo = new Dictionary<Item, LootInfo>();
+        private static Dictionary<Item, Models.LootInfo> LootInfo = new Dictionary<Item, Models.LootInfo>();
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
         private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
@@ -134,7 +134,7 @@ namespace LateToTheParty.Models
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
                 // Sort eligible loot
-                IEnumerable<KeyValuePair<Item, LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
+                IEnumerable<KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
 
                 // Identify items to destroy
@@ -168,8 +168,8 @@ namespace LateToTheParty.Models
             {
                 if (!LootInfo.ContainsKey(item))
                 {
-                    LootInfo newLoot = new LootInfo(
-                            ELootType.Loose,
+                    Models.LootInfo newLoot = new Models.LootInfo(
+                            Models.ELootType.Loose,
                             lootItem.ItemOwner,
                             lootItem.transform,
                             ItemHelpers.GetDistanceToNearestSpawnPoint(lootItem.transform.position),
@@ -194,8 +194,8 @@ namespace LateToTheParty.Models
                 {
                     if (!LootInfo.ContainsKey(item))
                     {
-                        LootInfo newLoot = new LootInfo(
-                            ELootType.Static,
+                        Models.LootInfo newLoot = new Models.LootInfo(
+                            Models.ELootType.Static,
                             lootableContainer.ItemOwner,
                             lootableContainer.transform,
                             ItemHelpers.GetDistanceToNearestSpawnPoint(lootableContainer.transform.position),
@@ -230,7 +230,7 @@ namespace LateToTheParty.Models
             return lootItemsToDestroy;
         }
 
-        private static IEnumerable<KeyValuePair<Item, LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, LootInfo>> loot)
+        private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
         {
             System.Random randomGen = new System.Random();
 

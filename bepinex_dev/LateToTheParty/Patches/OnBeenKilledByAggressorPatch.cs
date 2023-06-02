@@ -38,7 +38,7 @@ namespace LateToTheParty.Patches
             IEnumerable<Item> allPlayerItems = __instance.Profile.Inventory.Equipment.GetAllItems();
             foreach (Item item in allPlayerItems)
             {
-                Models.LootManager.RegisterItemDroppedByPlayer(item);
+                LootManager.RegisterItemDroppedByPlayer(item);
             }
         }
     }

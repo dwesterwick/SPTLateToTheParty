@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
-using LateToTheParty.Controllers;
 using UnityEngine;
 
-namespace LateToTheParty.Models
+namespace LateToTheParty.Controllers
 {
     public static class ItemHelpers
     {

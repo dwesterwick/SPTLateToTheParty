@@ -1,5 +1,4 @@
-﻿using LateToTheParty.Controllers;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LateToTheParty.Models
+namespace LateToTheParty.CoroutineExtensions
 {
     internal class TaskWithReturnValueAndTimeLimit<TResult> : TaskWithTimeLimit
     {

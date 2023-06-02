@@ -1,9 +1,4 @@
-﻿using EFT.Interactive;
-using EFT.InventoryLogic;
-using EFT.Quests;
-using EFT.UI;
-using LateToTheParty.Controllers;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,8 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LateToTheParty.Controllers;
 
-namespace LateToTheParty.Models
+namespace LateToTheParty.CoroutineExtensions
 {
     internal class TaskWithTimeLimit : MethodWithTimeLimit
     {

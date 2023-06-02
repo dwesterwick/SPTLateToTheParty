@@ -1,15 +1,13 @@
-﻿using EFT.InventoryLogic;
-using LateToTheParty.Controllers;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
+using LateToTheParty.Controllers;
 
-namespace LateToTheParty.Models
+namespace LateToTheParty.CoroutineExtensions
 {
     internal class EnumeratorWithTimeLimit : MethodWithTimeLimit
     {
