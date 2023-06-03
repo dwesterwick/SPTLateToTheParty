@@ -10,6 +10,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using EFT.UI;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 
@@ -272,7 +273,8 @@ namespace LateToTheParty.Controllers
             double lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
 
             // Return loot sorted by value but with randomness applied
-            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
+            //return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
+            return loot.OrderBy(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
         }
 
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
@@ -360,57 +362,112 @@ namespace LateToTheParty.Controllers
 
             // Get all child items of the parent item. The array needs to be reversed to prevent any of the items from becoming orphaned. 
             Item parentItem = parentItems.Last();
-            Item[] allItems = parentItem.GetAllItems().Reverse().ToArray();
-            foreach (Item containedItem in allItems)
+
+            // Check if the item cannot be removed from its parent
+            Item[] allItems;
+            if (CanRemoveItemFromParent(item, parentItem))
             {
-                if (allItemsToDestroy.Contains(containedItem))
+                allItems = item.GetAllItems().Reverse().ToArray();
+                AddItemsToDespawnList(allItems, item, allItemsToDestroy);
+                return;
+            }
+            LoggingController.LogInfo(item.LocalizedName() + " cannot be removed from " + parentItem.LocalizedName() + ". Destroying parent item and all children.");
+
+            // Get all children of the parent item and add them to the despawn list
+            allItems = parentItem.GetAllItems().Reverse().ToArray();
+            AddItemsToDespawnList(allItems, parentItem, allItemsToDestroy);
+        }
+
+        private static bool CanRemoveItemFromParent(Item item, Item parentItem)
+        {
+            if (item.TemplateId == parentItem.TemplateId)
+            {
+                return true;
+            }
+
+            LootItemClass lootItemClass;
+            if ((lootItemClass = (parentItem as LootItemClass)) == null)
+            {
+                return true;
+            }
+
+            foreach(Slot slot in lootItemClass.Slots)
+            {
+                if (!slot.Required)
                 {
                     continue;
                 }
 
-                if (!LootInfo.ContainsKey(containedItem))
+                if (slot.Items.Contains(item))
                 {
-                    LoggingController.LogWarning("Could not find entry for " + containedItem.LocalizedName());
-                    continue;
-                }
-
-                if (containedItem.CurrentAddress == null)
-                {
-                    LoggingController.LogWarning("Invalid parent for " + containedItem.LocalizedName());
-                    continue;
-                }
-
-                // Ensure child items are destroyed before parent items
-                LootInfo[item].parentItem = parentItem;
-                if (allItemsToDestroy.Contains(parentItem))
-                {
-                    allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(parentItem) - 1, containedItem);
-                }
-                else
-                {
-                    allItemsToDestroy.Add(containedItem);
+                    return false;
                 }
             }
+
+            return true;
+        }
+
+        private static int AddItemsToDespawnList(Item[] items, Item parentItem, List<Item> allItemsToDestroy)
+        {
+            int despawnCount = 0;
+            foreach (Item item in items)
+            {
+                despawnCount += AddItemToDespawnList(item, parentItem, allItemsToDestroy) ? 1: 0;
+            }
+            return despawnCount;
+        }
+
+        private static bool AddItemToDespawnList(Item item, Item parentItem, List<Item> allItemsToDestroy)
+        {
+            if (allItemsToDestroy.Contains(item))
+            {
+                return false;
+            }
+
+            if (!LootInfo.ContainsKey(item))
+            {
+                LoggingController.LogWarning("Could not find entry for " + item.LocalizedName());
+                return false;
+            }
+
+            if (item.CurrentAddress == null)
+            {
+                LoggingController.LogWarning("Invalid parent for " + item.LocalizedName());
+                return false;
+            }
+
+            // Ensure child items are destroyed before parent items
+            LootInfo[item].parentItem = parentItem;
+            if ((item.Parent.Item != null) && allItemsToDestroy.Contains(item.Parent.Item))
+            {
+                allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(parentItem), item);
+            }
+            else
+            {
+                allItemsToDestroy.Add(item);
+            }
+
+            return true;
         }
 
         private static void DestroyLoot(Item item)
         {
-            LoggingController.LogInfo(
-                    "Destroying " + LootInfo[item].LootType + " loot"
-                    + (((LootInfo[item].parentItem != null) && (LootInfo[item].parentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].parentItem.LocalizedName() : "")
-                    + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
-                    + ": " + item.LocalizedName()
-                );
-
             try
             {
                 LootInfo[item].TraderController.DestroyItem(item);
                 LootInfo[item].IsDestroyed = true;
                 lastLootDestroyedTimer.Restart();
+
+                LoggingController.LogInfo(
+                    "Destroyed " + LootInfo[item].LootType + " loot"
+                    + (((LootInfo[item].parentItem != null) && (LootInfo[item].parentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].parentItem.LocalizedName() : "")
+                    + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
+                    + ": " + item.LocalizedName()
+                );
             }
             catch (Exception ex)
             {
-                LoggingController.LogError("Could not destroy " + item);
+                LoggingController.LogError("Could not destroy " + item.LocalizedName());
                 LoggingController.LogError(ex.ToString());
                 LootInfo.Remove(item);
             }
