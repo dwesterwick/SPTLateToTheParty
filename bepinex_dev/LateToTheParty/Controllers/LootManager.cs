@@ -393,12 +393,17 @@ namespace LateToTheParty.Controllers
 
             foreach(Slot slot in lootItemClass.Slots)
             {
-                if (!slot.Required)
+                /*if (!slot.Required)
                 {
                     continue;
                 }
 
                 if (slot.Items.Contains(item))
+                {
+                    return false;
+                }*/
+
+                if (slot.RemoveItem(true).Failed)
                 {
                     return false;
                 }
