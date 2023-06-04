@@ -273,8 +273,7 @@ namespace LateToTheParty.Controllers
             double lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
 
             // Return loot sorted by value but with randomness applied
-            //return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
-            return loot.OrderBy(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
+            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
         }
 
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
