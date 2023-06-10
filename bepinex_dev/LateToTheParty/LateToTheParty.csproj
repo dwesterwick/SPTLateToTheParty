@@ -89,6 +89,7 @@
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
     <Compile Include="Configuration\LoggingPath.cs" />
+    <Compile Include="Configuration\LootRankingChildItemLimitsConfig.cs" />
     <Compile Include="Configuration\LootRankingConfig.cs" />
     <Compile Include="Configuration\LootRankingWeightingConfig.cs" />
     <Compile Include="Configuration\LootRankingItemDataConfig.cs" />

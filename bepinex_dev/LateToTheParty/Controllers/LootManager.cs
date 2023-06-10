@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -52,10 +53,16 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsFindingAndDestroyingLoot);
             }
 
+            if (ConfigController.Config.Debug && (LootInfo.Count > 0))
+            {
+                WriteLootLogFile();
+            }
+
             lock (lootableContainerLock)
             {
                 AllLootableContainers.Clear();
             }
+
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
 
@@ -162,7 +169,7 @@ namespace LateToTheParty.Controllers
 
                 // Destroy items
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot, raidET);
 
                 itemsToDestroy.Clear();
             }
@@ -328,6 +335,12 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Make sure the item isn't already in the queue to be destroyed
+            if (allItemsToDestroy.Contains(item))
+            {
+                return;
+            }
+
             // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
             // all of the mods, magazines, etc. on it will be orphaned and cause errors
             IEnumerable<Item> parentItems = item.ToEnumerable();
@@ -366,7 +379,20 @@ namespace LateToTheParty.Controllers
             Item[] allItems;
             if (CanRemoveItemFromParent(item, parentItem))
             {
-                allItems = item.GetAllItems().Reverse().ToArray();
+                allItems = item.GetAllItems().Reverse().ToArray();                
+                if (allItems.Length > ConfigController.Config.DestroyLootDuringRaid.LootRanking.ChildItemLimits.Count)
+                {
+                    LoggingController.LogInfo(item.LocalizedName() + " has too many child items to destroy.");
+                    return;
+                }
+
+                double allItemsWeight = allItems.Select(i => i.Weight).Sum();
+                if ((allItems.Length > 1) && (allItemsWeight > ConfigController.Config.DestroyLootDuringRaid.LootRanking.ChildItemLimits.TotalWeight))
+                {
+                    LoggingController.LogInfo(item.LocalizedName() + " and its child items are too heavy to destroy.");
+                    return;
+                }
+
                 AddItemsToDespawnList(allItems, item, allItemsToDestroy);
                 return;
             }
@@ -444,7 +470,7 @@ namespace LateToTheParty.Controllers
             LootInfo[item].parentItem = parentItem;
             if ((item.Parent.Item != null) && allItemsToDestroy.Contains(item.Parent.Item))
             {
-                allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(parentItem), item);
+                allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(item.Parent.Item), item);
             }
             else
             {
@@ -454,12 +480,13 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private static void DestroyLoot(Item item)
+        private static void DestroyLoot(Item item, double raidET)
         {
             try
             {
                 LootInfo[item].TraderController.DestroyItem(item);
                 LootInfo[item].IsDestroyed = true;
+                LootInfo[item].RaidETWhenDestroyed = raidET;
                 lastLootDestroyedTimer.Restart();
 
                 LoggingController.LogInfo(
@@ -496,6 +523,41 @@ namespace LateToTheParty.Controllers
                 .Where(i => !secureContainerIDs.Contains(i.TemplateId));
 
             return filteredItems;
+        }
+
+        private static void WriteLootLogFile()
+        {
+            LoggingController.LogInfo("Writing loot log file...");
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed");
+            foreach(Item item in LootInfo.Keys)
+            {
+                sb.Append(item.LocalizedName() + ",");
+                sb.Append(item.TemplateId + ",");
+                sb.Append(ConfigController.LootRanking.Items[item.TemplateId].Value + ",");
+                sb.Append(LootInfo[item].RaidETWhenFound + ",");
+                sb.AppendLine(LootInfo[item].RaidETWhenDestroyed >= 0 ? LootInfo[item].RaidETWhenDestroyed.ToString() : "");
+            }
+
+            string filename = LoggingController.LoggingPath + "loot_" + DateTime.Now.ToFileTimeUtc() + ".csv";
+            try
+            {
+                if (!Directory.Exists(LoggingController.LoggingPath))
+                {
+                    Directory.CreateDirectory(LoggingController.LoggingPath);
+                }
+
+                File.WriteAllText(filename, sb.ToString());
+
+                LoggingController.LogInfo("Writing loot log file...done.");
+            }
+            catch (Exception e)
+            {
+                e.Data.Add("Filename", filename);
+                LoggingController.LogError("Writing loot log file...failed!");
+                LoggingController.LogError(e.ToString());
+            }
         }
     }
 }

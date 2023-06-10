@@ -23,6 +23,7 @@ namespace LateToTheParty.Models
         public Transform Transform { get; set; } = null;
         public double DistanceToNearestSpawnPoint { get; set; } = 0;
         public double RaidETWhenFound { get; set; } = -999;
+        public double RaidETWhenDestroyed { get; set; } = -999;
         public bool CanDestroy { get; set; } = false;
         public Item parentItem { get; set; } = null;
 

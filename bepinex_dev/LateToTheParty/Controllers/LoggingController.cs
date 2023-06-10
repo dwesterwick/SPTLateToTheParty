@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LateToTheParty.Configuration;
 using LateToTheParty.Models;
 
 namespace LateToTheParty.Controllers
@@ -10,11 +11,13 @@ namespace LateToTheParty.Controllers
     public static class LoggingController
     {
         public static BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
+        public static string LoggingPath { get; private set; } = "";
 
         private static LoggingBuffer loggingBuffer;
 
         public static void InitializeLoggingBuffer(int length, string path, string filePrefix)
         {
+            LoggingPath = path;
             loggingBuffer = new LoggingBuffer(length, path, filePrefix);
         }
 

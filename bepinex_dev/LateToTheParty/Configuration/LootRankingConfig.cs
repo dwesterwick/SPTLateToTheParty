@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("alwaysRegenerate")]
         public bool AlwaysRegenerate { get; set; } = true;
 
+        [JsonProperty("child_item_limits")]
+        public LootRankingChildItemLimitsConfig ChildItemLimits { get; set; } = new LootRankingChildItemLimitsConfig();
+
         [JsonProperty("weighting")]
         public LootRankingWeightingConfig Weighting { get; set; } = new LootRankingWeightingConfig();
     }
