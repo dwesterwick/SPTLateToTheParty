@@ -63,7 +63,7 @@ namespace LateToTheParty.Controllers
             // This should only be run once to generate the list of lootable containers in the map
             if (foundLootableContainers == -1)
             {
-                foundLootableContainers = LootManager.FindAllLootableContainers();
+                foundLootableContainers = LootManager.FindAllLootableContainers(LocationSettingsController.LastLocationSelected.Name);
             }
 
             // Ensure there are loot containers on the map

@@ -29,6 +29,7 @@ namespace LateToTheParty.Controllers
         private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+        private static string currentLocationName = "";
 
         public static int LootableContainerCount
         {
@@ -66,14 +67,18 @@ namespace LateToTheParty.Controllers
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
 
+            currentLocationName = "";
+
             lastLootDestroyedTimer.Restart();
         }
 
-        public static int FindAllLootableContainers()
+        public static int FindAllLootableContainers(string _currentMapName)
         {
             LoggingController.LogInfo("Searching for lootable containers in the map...");
             AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
             LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
+
+            currentLocationName = _currentMapName;
 
             return LootableContainerCount;
         }
@@ -540,7 +545,13 @@ namespace LateToTheParty.Controllers
                 sb.AppendLine(LootInfo[item].RaidETWhenDestroyed >= 0 ? LootInfo[item].RaidETWhenDestroyed.ToString() : "");
             }
 
-            string filename = LoggingController.LoggingPath + "loot_" + DateTime.Now.ToFileTimeUtc() + ".csv";
+            string filename = LoggingController.LoggingPath
+                + "loot_"
+                + currentLocationName.Replace(" ", "")
+                + "_"
+                + DateTime.Now.ToFileTimeUtc()
+                + ".csv";
+
             try
             {
                 if (!Directory.Exists(LoggingController.LoggingPath))
