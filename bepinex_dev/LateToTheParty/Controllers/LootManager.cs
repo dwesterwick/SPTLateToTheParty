@@ -14,6 +14,7 @@ using EFT.InventoryLogic;
 using EFT.UI;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace LateToTheParty.Controllers
 {
@@ -163,8 +164,15 @@ namespace LateToTheParty.Controllers
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
+                // Check which items are accessible (NOT WORKING)
+                Dictionary<Item, bool> lootAccessibility = LootInfo.Where(l => !l.Value.IsDestroyed).ToDictionary(i => i.Key, i => true);
+                enumeratorWithTimeLimit.Reset();
+                yield return enumeratorWithTimeLimit.Run(lootAccessibility.Keys.ToArray(), UpdateLootAccessibility, yourPosition, lootAccessibility);
+                double percentAccessible = Math.Round(100.0 * lootAccessibility.Where(i => i.Value).Count() / lootAccessibility.Count, 1);
+                LoggingController.LogInfo(percentAccessible + "% of " + lootAccessibility.Count + " items are accessible.");
+
                 // Sort eligible loot
-                IEnumerable<KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
+                IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
 
                 // Identify items to destroy
@@ -330,6 +338,54 @@ namespace LateToTheParty.Controllers
             }
 
             return true;
+        }
+
+        private static void UpdateLootAccessibility(Item item, Vector3 sourcePosition, Dictionary<Item, bool> accessibilityDict)
+        {
+            bool isAccessible = IsLootItemAccessible(item, sourcePosition);
+
+            if (accessibilityDict.ContainsKey(item))
+            {
+                accessibilityDict[item] = isAccessible;
+            }
+            else
+            {
+                accessibilityDict.Add(item, isAccessible);
+            }
+        }
+
+        private static bool IsLootItemAccessible(Item item, Vector3 sourcePosition)
+        {
+            float searchDistanceSource = 10;
+            float searchDistanceTarget = 10;
+            NavMeshPath path = new NavMeshPath();
+
+            if (!NavMesh.SamplePosition(sourcePosition, out NavMeshHit sourceNearestPoint, searchDistanceSource, NavMesh.AllAreas))
+            {
+                return false;
+            }
+
+            if (!NavMesh.SamplePosition(LootInfo[item].Transform.position, out NavMeshHit targetNearestPoint, searchDistanceTarget, NavMesh.AllAreas))
+            {
+                return false;
+            }
+
+            float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, targetNearestPoint.position);
+            RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, targetNearestPoint.position, distToNavMesh);
+            RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.1).ToArray();
+            if (targetRaycastHitsFiltered.Length > 0)
+            {
+                LoggingController.LogInfo("Collider: " + targetRaycastHitsFiltered[0].collider.name + " (Distance: " + targetRaycastHitsFiltered[0].distance +  ")");
+                return false;
+            }
+
+            NavMesh.CalculatePath(sourceNearestPoint.position, targetNearestPoint.position, NavMesh.AllAreas, path);
+            if (path.status == NavMeshPathStatus.PathComplete)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, List<Item> allItemsToDestroy)
