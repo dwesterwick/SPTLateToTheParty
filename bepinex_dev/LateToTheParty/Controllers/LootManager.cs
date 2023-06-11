@@ -359,7 +359,7 @@ namespace LateToTheParty.Controllers
         private static bool IsLootItemAccessible(Item item, Vector3 sourcePosition)
         {
             float searchDistanceSource = 10;
-            float searchDistanceTarget = 3;
+            float searchDistanceTarget = 2;
             NavMeshPath path = new NavMeshPath();
 
             if (!NavMesh.SamplePosition(sourcePosition, out NavMeshHit sourceNearestPoint, searchDistanceSource, NavMesh.AllAreas))
@@ -384,22 +384,25 @@ namespace LateToTheParty.Controllers
 
             if (path.status != NavMeshPathStatus.PathComplete)
             {
-                PathRender.AddPath(item.Id, pathPoints, Color.red);
+                PathRender.AddPath(item.Id, pathPoints, Color.white);
                 return false;
             }
 
-            PathRender.AddPath(item.Id, pathPoints, Color.green);
-            PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.blue);
+            PathRender.AddPath(item.Id, pathPoints, Color.blue);
 
-            /*float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, targetNearestPoint.position);
-            RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, targetNearestPoint.position, distToNavMesh);
+            float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, pathPoints.Last());
+            RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, pathPoints.Last(), distToNavMesh);
             RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.1).ToArray();
             if (targetRaycastHitsFiltered.Length > 0)
             {
-                LoggingController.LogInfo("Collider: " + targetRaycastHitsFiltered[0].collider.name + " (Distance: " + targetRaycastHitsFiltered[0].distance +  ")");
-                return false;
-            }*/
+                LoggingController.LogInfo(item.LocalizedName() +  " Collider: " + targetRaycastHitsFiltered[0].collider.name + " (Distance: " + targetRaycastHitsFiltered[0].distance + " / " + distToNavMesh + ")");
+                
 
+                PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.red);
+                return false;
+            }
+
+            PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.green);
             return true;
         }
 
