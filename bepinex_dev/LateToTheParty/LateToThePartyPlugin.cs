@@ -37,6 +37,7 @@ namespace LateToTheParty
 
                 if (ConfigController.Config.Debug)
                 {
+                    this.GetOrAddComponent<PathRender>();
                     AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
                 }
             }

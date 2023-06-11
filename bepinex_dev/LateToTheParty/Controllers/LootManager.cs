@@ -60,6 +60,8 @@ namespace LateToTheParty.Controllers
                 WriteLootLogFile();
             }
 
+            PathRender.Clear();
+
             lock (lootableContainerLock)
             {
                 AllLootableContainers.Clear();
@@ -357,7 +359,7 @@ namespace LateToTheParty.Controllers
         private static bool IsLootItemAccessible(Item item, Vector3 sourcePosition)
         {
             float searchDistanceSource = 10;
-            float searchDistanceTarget = 10;
+            float searchDistanceTarget = 3;
             NavMeshPath path = new NavMeshPath();
 
             if (!NavMesh.SamplePosition(sourcePosition, out NavMeshHit sourceNearestPoint, searchDistanceSource, NavMesh.AllAreas))
@@ -370,22 +372,35 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, targetNearestPoint.position);
+            NavMesh.CalculatePath(sourceNearestPoint.position, targetNearestPoint.position, NavMesh.AllAreas, path);
+            
+            Vector3[] pathPoints = new Vector3[path.corners.Length];
+            //float heightOffset = (sourcePosition.y - sourceNearestPoint.position.y) * 0.5f;
+            float heightOffset = 1.5f;
+            for (int i = 0; i < pathPoints.Length; i++)
+            {
+                pathPoints[i] = new Vector3(path.corners[i].x, path.corners[i].y + heightOffset, path.corners[i].z);
+            }
+
+            if (path.status != NavMeshPathStatus.PathComplete)
+            {
+                PathRender.AddPath(item.Id, pathPoints, Color.red);
+                return false;
+            }
+
+            PathRender.AddPath(item.Id, pathPoints, Color.green);
+            PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.blue);
+
+            /*float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, targetNearestPoint.position);
             RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, targetNearestPoint.position, distToNavMesh);
             RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.1).ToArray();
             if (targetRaycastHitsFiltered.Length > 0)
             {
                 LoggingController.LogInfo("Collider: " + targetRaycastHitsFiltered[0].collider.name + " (Distance: " + targetRaycastHitsFiltered[0].distance +  ")");
                 return false;
-            }
+            }*/
 
-            NavMesh.CalculatePath(sourceNearestPoint.position, targetNearestPoint.position, NavMesh.AllAreas, path);
-            if (path.status == NavMeshPathStatus.PathComplete)
-            {
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
         private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, List<Item> allItemsToDestroy)
