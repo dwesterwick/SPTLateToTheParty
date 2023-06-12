@@ -13,6 +13,7 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace LateToTheParty.Controllers
 {

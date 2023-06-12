@@ -11,7 +11,6 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using EFT.UI;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 using UnityEngine.AI;
@@ -166,8 +165,9 @@ namespace LateToTheParty.Controllers
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
-                // Check which items are accessible (NOT WORKING)
+                // Check which items are accessible
                 Dictionary<Item, bool> lootAccessibility = LootInfo.Where(l => !l.Value.IsDestroyed).ToDictionary(i => i.Key, i => true);
+                PathRender.Clear();
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(lootAccessibility.Keys.ToArray(), UpdateLootAccessibility, yourPosition, lootAccessibility);
                 double percentAccessible = Math.Round(100.0 * lootAccessibility.Where(i => i.Value).Count() / lootAccessibility.Count, 1);
@@ -382,7 +382,25 @@ namespace LateToTheParty.Controllers
                 pathPoints[i] = new Vector3(path.corners[i].x, path.corners[i].y + heightOffset, path.corners[i].z);
             }
 
-            if (path.status != NavMeshPathStatus.PathComplete)
+            int objectsInWay = 0;
+            /*for (int p = 1; p < pathPoints.Length; p++)
+            {
+                float pathSectionLength = Vector3.Distance(pathPoints[p], pathPoints[p - 1]);
+                Vector3 pathSectionDirection = pathPoints[p] - pathPoints[p - 1];
+                RaycastHit[] pathSectionRaycastHits = Physics.RaycastAll(pathPoints[p - 1], pathSectionDirection, pathSectionLength);
+                foreach(RaycastHit raycastHit in pathSectionRaycastHits)
+                {
+                    objectsInWay++;
+                    LoggingController.LogInfo("Navmesh to " + item.LocalizedName() + " collided with " + raycastHit.collider.name);
+                    
+                    Vector3[] circlepoints = PathRender.GetCirclePoints(raycastHit.point, 0.05f, 10);
+                    PathRender.AddPath(item.Id + "_NavMeshObstacle" + objectsInWay, circlepoints, Color.red);
+
+                    //break;
+                }
+            }*/
+
+            if ((path.status != NavMeshPathStatus.PathComplete) || (objectsInWay > 0))
             {
                 PathRender.AddPath(item.Id, pathPoints, Color.white);
                 return false;
@@ -391,12 +409,17 @@ namespace LateToTheParty.Controllers
             PathRender.AddPath(item.Id, pathPoints, Color.blue);
 
             float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, pathPoints.Last());
-            RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, pathPoints.Last(), distToNavMesh);
-            RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.1).ToArray();
+            Vector3 direction = pathPoints.Last() - LootInfo[item].Transform.position;
+            RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, direction, distToNavMesh);
+            RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.3).ToArray();
             if (targetRaycastHitsFiltered.Length > 0)
             {
-                LoggingController.LogInfo(item.LocalizedName() +  " Collider: " + targetRaycastHitsFiltered[0].collider.name + " (Distance: " + targetRaycastHitsFiltered[0].distance + " / " + distToNavMesh + ")");
-                
+                for (int ray = 0; ray < targetRaycastHitsFiltered.Length; ray++)
+                {
+                    Vector3[] circlepoints = PathRender.GetCirclePoints(targetRaycastHitsFiltered[ray].point, 0.05f, 10);
+                    PathRender.AddPath(item.Id + "_ray" + ray, circlepoints, Color.red);
+                    LoggingController.LogInfo(item.LocalizedName() + " Collider: " + targetRaycastHitsFiltered[ray].collider.name + " (Distance: " + targetRaycastHitsFiltered[ray].distance + " / " + distToNavMesh + ")");
+                }
 
                 PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.red);
                 return false;
