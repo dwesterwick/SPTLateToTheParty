@@ -106,6 +106,7 @@
     <Compile Include="Controllers\LocationSettingsController.cs" />
     <Compile Include="Controllers\LoggingController.cs" />
     <Compile Include="Controllers\LootDestroyerController.cs" />
+    <Compile Include="Controllers\NavMeshController.cs" />
     <Compile Include="Controllers\PathRender.cs" />
     <Compile Include="CoroutineExtensions\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />

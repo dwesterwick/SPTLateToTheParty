@@ -167,7 +167,6 @@ namespace LateToTheParty.Controllers
 
                 // Check which items are accessible
                 Dictionary<Item, bool> lootAccessibility = LootInfo.Where(l => !l.Value.IsDestroyed).ToDictionary(i => i.Key, i => true);
-                PathRender.Clear();
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(lootAccessibility.Keys.ToArray(), UpdateLootAccessibility, yourPosition, lootAccessibility);
                 double percentAccessible = Math.Round(100.0 * lootAccessibility.Where(i => i.Value).Count() / lootAccessibility.Count, 1);
@@ -344,7 +343,7 @@ namespace LateToTheParty.Controllers
 
         private static void UpdateLootAccessibility(Item item, Vector3 sourcePosition, Dictionary<Item, bool> accessibilityDict)
         {
-            bool isAccessible = IsLootItemAccessible(item, sourcePosition);
+            bool isAccessible = NavMeshController.IsPositionAccessible(sourcePosition, LootInfo[item].Transform.position, GetLootPathName(item));
 
             if (accessibilityDict.ContainsKey(item))
             {
@@ -356,77 +355,9 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private static bool IsLootItemAccessible(Item item, Vector3 sourcePosition)
+        private static string GetLootPathName(Item item)
         {
-            float searchDistanceSource = 10;
-            float searchDistanceTarget = 2;
-            NavMeshPath path = new NavMeshPath();
-
-            if (!NavMesh.SamplePosition(sourcePosition, out NavMeshHit sourceNearestPoint, searchDistanceSource, NavMesh.AllAreas))
-            {
-                return false;
-            }
-
-            if (!NavMesh.SamplePosition(LootInfo[item].Transform.position, out NavMeshHit targetNearestPoint, searchDistanceTarget, NavMesh.AllAreas))
-            {
-                return false;
-            }
-
-            NavMesh.CalculatePath(sourceNearestPoint.position, targetNearestPoint.position, NavMesh.AllAreas, path);
-            
-            Vector3[] pathPoints = new Vector3[path.corners.Length];
-            //float heightOffset = (sourcePosition.y - sourceNearestPoint.position.y) * 0.5f;
-            float heightOffset = 1.5f;
-            for (int i = 0; i < pathPoints.Length; i++)
-            {
-                pathPoints[i] = new Vector3(path.corners[i].x, path.corners[i].y + heightOffset, path.corners[i].z);
-            }
-
-            int objectsInWay = 0;
-            /*for (int p = 1; p < pathPoints.Length; p++)
-            {
-                float pathSectionLength = Vector3.Distance(pathPoints[p], pathPoints[p - 1]);
-                Vector3 pathSectionDirection = pathPoints[p] - pathPoints[p - 1];
-                RaycastHit[] pathSectionRaycastHits = Physics.RaycastAll(pathPoints[p - 1], pathSectionDirection, pathSectionLength);
-                foreach(RaycastHit raycastHit in pathSectionRaycastHits)
-                {
-                    objectsInWay++;
-                    LoggingController.LogInfo("Navmesh to " + item.LocalizedName() + " collided with " + raycastHit.collider.name);
-                    
-                    Vector3[] circlepoints = PathRender.GetCirclePoints(raycastHit.point, 0.05f, 10);
-                    PathRender.AddPath(item.Id + "_NavMeshObstacle" + objectsInWay, circlepoints, Color.red);
-
-                    //break;
-                }
-            }*/
-
-            if ((path.status != NavMeshPathStatus.PathComplete) || (objectsInWay > 0))
-            {
-                PathRender.AddPath(item.Id, pathPoints, Color.white);
-                return false;
-            }
-
-            PathRender.AddPath(item.Id, pathPoints, Color.blue);
-
-            float distToNavMesh = Vector3.Distance(LootInfo[item].Transform.position, pathPoints.Last());
-            Vector3 direction = pathPoints.Last() - LootInfo[item].Transform.position;
-            RaycastHit[] targetRaycastHits = Physics.RaycastAll(LootInfo[item].Transform.position, direction, distToNavMesh);
-            RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.3).ToArray();
-            if (targetRaycastHitsFiltered.Length > 0)
-            {
-                for (int ray = 0; ray < targetRaycastHitsFiltered.Length; ray++)
-                {
-                    Vector3[] circlepoints = PathRender.GetCirclePoints(targetRaycastHitsFiltered[ray].point, 0.05f, 10);
-                    PathRender.AddPath(item.Id + "_ray" + ray, circlepoints, Color.red);
-                    LoggingController.LogInfo(item.LocalizedName() + " Collider: " + targetRaycastHitsFiltered[ray].collider.name + " (Distance: " + targetRaycastHitsFiltered[ray].distance + " / " + distToNavMesh + ")");
-                }
-
-                PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.red);
-                return false;
-            }
-
-            PathRender.AddPath(item.Id + "_end", new Vector3[] { pathPoints.Last(), LootInfo[item].Transform.position }, Color.green);
-            return true;
+            return item.LocalizedName() + "_" + item.Id;
         }
 
         private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, List<Item> allItemsToDestroy)
@@ -597,6 +528,8 @@ namespace LateToTheParty.Controllers
                     + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
                     + ": " + item.LocalizedName()
                 );
+
+                NavMeshController.RemoveAccessibilityPaths(GetLootPathName(item));
             }
             catch (Exception ex)
             {

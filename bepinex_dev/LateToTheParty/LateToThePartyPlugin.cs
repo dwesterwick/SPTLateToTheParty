@@ -34,6 +34,7 @@ namespace LateToTheParty
                 this.GetOrAddComponent<LootDestroyerController>();
                 this.GetOrAddComponent<DoorController>();
                 this.GetOrAddComponent<BotConversionController>();
+                this.GetOrAddComponent<NavMeshController>();
 
                 if (ConfigController.Config.Debug)
                 {

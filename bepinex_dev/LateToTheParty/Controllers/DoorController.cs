@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -30,6 +31,11 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
         private static int validDoorCount = -1;
+
+        public static Door[] GetCurrentDoors()
+        {
+            return validDoors.ToArray();
+        }
 
         public static void Clear()
         {
