@@ -102,14 +102,26 @@ namespace LateToTheParty.Controllers
             IsUpdatingDoorsBlockers = false;
         }
 
+        public static Vector3? FindNearestNavMeshPosition(Vector3 position, float searchDistance)
+        {
+            if (NavMesh.SamplePosition(position, out NavMeshHit sourceNearestPoint, searchDistance, NavMesh.AllAreas))
+            {
+                return sourceNearestPoint.position;
+            }
+
+            return null;
+        }
+
         public static bool IsPositionAccessible(Vector3 sourcePosition, Vector3 targetPosition, string positionName)
         {
             RemoveAccessibilityPaths(positionName);
 
+            Vector3[] targetCirclePoints = PathRender.GetSpherePoints(targetPosition, 0.05f, 10);
+            PathRender.AddPath(positionName + "_item", targetCirclePoints, Color.green);
+
             float searchDistanceSource = 10;
             float searchDistanceTarget = 2;
-            NavMeshPath path = new NavMeshPath();
-
+            
             if (!NavMesh.SamplePosition(sourcePosition, out NavMeshHit sourceNearestPoint, searchDistanceSource, NavMesh.AllAreas))
             {
                 return false;
@@ -120,10 +132,11 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
+            NavMeshPath path = new NavMeshPath();
             NavMesh.CalculatePath(sourceNearestPoint.position, targetNearestPoint.position, NavMesh.AllAreas, path);
 
             Vector3[] pathPoints = new Vector3[path.corners.Length];
-            float heightOffset = 1.5f;
+            float heightOffset = 1.25f;
             for (int i = 0; i < pathPoints.Length; i++)
             {
                 pathPoints[i] = new Vector3(path.corners[i].x, path.corners[i].y + heightOffset, path.corners[i].z);
@@ -143,15 +156,56 @@ namespace LateToTheParty.Controllers
 
             float distToNavMesh = Vector3.Distance(targetPosition, pathPoints.Last());
             Vector3 direction = pathPoints.Last() - targetPosition;
-            RaycastHit[] targetRaycastHits = Physics.RaycastAll(targetPosition, direction, distToNavMesh);
-            RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits.Where(r => r.distance > 0.3).ToArray();
+            RaycastHit[] targetRaycastHits = Physics.RaycastAll(targetPosition, direction, distToNavMesh, Physics.AllLayers, QueryTriggerInteraction.Collide);
+
+            for (int ray = 0; ray < targetRaycastHits.Length; ray++)
+            {
+                //if (targetRaycastHits[ray].collider.attachedRigidbody == null)
+                //{
+                    Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
+                    PathRender.AddPath(positionName + "_staticCollider" + ray, boundingBoxPoints, Color.magenta);
+
+                    LoggingController.LogInfo(
+                        positionName
+                        + " Static Collider: "
+                        + targetRaycastHits[ray].collider.name
+                        + " (Distance: "
+                        + targetRaycastHits[ray].distance
+                        + " / " + distToNavMesh
+                        + ", Bounds Size: "
+                        + targetRaycastHits[ray].collider.bounds.size.ToString()
+                        + ")"
+                    );
+                //}
+            }
+
+            RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits
+                .Where(r => r.distance > 0.1)
+                .Where(r => r.collider.bounds.size.y > 0.9)
+                .Where(r => r.collider.bounds.Volume() < 10)
+                .ToArray();
+            
             if (targetRaycastHitsFiltered.Length > 0)
             {
                 for (int ray = 0; ray < targetRaycastHitsFiltered.Length; ray++)
                 {
+                    Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHitsFiltered[ray].collider.bounds);
+                    PathRender.AddPath(positionName + "_bounds" + ray, boundingBoxPoints, Color.red);
+
                     Vector3[] circlepoints = PathRender.GetSpherePoints(targetRaycastHitsFiltered[ray].point, 0.05f, 10);
                     PathRender.AddPath(positionName + "_ray" + ray, circlepoints, Color.red);
-                    LoggingController.LogInfo(positionName + " Collider: " + targetRaycastHitsFiltered[ray].collider.name + " (Distance: " + targetRaycastHitsFiltered[ray].distance + " / " + distToNavMesh + ")");
+
+                    LoggingController.LogInfo(
+                        positionName
+                        + " Collider: "
+                        + targetRaycastHitsFiltered[ray].collider.name
+                        + " (Distance: "
+                        + targetRaycastHitsFiltered[ray].distance
+                        + " / " + distToNavMesh
+                        + ", Bounds Size: "
+                        + targetRaycastHitsFiltered[ray].collider.bounds.size.ToString()
+                        + ")"
+                    );
                 }
 
                 PathRender.AddPath(positionName + "_end", new Vector3[] { pathPoints.Last(), targetPosition }, Color.red);
@@ -194,7 +248,7 @@ namespace LateToTheParty.Controllers
             Destroy(doorBlockers[door]);
             doorBlockers[door] = null;
             PathRender.RemovePath(CreateDoorBlockerID(door));
-            LoggingController.LogInfo("Remove door blocker for " + door.Id);
+            //LoggingController.LogInfo("Remove door blocker for " + door.Id);
         }
 
         private static void CreateDoorBlocker(Door door)

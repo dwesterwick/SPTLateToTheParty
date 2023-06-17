@@ -18,7 +18,7 @@ namespace LateToTheParty.Controllers
         private static Dictionary<string, Vector3[]> paths = new Dictionary<string, Vector3[]>();
         private static Dictionary<string, Color> pathColors = new Dictionary<string, Color>();
         private static Dictionary<string, LineRenderer> pathRenderers = new Dictionary<string, LineRenderer>();
-        private static float lineWidth = 0.1f;
+        private static float lineWidth = 0.05f;
 
         private void LateUpdate()
         {
@@ -154,6 +154,34 @@ namespace LateToTheParty.Controllers
             }
 
             return points.ToArray();
+        }
+
+        public static Vector3[] GetBoundingBoxPoints(Bounds bounds)
+        {
+            return new Vector3[]
+            {
+                bounds.min,
+
+                new Vector3(bounds.min.x, bounds.min.y, bounds.max.z),
+                new Vector3(bounds.min.x, bounds.max.y, bounds.max.z),
+                new Vector3(bounds.min.x, bounds.min.y, bounds.max.z),
+
+                new Vector3(bounds.max.x, bounds.min.y, bounds.max.z),
+                new Vector3(bounds.max.x, bounds.max.y, bounds.max.z),
+                new Vector3(bounds.max.x, bounds.min.y, bounds.max.z),
+
+                new Vector3(bounds.max.x, bounds.min.y, bounds.min.z),
+                new Vector3(bounds.max.x, bounds.max.y, bounds.min.z),
+                new Vector3(bounds.max.x, bounds.min.y, bounds.min.z),
+
+                bounds.min,
+
+                new Vector3(bounds.min.x, bounds.max.y, bounds.min.z),
+                new Vector3(bounds.min.x, bounds.max.y, bounds.max.z),
+                bounds.max,
+                new Vector3(bounds.max.x, bounds.max.y, bounds.min.z),
+                new Vector3(bounds.min.x, bounds.max.y, bounds.min.z)
+            };
         }
     }
 }

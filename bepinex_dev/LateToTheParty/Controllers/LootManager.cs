@@ -116,6 +116,8 @@ namespace LateToTheParty.Controllers
                 {
                     LoggingController.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
                     LootInfo.Remove(relevantItem);
+
+                    NavMeshController.RemoveAccessibilityPaths(GetLootPathName(relevantItem));
                 }
             }
         }
@@ -166,11 +168,13 @@ namespace LateToTheParty.Controllers
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
                 // Check which items are accessible
-                Dictionary<Item, bool> lootAccessibility = LootInfo.Where(l => !l.Value.IsDestroyed).ToDictionary(i => i.Key, i => true);
+                IEnumerable<KeyValuePair<Item,Models.LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
+                Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.NavData.IsAccessible).Select(l => l.Key).ToArray();
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(lootAccessibility.Keys.ToArray(), UpdateLootAccessibility, yourPosition, lootAccessibility);
-                double percentAccessible = Math.Round(100.0 * lootAccessibility.Where(i => i.Value).Count() / lootAccessibility.Count, 1);
-                LoggingController.LogInfo(percentAccessible + "% of " + lootAccessibility.Count + " items are accessible.");
+                yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility, yourPosition);
+
+                double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.NavData.IsAccessible).Count() / remainingItems.Count(), 1);
+                LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
 
                 // Sort eligible loot
                 IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
@@ -341,18 +345,11 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private static void UpdateLootAccessibility(Item item, Vector3 sourcePosition, Dictionary<Item, bool> accessibilityDict)
+        private static void UpdateLootAccessibility(Item item, Vector3 sourcePosition)
         {
+            LootInfo[item].NavData.AccessibleFromPosition = sourcePosition;
             bool isAccessible = NavMeshController.IsPositionAccessible(sourcePosition, LootInfo[item].Transform.position, GetLootPathName(item));
-
-            if (accessibilityDict.ContainsKey(item))
-            {
-                accessibilityDict[item] = isAccessible;
-            }
-            else
-            {
-                accessibilityDict.Add(item, isAccessible);
-            }
+            LootInfo[item].NavData.IsAccessible = isAccessible;
         }
 
         private static string GetLootPathName(Item item)

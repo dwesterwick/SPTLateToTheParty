@@ -17,6 +17,7 @@ namespace LateToTheParty.Models
 
     public class LootInfo
     {
+        public LootNavData NavData = new LootNavData();
         public ELootType LootType { get; } = ELootType.Invalid;
         public bool IsDestroyed { get; set; } = false;
         public TraderControllerClass TraderController { get; set; } = null;

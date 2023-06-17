@@ -117,6 +117,7 @@
     <Compile Include="CoroutineExtensions\TaskWithReturnValueAndTimeLimit.cs" />
     <Compile Include="CoroutineExtensions\TaskWithTimeLimit.cs" />
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
+    <Compile Include="Models\LootNavData.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\OnBoxLandPatch.cs" />
     <Compile Include="Patches\OnGameStartedPatch.cs" />
