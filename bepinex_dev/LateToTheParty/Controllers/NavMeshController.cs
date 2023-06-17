@@ -68,6 +68,40 @@ namespace LateToTheParty.Controllers
             }
         }
 
+        public static Player GetNearestPlayer(Vector3 position)
+        {
+            float closestDistance = float.MaxValue;
+            Player closestPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+
+            foreach (Player player in Singleton<GameWorld>.Instance.AllPlayers)
+            {
+                float distance = Vector3.Distance(position, player.Transform.position);
+                if (distance < closestDistance)
+                {
+                    closestPlayer = player;
+                    closestDistance = distance;
+                }
+            }
+
+            return closestPlayer;
+        }
+
+        public static float GetDistanceToNearestLockedDoor(Vector3 position)
+        {
+            float closestDistance = float.MaxValue;
+
+            foreach (NavMeshObstacle obstacle in doorBlockers.Values)
+            {
+                float distance = Vector3.Distance(position, obstacle.center);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                }
+            }
+
+            return closestDistance;
+        }
+
         public static void CheckIfColliderIsDoor(MeshCollider meshCollider)
         {
             if (doorMeshColliders.ContainsValue(meshCollider))
@@ -84,6 +118,11 @@ namespace LateToTheParty.Controllers
             Door door = doorObject.GetComponent<Door>();
 
             if (door == null)
+            {
+                return;
+            }
+
+            if (!DoorController.IsToggleableDoor(door))
             {
                 return;
             }
@@ -116,7 +155,7 @@ namespace LateToTheParty.Controllers
         {
             RemoveAccessibilityPaths(positionName);
 
-            Vector3[] targetCirclePoints = PathRender.GetSpherePoints(targetPosition, 0.05f, 10);
+            Vector3[] targetCirclePoints = PathRender.GetSpherePoints(targetPosition, 0.1f, 10);
             PathRender.AddPath(positionName + "_item", targetCirclePoints, Color.green);
 
             float searchDistanceSource = 10;
@@ -155,10 +194,10 @@ namespace LateToTheParty.Controllers
             PathRender.AddPath(positionName + "_path", pathPoints, Color.blue);
 
             float distToNavMesh = Vector3.Distance(targetPosition, pathPoints.Last());
-            Vector3 direction = pathPoints.Last() - targetPosition;
-            RaycastHit[] targetRaycastHits = Physics.RaycastAll(targetPosition, direction, distToNavMesh, Physics.AllLayers, QueryTriggerInteraction.Collide);
+            Vector3 direction = targetPosition - pathPoints.Last();
+            RaycastHit[] targetRaycastHits = Physics.RaycastAll(pathPoints.Last(), direction, distToNavMesh, LayerMaskClass.HighPolyWithTerrainMask);
 
-            for (int ray = 0; ray < targetRaycastHits.Length; ray++)
+            /*for (int ray = 0; ray < targetRaycastHits.Length; ray++)
             {
                 //if (targetRaycastHits[ray].collider.attachedRigidbody == null)
                 //{
@@ -177,12 +216,12 @@ namespace LateToTheParty.Controllers
                         + ")"
                     );
                 //}
-            }
+            }*/
 
             RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits
-                .Where(r => r.distance > 0.1)
                 .Where(r => r.collider.bounds.size.y > 0.9)
-                .Where(r => r.collider.bounds.Volume() < 10)
+                .Where(r => r.collider.attachedRigidbody == null)
+                .Where(r => r.collider.bounds.Volume() > 2)
                 .ToArray();
             
             if (targetRaycastHitsFiltered.Length > 0)
@@ -223,7 +262,10 @@ namespace LateToTheParty.Controllers
 
         private static void UpdateDoorBlocker(Door door)
         {
-            if (door.DoorState == EDoorState.Open)
+            bool canOpenDoor = door.DoorState == EDoorState.Open;
+            canOpenDoor |= door.DoorState == EDoorState.Shut;
+
+            if (canOpenDoor)
             {
                 DestroyDoorBlocker(door);
                 return;

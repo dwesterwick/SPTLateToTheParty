@@ -11,6 +11,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using EFT.UI;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 using UnityEngine.AI;
@@ -171,7 +172,7 @@ namespace LateToTheParty.Controllers
                 IEnumerable<KeyValuePair<Item,Models.LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.NavData.IsAccessible).Select(l => l.Key).ToArray();
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility, yourPosition);
+                yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
 
                 double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.NavData.IsAccessible).Count() / remainingItems.Count(), 1);
                 LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
@@ -345,10 +346,21 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private static void UpdateLootAccessibility(Item item, Vector3 sourcePosition)
+        private static void UpdateLootAccessibility(Item item)
         {
-            LootInfo[item].NavData.AccessibleFromPosition = sourcePosition;
-            bool isAccessible = NavMeshController.IsPositionAccessible(sourcePosition, LootInfo[item].Transform.position, GetLootPathName(item));
+            Vector3 itemPosition = LootInfo[item].Transform.position;
+
+            float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
+            if ((distanceToNearestLockedDoor < float.MaxValue) && (distanceToNearestLockedDoor > 25))
+            {
+                LoggingController.LogInfo(item.LocalizedName() + " is " + distanceToNearestLockedDoor + "m from the nearest locked door.");
+                LootInfo[item].NavData.IsAccessible = true;
+                return;
+            }
+
+            Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
+            LootInfo[item].NavData.AccessibleFromPosition = nearestPlayer.Transform.position;
+            bool isAccessible = NavMeshController.IsPositionAccessible(nearestPlayer.Transform.position, itemPosition, GetLootPathName(item));
             LootInfo[item].NavData.IsAccessible = isAccessible;
         }
 

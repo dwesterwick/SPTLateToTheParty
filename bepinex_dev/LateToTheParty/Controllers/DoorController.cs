@@ -23,6 +23,7 @@ namespace LateToTheParty.Controllers
         public static bool IsTogglingDoors { get; private set; } = false;
         public static int InteractiveLayer { get; set; }
 
+        private static List<Door> toggleableDoors = new List<Door>();
         private static List<Door> validDoors = new List<Door>();
         private static Dictionary<Door, bool> canToggleDoorDict = new Dictionary<Door, bool>();
         private GamePlayerOwner gamePlayerOwner = null;
@@ -32,11 +33,6 @@ namespace LateToTheParty.Controllers
         private static int doorsToToggle = 1;
         private static int validDoorCount = -1;
 
-        public static Door[] GetCurrentDoors()
-        {
-            return validDoors.ToArray();
-        }
-
         public static void Clear()
         {
             if (IsTogglingDoors)
@@ -45,6 +41,7 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsTogglingDoors);
             }
 
+            toggleableDoors.Clear();
             validDoors.Clear();
             canToggleDoorDict.Clear();
             updateTimer.Restart();
@@ -116,6 +113,11 @@ namespace LateToTheParty.Controllers
             updateTimer.Restart();
         }
 
+        public static bool IsToggleableDoor(Door door)
+        {
+            return toggleableDoors.Contains(door);
+        }
+
         private IEnumerator ToggleDoors(int doorsToToggle)
         {
             try
@@ -147,12 +149,18 @@ namespace LateToTheParty.Controllers
 
             foreach (Door door in allDoors)
             {
+                // If the door can be toggled, add it to the dictionary
+                if (!CanDoorBeToggled(door, true))
+                {
+                    continue;
+                }
+                toggleableDoors.Add(door);
+
+                // If the door is eligible for toggling during the raid, add it to the dictionary
                 if (!IsValidDoor(door, true))
                 {
                     continue;
                 }
-
-                // If the door is eligible for toggling during the raid, add it to the dictionary
                 validDoors.Add(door);
             }
 
@@ -192,6 +200,29 @@ namespace LateToTheParty.Controllers
 
         private bool IsValidDoor(Door door, bool logResult = false)
         {
+            // Get all items to search for key ID's
+            Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
+
+            if (door.DoorState == EDoorState.Locked)
+            {
+                if (allItems.ContainsKey(door.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
+                {
+                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and not allowed to be opened.");
+                    return false;
+                }
+
+                if (door.CanBeBreached && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
+                {
+                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is not allowed to be breached.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool CanDoorBeToggled(Door door, bool logResult = false)
+        {
             // Redundant check
             /*if (!door.Operatable)
             {
@@ -224,21 +255,9 @@ namespace LateToTheParty.Controllers
 
             if (door.DoorState == EDoorState.Locked)
             {
-                if (allItems.ContainsKey(door.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
-                {
-                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and not allowed to be opened.");
-                    return false;
-                }
-
                 if (!allItems.ContainsKey(door.KeyId) && !door.CanBeBreached)
                 {
                     if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and has no valid key.");
-                    return false;
-                }
-
-                if (door.CanBeBreached && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
-                {
-                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is not allowed to be breached.");
                     return false;
                 }
             }
