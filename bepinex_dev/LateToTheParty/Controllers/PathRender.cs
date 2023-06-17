@@ -103,7 +103,10 @@ namespace LateToTheParty.Controllers
 
                 if (pathRenderers.ContainsKey(pathName))
                 {
-                    pathRenderers[pathName].positionCount = 0;
+                    if (pathRenderers[pathName] != null)
+                    {
+                        pathRenderers[pathName].positionCount = 0;
+                    }
 
                     //Destroy(pathRenderers[pathName].gameObject);
                     //Destroy(pathRenderers[pathName]);

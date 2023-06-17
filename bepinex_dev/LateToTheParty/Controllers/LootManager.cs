@@ -353,7 +353,6 @@ namespace LateToTheParty.Controllers
             float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
             if ((distanceToNearestLockedDoor < float.MaxValue) && (distanceToNearestLockedDoor > 25))
             {
-                LoggingController.LogInfo(item.LocalizedName() + " is " + distanceToNearestLockedDoor + "m from the nearest locked door.");
                 LootInfo[item].NavData.IsAccessible = true;
                 return;
             }

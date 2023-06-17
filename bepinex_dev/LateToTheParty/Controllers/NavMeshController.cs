@@ -48,7 +48,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure enough time has passed since the last check
-            if (updateTimer.ElapsedMilliseconds < 2 * 1000)
+            if (IsUpdatingDoorsBlockers || (updateTimer.ElapsedMilliseconds < 2 * 1000))
             {
                 return;
             }
@@ -90,9 +90,9 @@ namespace LateToTheParty.Controllers
         {
             float closestDistance = float.MaxValue;
 
-            foreach (NavMeshObstacle obstacle in doorBlockers.Values)
+            foreach (NavMeshObstacle obstacle in doorBlockers.Values.Where(v => v != null))
             {
-                float distance = Vector3.Distance(position, obstacle.center);
+                float distance = Vector3.Distance(position, obstacle.transform.position);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
@@ -183,11 +183,11 @@ namespace LateToTheParty.Controllers
 
             if (path.status != NavMeshPathStatus.PathComplete)
             {
-                for (int i = 0; i < pathPoints.Length; i++)
+                /*for (int i = 0; i < pathPoints.Length; i++)
                 {
                     pathPoints[i].y -= 0.25f;
                 }
-                PathRender.AddPath(positionName + "_path", pathPoints, Color.white);
+                PathRender.AddPath(positionName + "_path", pathPoints, Color.white);*/
                 return false;
             }
 
@@ -234,7 +234,7 @@ namespace LateToTheParty.Controllers
                     Vector3[] circlepoints = PathRender.GetSpherePoints(targetRaycastHitsFiltered[ray].point, 0.05f, 10);
                     PathRender.AddPath(positionName + "_ray" + ray, circlepoints, Color.red);
 
-                    LoggingController.LogInfo(
+                    /*LoggingController.LogInfo(
                         positionName
                         + " Collider: "
                         + targetRaycastHitsFiltered[ray].collider.name
@@ -244,7 +244,7 @@ namespace LateToTheParty.Controllers
                         + ", Bounds Size: "
                         + targetRaycastHitsFiltered[ray].collider.bounds.size.ToString()
                         + ")"
-                    );
+                    );*/
                 }
 
                 PathRender.AddPath(positionName + "_end", new Vector3[] { pathPoints.Last(), targetPosition }, Color.red);
