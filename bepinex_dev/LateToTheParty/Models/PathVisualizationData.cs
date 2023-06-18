@@ -52,15 +52,16 @@ namespace LateToTheParty.Models
         {
             lock (lineRendererLockObj)
             {
-                if (pathData == null)
-                {
-                    return;
-                }
-
                 if (lineRenderer == null)
                 {
                     lineRenderer = (new GameObject("Path_" + PathName)).GetOrAddComponent<LineRenderer>();
                     lineRenderer.material = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
+                }
+
+                if ((pathData == null) || (pathData.Length == 0))
+                {
+                    lineRenderer.positionCount = 0;
+                    return;
                 }
 
                 lineRenderer.startColor = LineColor;

@@ -21,6 +21,28 @@ namespace LateToTheParty.Models
 
         }
 
+        public void Merge(PathAccessibilityData other)
+        {
+            if (other.PathData != null) { PathData = other.PathData; }
+            if (other.PathEndPointData != null) { PathEndPointData = other.PathEndPointData; }
+            if (other.LootOutlineData != null) { LootOutlineData = other.LootOutlineData; }
+
+            foreach (PathVisualizationData data in other.BoundingBoxes)
+            {
+                if (!BoundingBoxes.Contains(data)) { BoundingBoxes.Add(data); }
+            }
+            foreach (PathVisualizationData data in other.RaycastHitMarkers)
+            {
+                if (!RaycastHitMarkers.Contains(data)) { RaycastHitMarkers.Add(data); }
+            }
+        }
+
+        public void MergeAndUpdate(PathAccessibilityData other)
+        {
+            Merge(other);
+            Update();
+        }
+
         public void Update()
         {
             PathRender.AddOrUpdatePath(PathData);

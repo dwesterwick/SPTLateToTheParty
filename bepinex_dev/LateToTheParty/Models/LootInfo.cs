@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EFT.Interactive;
 using EFT.InventoryLogic;
 using UnityEngine;
 
@@ -27,6 +28,7 @@ namespace LateToTheParty.Models
         public double RaidETWhenDestroyed { get; set; } = -999;
         public bool CanDestroy { get; set; } = false;
         public Item parentItem { get; set; } = null;
+        public WorldInteractiveObject ParentContainer = null;
 
         public LootInfo(ELootType lootType)
         {

@@ -168,7 +168,7 @@ namespace LateToTheParty.Controllers
             PathAccessibilityData lootAccessibilityData = new PathAccessibilityData();
 
             Vector3[] targetCirclePoints = PathRender.GetSpherePoints(targetPosition, 0.1f, 10);
-            lootAccessibilityData.LootOutlineData = new PathVisualizationData(targetPositionName + "_itemOutline", targetCirclePoints, Color.green);
+            lootAccessibilityData.LootOutlineData = new PathVisualizationData(targetPositionName + "_itemOutline", targetCirclePoints, Color.white);
 
             Vector3? sourceNearestPoint = FindNearestNavMeshPosition(sourcePosition, 10);
             if (!sourceNearestPoint.HasValue)
@@ -214,14 +214,14 @@ namespace LateToTheParty.Controllers
                 Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
                 lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBox" + ray, boundingBoxPoints, Color.magenta));
 
-                LoggingController.LogInfo(
+                /*LoggingController.LogInfo(
                     targetPositionName
                     + " Collider: "
                     + targetRaycastHits[ray].collider.name
                     + " (Bounds Size: "
                     + targetRaycastHits[ray].collider.bounds.size.ToString()
                     + ")"
-                );
+                );*/
             }
 
             RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits
@@ -256,6 +256,7 @@ namespace LateToTheParty.Controllers
             }
 
             lootAccessibilityData.IsAccessible = true;
+            lootAccessibilityData.LootOutlineData.LineColor = Color.green;
             lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.green));
             return lootAccessibilityData;
         }

@@ -244,6 +244,11 @@ namespace LateToTheParty.Controllers
                             GetLootFoundTime(raidET)
                         );
                         LootInfo.Add(item, newLoot);
+
+                        if (lootableContainer.DoorState == EDoorState.Locked)
+                        {
+                            LootInfo[item].ParentContainer = lootableContainer;
+                        }
                     }
                 }
             }
@@ -346,7 +351,27 @@ namespace LateToTheParty.Controllers
 
         private static void UpdateLootAccessibility(Item item)
         {
+            string lootPathName = GetLootPathName(item);
             Vector3 itemPosition = LootInfo[item].Transform.position;
+            
+            PathAccessibilityData accessibilityData = new PathAccessibilityData();
+            Vector3[] targetCirclePoints = PathRender.GetSpherePoints(itemPosition, 0.1f, 10);
+            accessibilityData.LootOutlineData = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.green);
+
+            if (LootInfo[item].PathData != null)
+            {
+                LootInfo[item].PathData.Clear();
+            }
+            LootInfo[item].PathData = accessibilityData;
+            LootInfo[item].PathData.Update();
+
+            if ((LootInfo[item].ParentContainer != null) && (LootInfo[item].ParentContainer.DoorState == EDoorState.Locked))
+            {
+                LootInfo[item].PathData.IsAccessible = false;
+                LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
+                LootInfo[item].PathData.Update();
+                return;
+            }
 
             float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
             if ((distanceToNearestLockedDoor < float.MaxValue) && (distanceToNearestLockedDoor > 25))
@@ -356,13 +381,8 @@ namespace LateToTheParty.Controllers
             }
 
             Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
-            PathAccessibilityData accessibilityData = NavMeshController.GetPathAccessibilityData(nearestPlayer.Transform.position, itemPosition, GetLootPathName(item));
-            if (LootInfo[item].PathData != null)
-            {
-                LootInfo[item].PathData.Clear();
-            }
-            LootInfo[item].PathData = accessibilityData;
-            LootInfo[item].PathData.Update();
+            PathAccessibilityData fullCccessibilityData = NavMeshController.GetPathAccessibilityData(nearestPlayer.Transform.position, itemPosition, lootPathName);
+            accessibilityData.MergeAndUpdate(fullCccessibilityData);
         }
 
         private static string GetLootPathName(Item item)
