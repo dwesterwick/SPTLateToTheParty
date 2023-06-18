@@ -52,7 +52,12 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            foreach (MeshCollider collider in FindObjectsOfType<MeshCollider>())
+            if (DoorController.ToggleableDoorCount == 0)
+            {
+                return;
+            }
+
+            foreach (Collider collider in FindObjectsOfType<Collider>())
             {
                 CheckIfColliderIsDoor(collider);
             }
@@ -114,14 +119,14 @@ namespace LateToTheParty.Controllers
             return closestDistance;
         }
 
-        public static void CheckIfColliderIsDoor(MeshCollider meshCollider)
+        public static void CheckIfColliderIsDoor(Collider collider)
         {
-            if (meshCollider.gameObject.layer != LayerMaskClass.DoorLayer)
+            if (collider.gameObject.layer != LayerMaskClass.DoorLayer)
             {
                 return;
             }
 
-            GameObject doorObject = meshCollider.transform.parent.gameObject;
+            GameObject doorObject = collider.transform.parent.gameObject;
             Door door = doorObject.GetComponent<Door>();
 
             if (door == null)
@@ -129,12 +134,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            if (!DoorController.IsToggleableDoor(door))
-            {
-                return;
-            }
-
-            doorObstacles.Add(door, new DoorObstacle(meshCollider, door));
+            bool isToggleable = DoorController.IsToggleableDoor(door);
+            doorObstacles.Add(door, new DoorObstacle(collider, door, isToggleable));
         }
 
         public static IEnumerator UpdateDoorObstacles()

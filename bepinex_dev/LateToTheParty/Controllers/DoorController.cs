@@ -20,6 +20,7 @@ namespace LateToTheParty.Controllers
     public class DoorController : MonoBehaviour
     {
         public static bool IsTogglingDoors { get; private set; } = false;
+        public static bool IsFindingDoors { get; private set; } = false;
         public static int InteractiveLayer { get; set; }
 
         private static List<Door> toggleableDoors = new List<Door>();
@@ -31,6 +32,11 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
         private static int validDoorCount = -1;
+
+        public static int ToggleableDoorCount
+        {
+            get { return IsFindingDoors ? 0 : toggleableDoors.Count; }
+        }
 
         private void OnDisable()
         {
@@ -119,7 +125,7 @@ namespace LateToTheParty.Controllers
 
         public static bool IsToggleableDoor(Door door)
         {
-            return toggleableDoors.Contains(door);
+            return toggleableDoors.Any(d => d.Id == door.Id);
         }
 
         private IEnumerator ToggleRandomDoors(int doorsToToggle)
@@ -145,6 +151,7 @@ namespace LateToTheParty.Controllers
 
         private void FindAllEligibleDoors()
         {
+            IsFindingDoors = true;
             eligibleDoors.Clear();
 
             LoggingController.LogInfo("Searching for valid doors...");
@@ -169,6 +176,7 @@ namespace LateToTheParty.Controllers
             }
 
             LoggingController.LogInfo("Searching for valid doors...found " + eligibleDoors.Count + " doors.");
+            IsFindingDoors = false;
         }
 
         private void UpdateIfDoorIsAllowedToBeToggle(Door door)

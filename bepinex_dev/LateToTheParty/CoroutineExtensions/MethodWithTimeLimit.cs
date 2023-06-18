@@ -55,6 +55,7 @@ namespace LateToTheParty.CoroutineExtensions
 
         protected void FinishedWaitingForFrames(string extraDetail = "")
         {
+            cycleTimes.Add(cycleTimer.ElapsedMilliseconds);
             if (hadToWait)
             {
                 LoggingController.LogWarning(messageTextPrefix(extraDetail) + "done." + messageTextSuffix(), true);
@@ -63,6 +64,7 @@ namespace LateToTheParty.CoroutineExtensions
 
         protected void AbortWaitingForFrames(string extraDetail = "")
         {
+            cycleTimes.Add(cycleTimer.ElapsedMilliseconds);
             if (IsRunning)
             {
                 LoggingController.LogWarning(messageTextPrefix(extraDetail) + "aborted." + messageTextSuffix(), true);

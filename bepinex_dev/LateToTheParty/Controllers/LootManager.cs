@@ -266,8 +266,10 @@ namespace LateToTheParty.Controllers
 
         private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
         {
+            IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
+
             // Calculate the fraction of loot that should be removed from the map
-            double currentLootRemainingFraction = (double)LootInfo.Values.Where(v => v.IsDestroyed == false).Count() / LootInfo.Count;
+            double currentLootRemainingFraction = (double)accessibleItems.Where(v => !v.Value.IsDestroyed).Count() / accessibleItems.Count();
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
             //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
 

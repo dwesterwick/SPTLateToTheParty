@@ -12,9 +12,10 @@ namespace LateToTheParty.Models
 {
     public class DoorObstacle
     {
+        public bool IsToggleable { get; private set; } = true;
         public Door LinkedDoor { get; private set; }
 
-        private MeshCollider meshCollider;
+        private Collider collider;
         private NavMeshObstacle navMeshObstacle = null;
         private PathVisualizationData visualizationData = null;
 
@@ -23,10 +24,15 @@ namespace LateToTheParty.Models
             get { return navMeshObstacle?.transform.position; }
         }
 
-        public DoorObstacle(MeshCollider _meshCollider, Door _door)
+        public DoorObstacle(Collider _collider, Door _door)
         {
-            meshCollider = _meshCollider;
+            collider = _collider;
             LinkedDoor = _door;
+        }
+
+        public DoorObstacle(Collider _collider, Door _door, bool istoggleable) : this(_collider, _door)
+        {
+            IsToggleable = istoggleable;
         }
 
         public void Update()
@@ -34,7 +40,7 @@ namespace LateToTheParty.Models
             bool canOpenDoor = LinkedDoor.DoorState == EDoorState.Open;
             canOpenDoor |= LinkedDoor.DoorState == EDoorState.Shut;
 
-            if (canOpenDoor)
+            if (canOpenDoor && IsToggleable)
             {
                 Remove();
                 return;
@@ -60,14 +66,19 @@ namespace LateToTheParty.Models
 
         private void Add()
         {
+            if (navMeshObstacle != null)
+            {
+                return;
+            }
+
             string id = "Door_" + LinkedDoor.Id.Replace(" ", "_") + "_Obstacle";
 
             GameObject doorBlockerObj = new GameObject(id);
-            doorBlockerObj.transform.SetParent(meshCollider.transform);
-            doorBlockerObj.transform.position = meshCollider.bounds.center;
+            doorBlockerObj.transform.SetParent(collider.transform);
+            doorBlockerObj.transform.position = collider.bounds.center;
 
             navMeshObstacle = doorBlockerObj.AddComponent<NavMeshObstacle>();
-            navMeshObstacle.size = meshCollider.bounds.size;
+            navMeshObstacle.size = collider.bounds.size;
             navMeshObstacle.carving = true;
             navMeshObstacle.carveOnlyStationary = false;
 
