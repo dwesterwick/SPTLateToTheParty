@@ -51,7 +51,7 @@ namespace LateToTheParty.Controllers
 
             if (paths.ContainsKey(data.PathName))
             {
-                //paths[data.PathName].Clear();
+                paths[data.PathName].Erase();
                 paths[data.PathName] = data;
             }
             else

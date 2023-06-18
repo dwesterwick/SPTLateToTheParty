@@ -74,15 +74,23 @@ namespace LateToTheParty.Models
             }
         }
 
-        public void Clear()
+        public void Erase()
         {
             lock (lineRendererLockObj)
             {
                 if (lineRenderer != null)
                 {
                     lineRenderer.positionCount = 0;
-                    pathData = null;
                 }
+            }
+        }
+
+        public void Clear()
+        {
+            Erase();
+            lock (lineRendererLockObj)
+            {
+                pathData = null;
             }
         }
     }
