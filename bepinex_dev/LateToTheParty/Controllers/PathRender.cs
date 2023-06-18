@@ -1,22 +1,23 @@
-﻿using BepInEx;
-using Comfort.Common;
-using EFT;
-using EFT.UI;
-using LateToTheParty.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Comfort.Common;
+using EFT;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LateToTheParty.Controllers
 {
     public class PathRender : MonoBehaviour
     {
-        private static Dictionary<string, PathVisualizationData> paths = new Dictionary<string, PathVisualizationData>();
+        private static Dictionary<string, Models.PathVisualizationData> paths = new Dictionary<string, Models.PathVisualizationData>();
+
+        private void OnDisable()
+        {
+            Clear();
+        }
 
         private void LateUpdate()
         {
@@ -41,7 +42,7 @@ namespace LateToTheParty.Controllers
             paths.Clear();
         }
 
-        public static bool AddOrUpdatePath(PathVisualizationData data)
+        public static bool AddOrUpdatePath(Models.PathVisualizationData data)
         {
             if (data == null)
             {
@@ -75,7 +76,7 @@ namespace LateToTheParty.Controllers
             return false;
         }
 
-        public static bool RemovePath(PathVisualizationData data)
+        public static bool RemovePath(Models.PathVisualizationData data)
         {
             if (data == null)
             {

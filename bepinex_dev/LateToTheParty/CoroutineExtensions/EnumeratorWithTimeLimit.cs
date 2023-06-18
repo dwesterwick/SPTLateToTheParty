@@ -25,6 +25,7 @@ namespace LateToTheParty.CoroutineExtensions
 
             base.IsCompleted = false;
             base.hadToWait = false;
+            base.cycleTimes.Clear();
             SetMethodName("");
         }
 
@@ -143,6 +144,7 @@ namespace LateToTheParty.CoroutineExtensions
             base.hadToWait = false;
 
             base.cycleTimer.Restart();
+            base.jobTimer.Restart();
         }
 
         private void Run_Internal_End()

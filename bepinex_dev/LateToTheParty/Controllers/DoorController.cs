@@ -14,7 +14,6 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace LateToTheParty.Controllers
 {
@@ -24,8 +23,8 @@ namespace LateToTheParty.Controllers
         public static int InteractiveLayer { get; set; }
 
         private static List<Door> toggleableDoors = new List<Door>();
-        private static List<Door> validDoors = new List<Door>();
-        private static Dictionary<Door, bool> canToggleDoorDict = new Dictionary<Door, bool>();
+        private static List<Door> eligibleDoors = new List<Door>();
+        private static Dictionary<Door, bool> allowedToToggleDoor = new Dictionary<Door, bool>();
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
@@ -33,20 +32,9 @@ namespace LateToTheParty.Controllers
         private static int doorsToToggle = 1;
         private static int validDoorCount = -1;
 
-        public static void Clear()
+        private void OnDisable()
         {
-            if (IsTogglingDoors)
-            {
-                enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsTogglingDoors);
-            }
-
-            toggleableDoors.Clear();
-            validDoors.Clear();
-            canToggleDoorDict.Clear();
-            updateTimer.Restart();
-
-            validDoorCount = -1;
+            Clear();
         }
 
         private void Update()
@@ -70,7 +58,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure enough time has passed since the last door event
-            if ((updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000) && (validDoors.Count > 0))
+            if ((updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000) && (eligibleDoors.Count > 0))
             {
                 return;
             }
@@ -86,18 +74,18 @@ namespace LateToTheParty.Controllers
             }
 
             // Do not change doors too early or late into the raid
-            if ((validDoors.Count > 0) && ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining)))
+            if ((eligibleDoors.Count > 0) && ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining)))
             {
                 return;
             }
 
             // Only find doors once per raid
-            doorsToToggle = (int)Math.Max(1, Math.Round(validDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
+            doorsToToggle = (int)Math.Max(1, Math.Round(eligibleDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
             if (validDoorCount == -1)
             {
                 gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
-                FindAllValidDoors();
-                validDoorCount = validDoors.Count;
+                FindAllEligibleDoors();
+                validDoorCount = eligibleDoors.Count;
 
                 doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
             }
@@ -109,8 +97,24 @@ namespace LateToTheParty.Controllers
             }
 
             // Try to change the state of doors
-            StartCoroutine(ToggleDoors(doorsToToggle));
+            StartCoroutine(ToggleRandomDoors(doorsToToggle));
             updateTimer.Restart();
+        }
+
+        public static void Clear()
+        {
+            if (IsTogglingDoors)
+            {
+                enumeratorWithTimeLimit.Abort();
+                TaskWithTimeLimit.WaitForCondition(() => !IsTogglingDoors);
+            }
+
+            toggleableDoors.Clear();
+            eligibleDoors.Clear();
+            allowedToToggleDoor.Clear();
+            updateTimer.Restart();
+
+            validDoorCount = -1;
         }
 
         public static bool IsToggleableDoor(Door door)
@@ -118,7 +122,7 @@ namespace LateToTheParty.Controllers
             return toggleableDoors.Contains(door);
         }
 
-        private IEnumerator ToggleDoors(int doorsToToggle)
+        private IEnumerator ToggleRandomDoors(int doorsToToggle)
         {
             try
             {
@@ -126,8 +130,8 @@ namespace LateToTheParty.Controllers
 
                 // Check which doors are eligible to be toggled
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(validDoors.AsEnumerable(), UpdateIfDoorCanBeToggled);
-                IEnumerable<Door> doorsThatCanBeToggled = canToggleDoorDict.Where(d => d.Value).Select(d => d.Key);
+                yield return enumeratorWithTimeLimit.Run(eligibleDoors.AsEnumerable(), UpdateIfDoorIsAllowedToBeToggle);
+                IEnumerable<Door> doorsThatCanBeToggled = allowedToToggleDoor.Where(d => d.Value).Select(d => d.Key);
 
                 // Toggle requested number of doors
                 enumeratorWithTimeLimit.Reset();
@@ -139,9 +143,9 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private void FindAllValidDoors()
+        private void FindAllEligibleDoors()
         {
-            validDoors.Clear();
+            eligibleDoors.Clear();
 
             LoggingController.LogInfo("Searching for valid doors...");
             Door[] allDoors = UnityEngine.Object.FindObjectsOfType<Door>();
@@ -150,36 +154,38 @@ namespace LateToTheParty.Controllers
             foreach (Door door in allDoors)
             {
                 // If the door can be toggled, add it to the dictionary
-                if (!CanDoorBeToggled(door, true))
+                if (!CheckIfDoorCanBeToggled(door, true))
                 {
                     continue;
                 }
                 toggleableDoors.Add(door);
 
                 // If the door is eligible for toggling during the raid, add it to the dictionary
-                if (!IsValidDoor(door, true))
+                if (!IsEligibleDoor(door, true))
                 {
                     continue;
                 }
-                validDoors.Add(door);
+                eligibleDoors.Add(door);
             }
 
-            LoggingController.LogInfo("Searching for valid doors...found " + validDoors.Count + " doors.");
+            LoggingController.LogInfo("Searching for valid doors...found " + eligibleDoors.Count + " doors.");
         }
 
-        private void UpdateIfDoorCanBeToggled(Door door)
+        private void UpdateIfDoorIsAllowedToBeToggle(Door door)
         {
-            if (canToggleDoorDict.ContainsKey(door))
+            bool isAllowedToBeToggled = IsDoorAllowedToBeToggled(door);
+
+            if (allowedToToggleDoor.ContainsKey(door))
             {
-                canToggleDoorDict[door] = CanToggleDoor(door);
+                allowedToToggleDoor[door] = isAllowedToBeToggled;
             }
             else
             {
-                canToggleDoorDict.Add(door, CanToggleDoor(door));
+                allowedToToggleDoor.Add(door, isAllowedToBeToggled);
             }
         }
 
-        private bool CanToggleDoor(Door door)
+        private bool IsDoorAllowedToBeToggled(Door door)
         {
             // Ensure you're still in the raid to avoid NRE's when it ends
             if ((Camera.main == null) || (door.transform == null))
@@ -198,7 +204,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool IsValidDoor(Door door, bool logResult = false)
+        private bool IsEligibleDoor(Door door, bool logResult = false)
         {
             // Get all items to search for key ID's
             Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
@@ -221,7 +227,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool CanDoorBeToggled(Door door, bool logResult = false)
+        private bool CheckIfDoorCanBeToggled(Door door, bool logResult = false)
         {
             // Redundant check
             /*if (!door.Operatable)

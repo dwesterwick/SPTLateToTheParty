@@ -1,16 +1,15 @@
-﻿using Comfort.Common;
-using EFT;
-using EFT.Interactive;
-using EFT.InventoryLogic;
-using LateToTheParty.CoroutineExtensions;
-using LateToTheParty.Models;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Comfort.Common;
+using EFT;
+using EFT.Interactive;
+using LateToTheParty.CoroutineExtensions;
+using LateToTheParty.Models;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -24,21 +23,9 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
-        public static void Clear()
+        private void OnDisable()
         {
-            if (IsUpdatingDoorsObstacles)
-            {
-                enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsUpdatingDoorsObstacles);
-            }
-
-            foreach (DoorObstacle doorObstacle in doorObstacles.Values)
-            {
-                doorObstacle.Remove();
-            }
-            doorObstacles.Clear();
-
-            updateTimer.Restart();
+            Clear();
         }
 
         private void LateUpdate()
@@ -69,6 +56,23 @@ namespace LateToTheParty.Controllers
             {
                 CheckIfColliderIsDoor(collider);
             }
+        }
+
+        public static void Clear()
+        {
+            if (IsUpdatingDoorsObstacles)
+            {
+                enumeratorWithTimeLimit.Abort();
+                TaskWithTimeLimit.WaitForCondition(() => !IsUpdatingDoorsObstacles);
+            }
+
+            foreach (DoorObstacle doorObstacle in doorObstacles.Values)
+            {
+                doorObstacle.Remove();
+            }
+            doorObstacles.Clear();
+
+            updateTimer.Restart();
         }
 
         public static Player GetNearestPlayer(Vector3 position)

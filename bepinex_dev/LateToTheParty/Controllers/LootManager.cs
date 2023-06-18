@@ -11,11 +11,9 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using EFT.UI;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace LateToTheParty.Controllers
 {
@@ -169,7 +167,7 @@ namespace LateToTheParty.Controllers
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
                 // Check which items are accessible
-                IEnumerable<KeyValuePair<Item,Models.LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
+                IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
@@ -178,7 +176,7 @@ namespace LateToTheParty.Controllers
                 LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
 
                 // Sort eligible loot
-                IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy);
+                IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible);
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
 
                 // Identify items to destroy

@@ -15,7 +15,9 @@ namespace LateToTheParty.CoroutineExtensions
         public bool IsRunning { get; protected set; } = false;
         public bool IsCompleted { get; protected set; } = false;
 
+        protected List<long> cycleTimes = new List<long>();
         protected Stopwatch cycleTimer = new Stopwatch();
+        protected Stopwatch jobTimer = new Stopwatch();
         protected double maxTimePerIteration;
         protected bool stopRequested = false;
         protected bool hadToWait = false;
@@ -40,9 +42,13 @@ namespace LateToTheParty.CoroutineExtensions
 
         protected IEnumerator WaitForNextFrame(string extraDetail = "")
         {
+            cycleTimes.Add(cycleTimer.ElapsedMilliseconds);
+            if (!hadToWait)
+            {
+                LoggingController.LogWarning(messageTextPrefix(extraDetail) + messageTextSuffix(), true);
+            }
             hadToWait = true;
-            LoggingController.LogWarning(messageTextPrefix(extraDetail) + messageTextSuffix(), true);
-
+            
             yield return null;
             cycleTimer.Restart();
         }
@@ -82,7 +88,7 @@ namespace LateToTheParty.CoroutineExtensions
 
         private string messageTextSuffix()
         {
-            return " (Cycle time: " + cycleTimer.ElapsedMilliseconds + ")";
+            return " (Cycle times: " + string.Join(", ", cycleTimes) + ")";
         }
     }
 }

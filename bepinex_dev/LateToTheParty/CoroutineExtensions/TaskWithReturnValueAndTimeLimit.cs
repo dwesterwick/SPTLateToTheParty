@@ -33,6 +33,7 @@ namespace LateToTheParty.CoroutineExtensions
             SetMethodName(action.Method.Name);
             _task = Task.Run(action, base.cancellationTokenSource.Token);
             base.cycleTimer.Restart();
+            base.jobTimer.Restart();
             base.IsRunning = true;
         }
 
