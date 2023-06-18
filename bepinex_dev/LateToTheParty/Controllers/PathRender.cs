@@ -41,40 +41,53 @@ namespace LateToTheParty.Controllers
             paths.Clear();
         }
 
-        public static void AddOrUpdatePath(PathVisualizationData data)
+        public static bool AddOrUpdatePath(PathVisualizationData data)
         {
             if (data == null)
             {
-                return;
+                return false;
             }
 
             if (paths.ContainsKey(data.PathName))
             {
+                paths[data.PathName].Clear();
                 paths[data.PathName] = data;
             }
             else
             {
                 paths.Add(data.PathName, data);
             }
+
+            paths[data.PathName].Update();
+
+            return true;
         }
 
-        public static void RemovePath(string pathName)
+        public static bool RemovePath(string pathName)
         {
             if (paths.ContainsKey(pathName))
             {
                 paths[pathName].Clear();
                 paths.Remove(pathName);
+                return true;
             }
+
+            return false;
         }
 
-        public static void RemovePath(PathVisualizationData data)
+        public static bool RemovePath(PathVisualizationData data)
         {
             if (data == null)
             {
-                return;
+                return false;
             }
 
-            RemovePath(data.PathName);
+            if (!RemovePath(data.PathName))
+            {
+                data.Clear();
+            }
+
+            return true;
         }
 
         public static Vector3 IncreaseVector3ToMinSize(Vector3 vector, float minSize)

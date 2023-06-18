@@ -60,7 +60,7 @@ namespace LateToTheParty.Models
 
         private void Add()
         {
-            string id = "Door_" + LinkedDoor.Id.Replace(" ", "_") + "_Blocker";
+            string id = "Door_" + LinkedDoor.Id.Replace(" ", "_") + "_Obstacle";
 
             GameObject doorBlockerObj = new GameObject(id);
             doorBlockerObj.transform.SetParent(meshCollider.transform);
