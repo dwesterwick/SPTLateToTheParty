@@ -3,6 +3,7 @@ using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.CoroutineExtensions;
+using LateToTheParty.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,23 +18,25 @@ namespace LateToTheParty.Controllers
 {
     public class NavMeshController: MonoBehaviour
     {
-        public static bool IsUpdatingDoorsBlockers { get; private set; } = false;
+        public static bool IsUpdatingDoorsObstacles { get; private set; } = false;
 
-        private static Dictionary<Door, MeshCollider> doorMeshColliders = new Dictionary<Door, MeshCollider>(); 
-        private static Dictionary<Door, NavMeshObstacle> doorBlockers = new Dictionary<Door, NavMeshObstacle>();
+        private static Dictionary<Door, DoorObstacle> doorObstacles = new Dictionary<Door, DoorObstacle>();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
         public static void Clear()
         {
-            if (IsUpdatingDoorsBlockers)
+            if (IsUpdatingDoorsObstacles)
             {
                 enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsUpdatingDoorsBlockers);
+                TaskWithTimeLimit.WaitForCondition(() => !IsUpdatingDoorsObstacles);
             }
 
-            doorBlockers.Clear();
-            doorMeshColliders.Clear();
+            foreach (DoorObstacle doorObstacle in doorObstacles.Values)
+            {
+                doorObstacle.Remove();
+            }
+            doorObstacles.Clear();
 
             updateTimer.Restart();
         }
@@ -48,15 +51,15 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure enough time has passed since the last check
-            if (IsUpdatingDoorsBlockers || (updateTimer.ElapsedMilliseconds < 2 * 1000))
+            if (IsUpdatingDoorsObstacles || (updateTimer.ElapsedMilliseconds < 2 * 1000))
             {
                 return;
             }
 
-            if (doorMeshColliders.Count > 0)
+            if (doorObstacles.Count() > 0)
             {
                 // Update the nav mesh to reflect the door state changes
-                StartCoroutine(UpdateDoorBlockers());
+                StartCoroutine(UpdateDoorObstacles());
                 updateTimer.Restart();
 
                 return;
@@ -90,9 +93,14 @@ namespace LateToTheParty.Controllers
         {
             float closestDistance = float.MaxValue;
 
-            foreach (NavMeshObstacle obstacle in doorBlockers.Values.Where(v => v != null))
+            foreach (DoorObstacle obstacle in doorObstacles.Values)
             {
-                float distance = Vector3.Distance(position, obstacle.transform.position);
+                if (!obstacle.Position.HasValue)
+                {
+                    continue;
+                }
+
+                float distance = Vector3.Distance(position, obstacle.Position.Value);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
@@ -104,11 +112,6 @@ namespace LateToTheParty.Controllers
 
         public static void CheckIfColliderIsDoor(MeshCollider meshCollider)
         {
-            if (doorMeshColliders.ContainsValue(meshCollider))
-            {
-                return;
-            }
-
             if (meshCollider.gameObject.layer != LayerMaskClass.DoorLayer)
             {
                 return;
@@ -127,18 +130,23 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            doorMeshColliders.Add(door, meshCollider);
+            doorObstacles.Add(door, new DoorObstacle(meshCollider, door));
         }
 
-        public static IEnumerator UpdateDoorBlockers()
+        public static IEnumerator UpdateDoorObstacles()
         {
-            IsUpdatingDoorsBlockers = true;
+            IsUpdatingDoorsObstacles = true;
 
             // Update door blockers
             enumeratorWithTimeLimit.Reset();
-            yield return enumeratorWithTimeLimit.Run(doorMeshColliders.Keys.ToArray(), UpdateDoorBlocker);
+            yield return enumeratorWithTimeLimit.Run(doorObstacles.Keys.ToArray(), UpdateDoorObstacle);
 
-            IsUpdatingDoorsBlockers = false;
+            IsUpdatingDoorsObstacles = false;
+        }
+
+        public static void UpdateDoorObstacle(Door door)
+        {
+            doorObstacles[door].Update();
         }
 
         public static Vector3? FindNearestNavMeshPosition(Vector3 position, float searchDistance)
@@ -151,28 +159,27 @@ namespace LateToTheParty.Controllers
             return null;
         }
 
-        public static bool IsPositionAccessible(Vector3 sourcePosition, Vector3 targetPosition, string positionName)
+        public static PathAccessibilityData GetPathAccessibilityData(Vector3 sourcePosition, Vector3 targetPosition, string targetPositionName)
         {
-            RemoveAccessibilityPaths(positionName);
+            PathAccessibilityData lootAccessibilityData = new PathAccessibilityData();
 
             Vector3[] targetCirclePoints = PathRender.GetSpherePoints(targetPosition, 0.1f, 10);
-            PathRender.AddPath(positionName + "_item", targetCirclePoints, Color.green);
+            lootAccessibilityData.LootOutlineData = new PathVisualizationData(targetPositionName + "_itemOutline", targetCirclePoints, Color.green);
 
-            float searchDistanceSource = 10;
-            float searchDistanceTarget = 2;
-            
-            if (!NavMesh.SamplePosition(sourcePosition, out NavMeshHit sourceNearestPoint, searchDistanceSource, NavMesh.AllAreas))
+            Vector3? sourceNearestPoint = FindNearestNavMeshPosition(sourcePosition, 10);
+            if (!sourceNearestPoint.HasValue)
             {
-                return false;
+                return lootAccessibilityData;
             }
 
-            if (!NavMesh.SamplePosition(targetPosition, out NavMeshHit targetNearestPoint, searchDistanceTarget, NavMesh.AllAreas))
+            Vector3? targetNearestPoint = FindNearestNavMeshPosition(targetPosition, 2);
+            if (!targetNearestPoint.HasValue)
             {
-                return false;
+                return lootAccessibilityData;
             }
 
             NavMeshPath path = new NavMeshPath();
-            NavMesh.CalculatePath(sourceNearestPoint.position, targetNearestPoint.position, NavMesh.AllAreas, path);
+            NavMesh.CalculatePath(sourceNearestPoint.Value, targetNearestPoint.Value, NavMesh.AllAreas, path);
 
             Vector3[] pathPoints = new Vector3[path.corners.Length];
             float heightOffset = 1.25f;
@@ -183,40 +190,35 @@ namespace LateToTheParty.Controllers
 
             if (path.status != NavMeshPathStatus.PathComplete)
             {
-                /*for (int i = 0; i < pathPoints.Length; i++)
+                for (int i = 0; i < pathPoints.Length; i++)
                 {
                     pathPoints[i].y -= 0.25f;
                 }
-                PathRender.AddPath(positionName + "_path", pathPoints, Color.white);*/
-                return false;
+                lootAccessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.white);
+                return lootAccessibilityData;
             }
 
-            PathRender.AddPath(positionName + "_path", pathPoints, Color.blue);
+            Vector3[] endLine = new Vector3[] { pathPoints.Last(), targetPosition };
+            lootAccessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.blue);
 
             float distToNavMesh = Vector3.Distance(targetPosition, pathPoints.Last());
             Vector3 direction = targetPosition - pathPoints.Last();
             RaycastHit[] targetRaycastHits = Physics.RaycastAll(pathPoints.Last(), direction, distToNavMesh, LayerMaskClass.HighPolyWithTerrainMask);
 
-            /*for (int ray = 0; ray < targetRaycastHits.Length; ray++)
+            for (int ray = 0; ray < targetRaycastHits.Length; ray++)
             {
-                //if (targetRaycastHits[ray].collider.attachedRigidbody == null)
-                //{
-                    Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
-                    PathRender.AddPath(positionName + "_staticCollider" + ray, boundingBoxPoints, Color.magenta);
+                Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
+                lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBox" + ray, boundingBoxPoints, Color.magenta));
 
-                    LoggingController.LogInfo(
-                        positionName
-                        + " Static Collider: "
-                        + targetRaycastHits[ray].collider.name
-                        + " (Distance: "
-                        + targetRaycastHits[ray].distance
-                        + " / " + distToNavMesh
-                        + ", Bounds Size: "
-                        + targetRaycastHits[ray].collider.bounds.size.ToString()
-                        + ")"
-                    );
-                //}
-            }*/
+                LoggingController.LogInfo(
+                    targetPositionName
+                    + " Collider: "
+                    + targetRaycastHits[ray].collider.name
+                    + " (Bounds Size: "
+                    + targetRaycastHits[ray].collider.bounds.size.ToString()
+                    + ")"
+                );
+            }
 
             RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits
                 .Where(r => r.collider.bounds.size.y > 0.9)
@@ -229,104 +231,29 @@ namespace LateToTheParty.Controllers
                 for (int ray = 0; ray < targetRaycastHitsFiltered.Length; ray++)
                 {
                     Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHitsFiltered[ray].collider.bounds);
-                    PathRender.AddPath(positionName + "_bounds" + ray, boundingBoxPoints, Color.red);
+                    lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBoxFiltered" + ray, boundingBoxPoints, Color.red));
 
                     Vector3[] circlepoints = PathRender.GetSpherePoints(targetRaycastHitsFiltered[ray].point, 0.05f, 10);
-                    PathRender.AddPath(positionName + "_ray" + ray, circlepoints, Color.red);
+                    lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_ray" + ray, circlepoints, Color.red));
 
                     /*LoggingController.LogInfo(
-                        positionName
+                        targetPositionName
                         + " Collider: "
                         + targetRaycastHitsFiltered[ray].collider.name
-                        + " (Distance: "
-                        + targetRaycastHitsFiltered[ray].distance
-                        + " / " + distToNavMesh
-                        + ", Bounds Size: "
+                        + " (Bounds Size: "
                         + targetRaycastHitsFiltered[ray].collider.bounds.size.ToString()
                         + ")"
                     );*/
                 }
 
-                PathRender.AddPath(positionName + "_end", new Vector3[] { pathPoints.Last(), targetPosition }, Color.red);
-                return false;
+                
+                lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.red));
+                return lootAccessibilityData;
             }
 
-            PathRender.AddPath(positionName + "_end", new Vector3[] { pathPoints.Last(), targetPosition }, Color.green);
-            return true;
-        }
-
-        public static void RemoveAccessibilityPaths(string positionName)
-        {
-            PathRender.RemovePaths(positionName);
-        }
-
-        private static void UpdateDoorBlocker(Door door)
-        {
-            bool canOpenDoor = door.DoorState == EDoorState.Open;
-            canOpenDoor |= door.DoorState == EDoorState.Shut;
-
-            if (canOpenDoor)
-            {
-                DestroyDoorBlocker(door);
-                return;
-            }
-
-            CreateDoorBlocker(door);
-        }
-
-        private static void DestroyDoorBlocker(Door door)
-        {
-            if (!doorBlockers.ContainsKey(door))
-            {
-                return;
-            }
-
-            if (doorBlockers[door] == null)
-            {
-                return;
-            }
-
-            //Destroy(doorBlockers[door].gameObject);
-            Destroy(doorBlockers[door]);
-            doorBlockers[door] = null;
-            PathRender.RemovePath(CreateDoorBlockerID(door));
-            //LoggingController.LogInfo("Remove door blocker for " + door.Id);
-        }
-
-        private static void CreateDoorBlocker(Door door)
-        {
-            if (doorBlockers.ContainsKey(door) && (doorBlockers[door] != null))
-            {
-                return;
-            }
-
-            GameObject doorBlockerObj = new GameObject("Door_" + door.Id.Replace(" ", "_") + "_Blocker");
-            //GameObject doorBlockerObj = new GameObject("ObstacleObject");
-            doorBlockerObj.transform.SetParent(doorMeshColliders[door].transform);
-            doorBlockerObj.transform.position = doorMeshColliders[door].bounds.center;
-
-            NavMeshObstacle obstacle = doorBlockerObj.AddComponent<NavMeshObstacle>();
-            if (doorBlockers.ContainsKey(door))
-            {
-                doorBlockers[door] = obstacle;
-            }
-            else
-            {
-                doorBlockers.Add(door, obstacle);
-            }
-
-            doorBlockers[door].size = doorMeshColliders[door].bounds.size;
-            doorBlockers[door].carving = true;
-            doorBlockers[door].carveOnlyStationary = false;
-
-            Vector3 ellipsoidSize = PathRender.IncreaseVector3ToMinSize(doorBlockers[door].size, 0.2f);
-            Vector3[] circlepoints = PathRender.GetEllipsoidPoints(door.transform.position, ellipsoidSize, 10);
-            PathRender.AddPath(CreateDoorBlockerID(door), circlepoints, Color.yellow);
-        }
-
-        private static string CreateDoorBlockerID(Door door)
-        {
-            return door.Id.Replace(" ", "") + "_blocker";
+            lootAccessibilityData.IsAccessible = true;
+            lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.green));
+            return lootAccessibilityData;
         }
     }
 }

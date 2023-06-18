@@ -1,6 +1,8 @@
-﻿using Comfort.Common;
+﻿using BepInEx;
+using Comfort.Common;
 using EFT;
 using EFT.UI;
+using LateToTheParty.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,11 +16,7 @@ namespace LateToTheParty.Controllers
 {
     public class PathRender : MonoBehaviour
     {
-        private static object pathLock = new object();
-        private static Dictionary<string, Vector3[]> paths = new Dictionary<string, Vector3[]>();
-        private static Dictionary<string, Color> pathColors = new Dictionary<string, Color>();
-        private static Dictionary<string, LineRenderer> pathRenderers = new Dictionary<string, LineRenderer>();
-        private static float lineWidth = 0.05f;
+        private static Dictionary<string, PathVisualizationData> paths = new Dictionary<string, PathVisualizationData>();
 
         private void LateUpdate()
         {
@@ -27,101 +25,56 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            lock (pathLock)
+            foreach (string pathName in paths.Keys)
             {
-                foreach (string pathName in paths.Keys)
-                {
-                    if (!pathRenderers.ContainsKey(pathName))
-                    {
-                        pathRenderers.Add(pathName, (new GameObject("Path_" + pathName)).GetOrAddComponent<LineRenderer>());
-                        pathRenderers[pathName].material = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
-                    }
-
-                    pathRenderers[pathName].startColor = pathColors[pathName];
-                    pathRenderers[pathName].endColor = pathColors[pathName];
-                    pathRenderers[pathName].startWidth = lineWidth;
-                    pathRenderers[pathName].endWidth = lineWidth;
-
-                    pathRenderers[pathName].positionCount = paths[pathName].Length;
-                    pathRenderers[pathName].SetPositions(paths[pathName]);
-                }
+                paths[pathName].Update();
             }
         }
 
         public static void Clear()
         {
-            lock (pathLock)
+            foreach (string pathName in paths.Keys)
             {
-                foreach (string pathName in paths.Keys.ToArray())
-                {
-                    RemovePath(pathName);
-                }
-
-                paths.Clear();
-                pathColors.Clear();
-                pathRenderers.Clear();
+                paths[pathName].Clear();
             }
+
+            paths.Clear();
         }
 
-        public static void AddPath(string pathName, Vector3[] path, Color color)
+        public static void AddOrUpdatePath(PathVisualizationData data)
         {
-            lock (pathLock)
+            if (data == null)
             {
-                if (paths.ContainsKey(pathName))
-                {
-                    paths[pathName] = path;
-                }
-                else
-                {
-                    paths.Add(pathName, path);
-                }
+                return;
+            }
 
-                if (pathColors.ContainsKey(pathName))
-                {
-                    pathColors[pathName] = color;
-                }
-                else
-                {
-                    pathColors.Add(pathName, color);
-                }
+            if (paths.ContainsKey(data.PathName))
+            {
+                paths[data.PathName] = data;
+            }
+            else
+            {
+                paths.Add(data.PathName, data);
             }
         }
 
         public static void RemovePath(string pathName)
         {
-            lock (pathLock)
+            if (paths.ContainsKey(pathName))
             {
-                if (paths.ContainsKey(pathName))
-                {
-                    paths.Remove(pathName);
-                }
-
-                if (pathColors.ContainsKey(pathName))
-                {
-                    pathColors.Remove(pathName);
-                }
-
-                if (pathRenderers.ContainsKey(pathName))
-                {
-                    if (pathRenderers[pathName] != null)
-                    {
-                        pathRenderers[pathName].positionCount = 0;
-                    }
-
-                    //Destroy(pathRenderers[pathName].gameObject);
-                    //Destroy(pathRenderers[pathName]);
-                    pathRenderers.Remove(pathName);
-                }
+                paths[pathName].Clear();
+                paths.Remove(pathName);
             }
         }
 
-        public static void RemovePaths(string pathNameTemplate)
+        public static void RemovePath(PathVisualizationData data)
         {
-            string[] matchingKeys = paths.Keys.Where(k => k.Contains(pathNameTemplate)).ToArray();
-            foreach (string key in matchingKeys)
+            if (data == null)
             {
-                RemovePath(key);
+                return;
             }
+
+            RemovePath(data.PathName);
         }
 
         public static Vector3 IncreaseVector3ToMinSize(Vector3 vector, float minSize)

@@ -110,14 +110,16 @@
     <Compile Include="Controllers\PathRender.cs" />
     <Compile Include="CoroutineExtensions\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />
+    <Compile Include="Models\DoorObstacle.cs" />
     <Compile Include="Models\LoggingBuffer.cs" />
+    <Compile Include="Models\PathAccessibilityData.cs" />
     <Compile Include="Models\LootInfo.cs" />
     <Compile Include="Models\LocationSettings.cs" />
     <Compile Include="Controllers\LootManager.cs" />
     <Compile Include="CoroutineExtensions\TaskWithReturnValueAndTimeLimit.cs" />
     <Compile Include="CoroutineExtensions\TaskWithTimeLimit.cs" />
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
-    <Compile Include="Models\LootNavData.cs" />
+    <Compile Include="Models\PathVisualizationData.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\OnBoxLandPatch.cs" />
     <Compile Include="Patches\OnGameStartedPatch.cs" />

@@ -13,6 +13,7 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using EFT.UI;
 using LateToTheParty.CoroutineExtensions;
+using LateToTheParty.Models;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -116,9 +117,8 @@ namespace LateToTheParty.Controllers
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))
                 {
                     LoggingController.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
+                    LootInfo[item].PathData.Clear();
                     LootInfo.Remove(relevantItem);
-
-                    NavMeshController.RemoveAccessibilityPaths(GetLootPathName(relevantItem));
                 }
             }
         }
@@ -170,11 +170,11 @@ namespace LateToTheParty.Controllers
 
                 // Check which items are accessible
                 IEnumerable<KeyValuePair<Item,Models.LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
-                Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.NavData.IsAccessible).Select(l => l.Key).ToArray();
+                Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
 
-                double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.NavData.IsAccessible).Count() / remainingItems.Count(), 1);
+                double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
                 LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
 
                 // Sort eligible loot
@@ -353,14 +353,18 @@ namespace LateToTheParty.Controllers
             float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
             if ((distanceToNearestLockedDoor < float.MaxValue) && (distanceToNearestLockedDoor > 25))
             {
-                LootInfo[item].NavData.IsAccessible = true;
+                LootInfo[item].PathData.IsAccessible = true;
                 return;
             }
 
             Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
-            LootInfo[item].NavData.AccessibleFromPosition = nearestPlayer.Transform.position;
-            bool isAccessible = NavMeshController.IsPositionAccessible(nearestPlayer.Transform.position, itemPosition, GetLootPathName(item));
-            LootInfo[item].NavData.IsAccessible = isAccessible;
+            PathAccessibilityData accessibilityData = NavMeshController.GetPathAccessibilityData(nearestPlayer.Transform.position, itemPosition, GetLootPathName(item));
+            if (LootInfo[item].PathData != null)
+            {
+                LootInfo[item].PathData.Clear();
+            }
+            LootInfo[item].PathData = accessibilityData;
+            LootInfo[item].PathData.Update();
         }
 
         private static string GetLootPathName(Item item)
@@ -537,7 +541,7 @@ namespace LateToTheParty.Controllers
                     + ": " + item.LocalizedName()
                 );
 
-                NavMeshController.RemoveAccessibilityPaths(GetLootPathName(item));
+                LootInfo[item].PathData.Clear();
             }
             catch (Exception ex)
             {
