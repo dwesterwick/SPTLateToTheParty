@@ -42,6 +42,12 @@ namespace LateToTheParty.Configuration
         [JsonProperty("collision_point_radius")]
         public float CollisionPointRadius { get; set; } = 0.05f;
 
+        [JsonProperty("show_door_obstacles")]
+        public bool ShowDoorObstacles { get; set; } = true;
+
+        [JsonProperty("door_obstacle_min_radius")]
+        public float DoorObstacleMinRadius { get; set; } = 0.05f;
+
         public LootPathVisualizationConfig()
         {
 

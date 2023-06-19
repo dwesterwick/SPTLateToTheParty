@@ -84,9 +84,14 @@ namespace LateToTheParty.Models
             navMeshObstacle.carving = true;
             navMeshObstacle.carveOnlyStationary = false;
 
+            if (!ConfigController.Config.Debug.LootPathVisualization.ShowDoorObstacles)
+            {
+                return;
+            }
+
             // Draw ellipsoid around obstacle
-            Vector3 ellipsoidSize = PathRender.IncreaseVector3ToMinSize(navMeshObstacle.size, 0.3f);
-            Vector3[] obstaclePoints = PathRender.GetEllipsoidPoints(LinkedDoor.transform.position, ellipsoidSize, 10);
+            Vector3 ellipsoidSize = PathRender.IncreaseVector3ToMinSize(navMeshObstacle.size, ConfigController.Config.Debug.LootPathVisualization.DoorObstacleMinRadius);
+            Vector3[] obstaclePoints = PathRender.GetEllipsoidPoints(LinkedDoor.transform.position, ellipsoidSize, ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle);
             visualizationData = new PathVisualizationData(id, obstaclePoints, Color.yellow);
             PathRender.AddOrUpdatePath(visualizationData);
         }

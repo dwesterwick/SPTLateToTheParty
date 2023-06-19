@@ -14,7 +14,9 @@
 			"outline_obstacles": true,
 			"only_outline_filtered_obstacles": false,
 			"show_obstacle_collision_points": true,
-			"collision_point_radius": 0.05
+			"collision_point_radius": 0.05,
+			"show_door_obstacles": true,
+			"door_obstacle_min_radius": 0.3
 		}
 	},
 	"adjust_raid_times": {

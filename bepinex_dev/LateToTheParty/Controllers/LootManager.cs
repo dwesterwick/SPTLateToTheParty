@@ -354,13 +354,23 @@ namespace LateToTheParty.Controllers
 
         private static void UpdateLootAccessibility(Item item)
         {
-            string lootPathName = GetLootPathName(item);
-            Vector3 itemPosition = LootInfo[item].Transform.position;
-            
             PathAccessibilityData accessibilityData = new PathAccessibilityData();
-            Vector3[] targetCirclePoints = PathRender.GetSpherePoints(itemPosition, 0.1f, 10);
-            accessibilityData.LootOutlineData = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.green);
+            string lootPathName = GetLootPathName(item);
+            Vector3 itemPosition = LootInfo[item].Transform.position;            
+            
+            // Draw a sphere around the loot item
+            if (ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
+            {
+                Vector3[] targetCirclePoints = PathRender.GetSpherePoints
+                (
+                    itemPosition,
+                    ConfigController.Config.Debug.LootPathVisualization.LootOutlineRadius,
+                    ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
+                );
+                accessibilityData.LootOutlineData = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.green);
+            }
 
+            // Erase any previous path visualization data and replace it with the new data
             if (LootInfo[item].PathData != null)
             {
                 LootInfo[item].PathData.Clear();
@@ -368,21 +378,40 @@ namespace LateToTheParty.Controllers
             LootInfo[item].PathData = accessibilityData;
             LootInfo[item].PathData.Update();
 
+            // Mark the loot as inaccessible if it is inside a locked container
             if ((LootInfo[item].ParentContainer != null) && (LootInfo[item].ParentContainer.DoorState == EDoorState.Locked))
             {
                 LootInfo[item].PathData.IsAccessible = false;
-                LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
+
+                if (LootInfo[item].PathData.LootOutlineData != null)
+                {
+                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
+                }
                 LootInfo[item].PathData.Update();
+
                 return;
             }
 
-            float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
-            if ((distanceToNearestLockedDoor < float.MaxValue) && (distanceToNearestLockedDoor > 25))
+            // Make everything accessible if the accessibility-checking system is disabled
+            if (!ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.Enabled)
             {
                 LootInfo[item].PathData.IsAccessible = true;
                 return;
             }
 
+            // Check if the loot is near a locked door. If not, assume it's accessible. 
+            float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
+            if
+            (
+                (distanceToNearestLockedDoor < float.MaxValue)
+                && (distanceToNearestLockedDoor > ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.InclusionRadius)
+            )
+            {
+                LootInfo[item].PathData.IsAccessible = true;
+                return;
+            }
+
+            // Find a path using the NavMesh from the nearest player (you or a bot) to the loot
             Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
             PathAccessibilityData fullCccessibilityData = NavMeshController.GetPathAccessibilityData(nearestPlayer.Transform.position, itemPosition, lootPathName);
             accessibilityData.MergeAndUpdate(fullCccessibilityData);

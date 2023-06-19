@@ -16,16 +16,16 @@ namespace LateToTheParty.Configuration
         public double InclusionRadius { get; set; } = 25;
 
         [JsonProperty("navmesh_search_max_distance_player")]
-        public double NavMeshSearchMaxDistancePlayer { get; set; } = 10;
+        public float NavMeshSearchMaxDistancePlayer { get; set; } = 10;
 
         [JsonProperty("navmesh_search_max_distance_loot")]
-        public double NavMeshSearchMaxDistanceLoot { get; set; } = 2;
+        public float NavMeshSearchMaxDistanceLoot { get; set; } = 2;
 
         [JsonProperty("navmesh_height_offset_complete")]
-        public double NavMeshHeightOffsetComplete { get; set; } = 1.25;
+        public float NavMeshHeightOffsetComplete { get; set; } = 1.25f;
 
         [JsonProperty("navmesh_height_offset_incomplete")]
-        public double NavMeshHeightOffsetIncomplete { get; set; } = 1;
+        public float NavMeshHeightOffsetIncomplete { get; set; } = 1;
 
         [JsonProperty("navmesh_obstacle_min_height")]
         public double NavMeshObstacleMinHeight { get; set; } = 0.9;
