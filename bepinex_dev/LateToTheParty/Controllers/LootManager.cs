@@ -355,11 +355,16 @@ namespace LateToTheParty.Controllers
         private static void UpdateLootAccessibility(Item item)
         {
             PathAccessibilityData accessibilityData = new PathAccessibilityData();
+            if (LootInfo[item].PathData == null)
+            {
+                LootInfo[item].PathData = accessibilityData;
+            }
+            
             string lootPathName = GetLootPathName(item);
             Vector3 itemPosition = LootInfo[item].Transform.position;            
             
             // Draw a sphere around the loot item
-            if (ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
+            if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
             {
                 Vector3[] targetCirclePoints = PathRender.GetSpherePoints
                 (
@@ -368,15 +373,8 @@ namespace LateToTheParty.Controllers
                     ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
                 );
                 accessibilityData.LootOutlineData = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.green);
+                LootInfo[item].PathData.Update();
             }
-
-            // Erase any previous path visualization data and replace it with the new data
-            if (LootInfo[item].PathData != null)
-            {
-                LootInfo[item].PathData.Clear();
-            }
-            LootInfo[item].PathData = accessibilityData;
-            LootInfo[item].PathData.Update();
 
             // Mark the loot as inaccessible if it is inside a locked container
             if ((LootInfo[item].ParentContainer != null) && (LootInfo[item].ParentContainer.DoorState == EDoorState.Locked))
@@ -387,6 +385,7 @@ namespace LateToTheParty.Controllers
                 {
                     LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
                 }
+                LootInfo[item].PathData.Clear(true);
                 LootInfo[item].PathData.Update();
 
                 return;
@@ -396,6 +395,10 @@ namespace LateToTheParty.Controllers
             if (!ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.Enabled)
             {
                 LootInfo[item].PathData.IsAccessible = true;
+
+                LootInfo[item].PathData.Clear(true);
+                LootInfo[item].PathData.Update();
+
                 return;
             }
 
@@ -408,13 +411,22 @@ namespace LateToTheParty.Controllers
             )
             {
                 LootInfo[item].PathData.IsAccessible = true;
+
+                LootInfo[item].PathData.Clear(true);
+                LootInfo[item].PathData.Update();
+
                 return;
             }
 
             // Find a path using the NavMesh from the nearest player (you or a bot) to the loot
             Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
-            PathAccessibilityData fullCccessibilityData = NavMeshController.GetPathAccessibilityData(nearestPlayer.Transform.position, itemPosition, lootPathName);
-            accessibilityData.MergeAndUpdate(fullCccessibilityData);
+            PathAccessibilityData fullAccessibilityData = NavMeshController.GetPathAccessibilityData
+            (
+                nearestPlayer.Transform.position,
+                itemPosition,
+                lootPathName
+            );
+            accessibilityData.MergeAndUpdate(fullAccessibilityData);
         }
 
         private static string GetLootPathName(Item item)

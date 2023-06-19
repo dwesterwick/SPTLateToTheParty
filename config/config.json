@@ -9,10 +9,10 @@
 			"outline_loot": true,
 			"loot_outline_radius": 0.1,
 			"only_outline_loot_with_pathing": false,
-			"draw_incomplete_paths": true,
+			"draw_incomplete_paths": false,
 			"draw_complete_paths": true,
-			"outline_obstacles": true,
-			"only_outline_filtered_obstacles": false,
+			"outline_obstacles": false,
+			"only_outline_filtered_obstacles": true,
 			"show_obstacle_collision_points": true,
 			"collision_point_radius": 0.05,
 			"show_door_obstacles": true,
@@ -63,7 +63,7 @@
 			"navmesh_height_offset_incomplete": 1,
 			"navmesh_obstacle_min_height": 0.9,
 			"navmesh_obstacle_min_volume": 2,
-			"max_calc_time_per_frame_ms": 5,
+			"max_calc_time_per_frame_ms": 4,
 			"door_obstacle_update_time": 2
 		},
 		"loot_ranking": {

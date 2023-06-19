@@ -84,7 +84,7 @@ namespace LateToTheParty.Models
             navMeshObstacle.carving = true;
             navMeshObstacle.carveOnlyStationary = false;
 
-            if (!ConfigController.Config.Debug.LootPathVisualization.ShowDoorObstacles)
+            if (!ConfigController.Config.Debug.LootPathVisualization.Enabled || !ConfigController.Config.Debug.LootPathVisualization.ShowDoorObstacles)
             {
                 return;
             }

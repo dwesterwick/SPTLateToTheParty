@@ -31,7 +31,7 @@ namespace LateToTheParty.Controllers
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
-        private static int validDoorCount = -1;
+        private static bool hasToggledInitialDoors = false;
 
         public static int ToggleableDoorCount
         {
@@ -58,7 +58,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Wait until the previous task completes
-            if (IsTogglingDoors)
+            if (IsTogglingDoors || IsFindingDoors)
             {
                 return;
             }
@@ -86,13 +86,17 @@ namespace LateToTheParty.Controllers
             }
 
             // Only find doors once per raid
-            doorsToToggle = (int)Math.Max(1, Math.Round(eligibleDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
-            if (validDoorCount == -1)
+            if (ToggleableDoorCount == 0)
             {
                 gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
-                FindAllEligibleDoors();
-                validDoorCount = eligibleDoors.Count;
+                StartCoroutine(FindAllEligibleDoors());
+                return;
+            }
 
+            // Determine how many doors to toggled accounting for the raid time elapsed when the player spawns in
+            doorsToToggle = (int)Math.Max(1, Math.Round(eligibleDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
+            if (!hasToggledInitialDoors)
+            {
                 doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
             }
 
@@ -120,7 +124,7 @@ namespace LateToTheParty.Controllers
             allowedToToggleDoor.Clear();
             updateTimer.Restart();
 
-            validDoorCount = -1;
+            hasToggledInitialDoors = false;
         }
 
         public static bool IsToggleableDoor(Door door)
@@ -146,10 +150,11 @@ namespace LateToTheParty.Controllers
             finally
             {
                 IsTogglingDoors = false;
+                hasToggledInitialDoors = true;
             }
         }
 
-        private void FindAllEligibleDoors()
+        private IEnumerator FindAllEligibleDoors()
         {
             IsFindingDoors = true;
             eligibleDoors.Clear();
@@ -158,25 +163,28 @@ namespace LateToTheParty.Controllers
             Door[] allDoors = UnityEngine.Object.FindObjectsOfType<Door>();
             LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Length + " possible doors.");
 
-            foreach (Door door in allDoors)
-            {
-                // If the door can be toggled, add it to the dictionary
-                if (!CheckIfDoorCanBeToggled(door, true))
-                {
-                    continue;
-                }
-                toggleableDoors.Add(door);
-
-                // If the door is eligible for toggling during the raid, add it to the dictionary
-                if (!IsEligibleDoor(door, true))
-                {
-                    continue;
-                }
-                eligibleDoors.Add(door);
-            }
+            enumeratorWithTimeLimit.Reset();
+            yield return enumeratorWithTimeLimit.Run(allDoors, CheckIfDoorIsEligible);
 
             LoggingController.LogInfo("Searching for valid doors...found " + eligibleDoors.Count + " doors.");
             IsFindingDoors = false;
+        }
+
+        private void CheckIfDoorIsEligible(Door door)
+        {
+            // If the door can be toggled, add it to the dictionary
+            if (!CheckIfDoorCanBeToggled(door, true))
+            {
+                return;
+            }
+            toggleableDoors.Add(door);
+
+            // If the door is eligible for toggling during the raid, add it to the dictionary
+            if (!IsEligibleDoor(door, true))
+            {
+                return;
+            }
+            eligibleDoors.Add(door);
         }
 
         private void UpdateIfDoorIsAllowedToBeToggle(Door door)

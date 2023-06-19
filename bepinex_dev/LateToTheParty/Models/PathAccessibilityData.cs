@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LateToTheParty.Controllers;
+using UnityEngine;
 
 namespace LateToTheParty.Models
 {
@@ -59,11 +60,15 @@ namespace LateToTheParty.Models
             }
         }
 
-        public void Clear()
+        public void Clear(bool keepLootOutline = false)
         {
             PathRender.RemovePath(PathData);
             PathRender.RemovePath(PathEndPointData);
-            PathRender.RemovePath(LootOutlineData);
+
+            if (!keepLootOutline)
+            {
+                PathRender.RemovePath(LootOutlineData);
+            }
 
             foreach (PathVisualizationData data in BoundingBoxes)
             {
