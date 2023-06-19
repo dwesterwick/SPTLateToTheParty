@@ -5,13 +5,16 @@
 		"scav_cooldown_time": 1,
 		"loot_path_visualization": {
 			"enabled": true,
+			"points_per_circle": 10,
 			"outline_loot": true,
+			"loot_outline_radius": 0.1,
 			"only_outline_loot_with_pathing": false,
 			"draw_incomplete_paths": true,
 			"draw_complete_paths": true,
 			"outline_obstacles": true,
 			"only_outline_filtered_obstacles": false,
-			"show_obstacle_collision_points": true
+			"show_obstacle_collision_points": true,
+			"collision_point_radius": 0.05
 		}
 	},
 	"adjust_raid_times": {
@@ -50,7 +53,16 @@
 		},
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ],
 		"check_loot_accessibility": {
-			"enabled": true
+			"enabled": true,
+			"inclusion_radius": 25,
+			"navmesh_search_max_distance_player": 10,
+			"navmesh_search_max_distance_loot": 2,
+			"navmesh_height_offset_complete": 1.25,
+			"navmesh_height_offset_incomplete": 1,
+			"navmesh_obstacle_min_height": 0.9,
+			"navmesh_obstacle_min_volume": 2,
+			"max_calc_time_per_frame_ms": 5,
+			"door_obstacle_update_time": 2
 		},
 		"loot_ranking": {
 			"enabled": true,

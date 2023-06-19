@@ -12,6 +12,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("enabled")]
         public bool Enabled { get; set; } = false;
 
+        [JsonProperty("scav_cooldown_time")]
+        public long ScavCooldownTime { get; set; } = 1;
+
         [JsonProperty("loot_path_visualization")]
         public LootPathVisualizationConfig LootPathVisualization { get; set; } = new LootPathVisualizationConfig();
 

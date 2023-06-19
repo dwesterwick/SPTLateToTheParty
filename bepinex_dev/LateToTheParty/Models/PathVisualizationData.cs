@@ -48,6 +48,11 @@ namespace LateToTheParty.Models
             LineColor = _color;
         }
 
+        public PathVisualizationData(string _pathName, Vector3[] _pathData, Color _color, float _lineThickness) : this(_pathName, _pathData, _color)
+        {
+            LineThickness = _lineThickness;
+        }
+
         public void Update()
         {
             lock (lineRendererLockObj)
