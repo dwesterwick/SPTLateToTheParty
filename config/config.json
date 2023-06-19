@@ -1,6 +1,19 @@
 {
 	"enabled": true,
-	"debug": false,
+	"debug": {
+		"enabled": true,
+		"scav_cooldown_time": 1,
+		"loot_path_visualization": {
+			"enabled": true,
+			"outline_loot": true,
+			"only_outline_loot_with_pathing": false,
+			"draw_incomplete_paths": true,
+			"draw_complete_paths": true,
+			"outline_obstacles": true,
+			"only_outline_filtered_obstacles": false,
+			"show_obstacle_collision_points": true
+		}
+	},
 	"adjust_raid_times": {
 		"enabled": true,
 		"scav" : {
@@ -36,6 +49,9 @@
 			"only_if_you_killed_them": true
 		},
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ],
+		"check_loot_accessibility": {
+			"enabled": true
+		},
 		"loot_ranking": {
 			"enabled": true,
 			"randomness": 30,

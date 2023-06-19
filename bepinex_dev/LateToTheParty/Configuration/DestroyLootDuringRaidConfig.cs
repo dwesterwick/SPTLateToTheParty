@@ -45,6 +45,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("excluded_parents")]
         public string[] ExcludedParents { get; set; } = new string[0];
 
+        [JsonProperty("check_loot_accessibility")]
+        public CheckLootAccessibilityConfig CheckLootAccessibility { get; set; } = new CheckLootAccessibilityConfig();
+
         [JsonProperty("loot_ranking")]
         public LootRankingConfig LootRanking { get; set; } = new LootRankingConfig();
 

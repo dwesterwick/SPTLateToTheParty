@@ -23,7 +23,7 @@ namespace LateToTheParty.Controllers
 
         public static void LogInfo(string message)
         {
-            if (!ConfigController.Config.Debug)
+            if (!ConfigController.Config.Debug.Enabled)
             {
                 return;
             }
@@ -34,7 +34,7 @@ namespace LateToTheParty.Controllers
 
         public static void LogWarning(string message, bool onlyForDebug = false)
         {
-            if (onlyForDebug && !ConfigController.Config.Debug)
+            if (onlyForDebug && !ConfigController.Config.Debug.Enabled)
             {
                 return;
             }
@@ -45,7 +45,7 @@ namespace LateToTheParty.Controllers
 
         public static void LogError(string message, bool onlyForDebug = false)
         {
-            if (onlyForDebug && !ConfigController.Config.Debug)
+            if (onlyForDebug && !ConfigController.Config.Debug.Enabled)
             {
                 return;
             }

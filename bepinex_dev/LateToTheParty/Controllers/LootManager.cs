@@ -54,7 +54,7 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsFindingAndDestroyingLoot);
             }
 
-            if (ConfigController.Config.Debug && (LootInfo.Count > 0))
+            if (ConfigController.Config.Debug.Enabled && (LootInfo.Count > 0))
             {
                 WriteLootLogFile();
             }

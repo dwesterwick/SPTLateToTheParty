@@ -88,11 +88,14 @@
   <ItemGroup>
     <Compile Include="Configuration\AdjustBotSpawnChancesConfig.cs" />
     <Compile Include="Configuration\AdjustRaidTimesConfig.cs" />
+    <Compile Include="Configuration\CheckLootAccessibilityConfig.cs" />
+    <Compile Include="Configuration\DebugConfig.cs" />
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
     <Compile Include="Configuration\LoggingPath.cs" />
+    <Compile Include="Configuration\LootPathVisualizationConfig.cs" />
     <Compile Include="Configuration\LootRankingChildItemLimitsConfig.cs" />
     <Compile Include="Configuration\LootRankingConfig.cs" />
     <Compile Include="Configuration\LootRankingWeightingConfig.cs" />

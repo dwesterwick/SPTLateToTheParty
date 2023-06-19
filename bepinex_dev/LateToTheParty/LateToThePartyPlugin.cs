@@ -36,7 +36,7 @@ namespace LateToTheParty
                 this.GetOrAddComponent<BotConversionController>();
                 this.GetOrAddComponent<NavMeshController>();
 
-                if (ConfigController.Config.Debug)
+                if (ConfigController.Config.Debug.Enabled)
                 {
                     this.GetOrAddComponent<PathRender>();
                     AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;

@@ -13,7 +13,7 @@ namespace LateToTheParty.Configuration
         public bool Enabled { get; set; } = true;
 
         [JsonProperty("debug")]
-        public bool Debug { get; set; } = false;
+        public DebugConfig Debug { get; set; } = new DebugConfig();
 
         [JsonProperty("adjust_raid_times")]
         public AdjustRaidTimesConfig AdjustRaidTimes { get; set; } = new AdjustRaidTimesConfig();
