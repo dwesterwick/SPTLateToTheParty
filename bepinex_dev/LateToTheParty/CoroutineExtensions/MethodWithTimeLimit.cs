@@ -90,7 +90,7 @@ namespace LateToTheParty.CoroutineExtensions
 
         private string messageTextSuffix()
         {
-            return " (Cycle times: " + string.Join(", ", cycleTimes) + ")";
+            return " (Cycle times: " + string.Join(", ", cycleTimes) + ", Total time: " + jobTimer.ElapsedMilliseconds + ")";
         }
     }
 }

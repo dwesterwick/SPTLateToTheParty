@@ -121,7 +121,7 @@ namespace LateToTheParty.Controllers
 
                 points.Add(new Vector3(centerPoint.x + x, centerPoint.y + y, centerPoint.z));
             }
-            points.Add(points.First());
+            points.Add(new Vector3(centerPoint.x + radii.x, centerPoint.y, centerPoint.z));
 
             // Draw a second ellipse in the XZ plane
             for (float theta = 0; theta < 2 * Math.PI; theta += theta_increment)
@@ -131,6 +131,7 @@ namespace LateToTheParty.Controllers
 
                 points.Add(new Vector3(centerPoint.x + x, centerPoint.y, centerPoint.z + z));
             }
+            points.Add(new Vector3(centerPoint.x + radii.x, centerPoint.y, centerPoint.z));
 
             return points.ToArray();
         }

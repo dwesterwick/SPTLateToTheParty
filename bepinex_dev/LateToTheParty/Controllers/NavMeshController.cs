@@ -295,7 +295,7 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Draw a line from the last NavMesh point (determined above) and the actual target position
-                if (ConfigController.Config.Debug.LootPathVisualization.DrawCompletePaths)
+                if (ConfigController.Config.Debug.LootPathVisualization.ShowObstacleCollisionPoints)
                 {
                     lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.red));
                 }
