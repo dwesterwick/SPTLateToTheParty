@@ -166,12 +166,13 @@ namespace LateToTheParty.Controllers
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
 
-                // Check which items are accessible
+                // Enumerate loot that hasn't been destroyed and hasn't previously been deemed accessible
                 IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
+
+                // Check which items are accessible
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
-
                 double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
                 LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
 

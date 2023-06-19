@@ -58,6 +58,7 @@ namespace LateToTheParty.Models
                     lineRenderer.material = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
                 }
 
+                // If there are no points, erase any that have been drawn previously
                 if ((pathData == null) || (pathData.Length == 0))
                 {
                     lineRenderer.positionCount = 0;

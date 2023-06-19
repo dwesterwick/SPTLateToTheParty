@@ -37,9 +37,11 @@ namespace LateToTheParty.Models
 
         public void Update()
         {
+            // Ensure the door isn't locked and nothing is interacting with it
             bool canOpenDoor = LinkedDoor.DoorState == EDoorState.Open;
             canOpenDoor |= LinkedDoor.DoorState == EDoorState.Shut;
 
+            // Only remove the obstacle if the main player can toggle the door
             if (canOpenDoor && IsToggleable)
             {
                 Remove();
@@ -82,6 +84,7 @@ namespace LateToTheParty.Models
             navMeshObstacle.carving = true;
             navMeshObstacle.carveOnlyStationary = false;
 
+            // Draw ellipsoid around obstacle
             Vector3 ellipsoidSize = PathRender.IncreaseVector3ToMinSize(navMeshObstacle.size, 0.3f);
             Vector3[] obstaclePoints = PathRender.GetEllipsoidPoints(LinkedDoor.transform.position, ellipsoidSize, 10);
             visualizationData = new PathVisualizationData(id, obstaclePoints, Color.yellow);

@@ -26,6 +26,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Update each registered path
             foreach (string pathName in paths.Keys)
             {
                 paths[pathName].Update();
@@ -34,6 +35,7 @@ namespace LateToTheParty.Controllers
 
         public static void Clear()
         {
+            // Prevent registered paths from being drawn again
             foreach (string pathName in paths.Keys)
             {
                 paths[pathName].Clear();
@@ -51,6 +53,7 @@ namespace LateToTheParty.Controllers
 
             if (paths.ContainsKey(data.PathName))
             {
+                // Need to erase the existing path before replacing it
                 paths[data.PathName].Erase();
                 paths[data.PathName] = data;
             }
@@ -59,6 +62,7 @@ namespace LateToTheParty.Controllers
                 paths.Add(data.PathName, data);
             }
 
+            // Draw the new or updated path
             paths[data.PathName].Update();
 
             return true;
@@ -68,7 +72,9 @@ namespace LateToTheParty.Controllers
         {
             if (paths.ContainsKey(pathName))
             {
+                // Prevent the path from being drawn again
                 paths[pathName].Clear();
+
                 paths.Remove(pathName);
                 return true;
             }
@@ -83,6 +89,7 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
+            // In case the path isn't registered, erase it anyway
             if (!RemovePath(data.PathName))
             {
                 data.Clear();
@@ -105,6 +112,7 @@ namespace LateToTheParty.Controllers
         {
             List<Vector3> points = new List<Vector3>();
 
+            // Draw a complete ellipse in the XY plane
             float theta_increment = (float)Math.PI * 2 / pointCount;
             for (float theta = 0; theta < 2 * Math.PI; theta += theta_increment)
             {
@@ -115,6 +123,7 @@ namespace LateToTheParty.Controllers
             }
             points.Add(points.First());
 
+            // Draw a second ellipse in the XZ plane
             for (float theta = 0; theta < 2 * Math.PI; theta += theta_increment)
             {
                 float x = radii.x * (float)Math.Cos(theta);

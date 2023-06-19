@@ -52,11 +52,13 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Wait until DoorController is done finding doors
             if (DoorController.ToggleableDoorCount == 0)
             {
                 return;
             }
 
+            // Search for all colliders attached to doors
             foreach (Collider collider in FindObjectsOfType<Collider>())
             {
                 CheckIfColliderIsDoor(collider);
@@ -71,6 +73,7 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsUpdatingDoorsObstacles);
             }
 
+            // Make sure the obstacle is removed from the map before deleting that record from the dictionary
             foreach (DoorObstacle doorObstacle in doorObstacles.Values)
             {
                 doorObstacle.Remove();
@@ -104,6 +107,7 @@ namespace LateToTheParty.Controllers
 
             foreach (DoorObstacle obstacle in doorObstacles.Values)
             {
+                // Make sure the door is locked (by checking if it has a DoorObstacle attached to it)
                 if (!obstacle.Position.HasValue)
                 {
                     continue;
@@ -128,7 +132,6 @@ namespace LateToTheParty.Controllers
 
             GameObject doorObject = collider.transform.parent.gameObject;
             Door door = doorObject.GetComponent<Door>();
-
             if (door == null)
             {
                 return;
@@ -142,7 +145,6 @@ namespace LateToTheParty.Controllers
         {
             IsUpdatingDoorsObstacles = true;
 
-            // Update door blockers
             enumeratorWithTimeLimit.Reset();
             yield return enumeratorWithTimeLimit.Run(doorObstacles.Keys.ToArray(), UpdateDoorObstacle);
 
@@ -168,24 +170,29 @@ namespace LateToTheParty.Controllers
         {
             PathAccessibilityData lootAccessibilityData = new PathAccessibilityData();
 
+            // Draw a sphere around the loot item (white = accessibility is undetermined)
             Vector3[] targetCirclePoints = PathRender.GetSpherePoints(targetPosition, 0.1f, 10);
             lootAccessibilityData.LootOutlineData = new PathVisualizationData(targetPositionName + "_itemOutline", targetCirclePoints, Color.white);
 
+            // Find the nearest NavMesh point to the source position. If one can't be found, give up. 
             Vector3? sourceNearestPoint = FindNearestNavMeshPosition(sourcePosition, 10);
             if (!sourceNearestPoint.HasValue)
             {
                 return lootAccessibilityData;
             }
 
+            // Find the nearest NavMesh point to the target position. If one can't be found, give up. 
             Vector3? targetNearestPoint = FindNearestNavMeshPosition(targetPosition, 2);
             if (!targetNearestPoint.HasValue)
             {
                 return lootAccessibilityData;
             }
 
+            // Try to find a path using the NavMesh from the source position to the target position (using the nearest NavMesh points found above)
             NavMeshPath path = new NavMeshPath();
             NavMesh.CalculatePath(sourceNearestPoint.Value, targetNearestPoint.Value, NavMesh.AllAreas, path);
 
+            // Modify the path vertices so they're off the ground
             Vector3[] pathPoints = new Vector3[path.corners.Length];
             float heightOffset = 1.25f;
             for (int i = 0; i < pathPoints.Length; i++)
@@ -195,6 +202,7 @@ namespace LateToTheParty.Controllers
 
             if (path.status != NavMeshPathStatus.PathComplete)
             {
+                // Lower the path vertices so they're clearly separate from complete paths when drawn in the game
                 for (int i = 0; i < pathPoints.Length; i++)
                 {
                     pathPoints[i].y -= 0.25f;
@@ -203,13 +211,16 @@ namespace LateToTheParty.Controllers
                 return lootAccessibilityData;
             }
 
+            // Draw the path in the game
             Vector3[] endLine = new Vector3[] { pathPoints.Last(), targetPosition };
             lootAccessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.blue);
 
+            // Check for obstacles between the last NavMesh point (determined above) and the actual target position
             float distToNavMesh = Vector3.Distance(targetPosition, pathPoints.Last());
             Vector3 direction = targetPosition - pathPoints.Last();
             RaycastHit[] targetRaycastHits = Physics.RaycastAll(pathPoints.Last(), direction, distToNavMesh, LayerMaskClass.HighPolyWithTerrainMask);
 
+            // Draw boxes enveloping the colliders for all obstacles between the two points
             for (int ray = 0; ray < targetRaycastHits.Length; ray++)
             {
                 Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
@@ -225,12 +236,14 @@ namespace LateToTheParty.Controllers
                 );*/
             }
 
+            // Filter obstacles to remove ones we don't care about
             RaycastHit[] targetRaycastHitsFiltered = targetRaycastHits
                 .Where(r => r.collider.bounds.size.y > 0.9)
                 .Where(r => r.collider.attachedRigidbody == null)
                 .Where(r => r.collider.bounds.Volume() > 2)
                 .ToArray();
             
+            // After filtering, draw spheres at all collision points and outline all obstacles
             if (targetRaycastHitsFiltered.Length > 0)
             {
                 for (int ray = 0; ray < targetRaycastHitsFiltered.Length; ray++)
@@ -251,14 +264,17 @@ namespace LateToTheParty.Controllers
                     );*/
                 }
 
-                
+                // Draw a line from the last NavMesh point (determined above) and the actual target position
                 lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.red));
                 return lootAccessibilityData;
             }
 
+            // Draw a line from the last NavMesh point (determined above) and the actual target position
+            lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.green));
+
+            // Update accessibility and the color of the sphere around the item
             lootAccessibilityData.IsAccessible = true;
             lootAccessibilityData.LootOutlineData.LineColor = Color.green;
-            lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.green));
             return lootAccessibilityData;
         }
     }

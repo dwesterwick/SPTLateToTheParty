@@ -258,6 +258,7 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
+            // This is a sanity check but never seems to actually happen
             if (door.DoorState != EDoorState.Open && door.DoorState != EDoorState.Shut && door.DoorState != EDoorState.Locked)
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has an invalid state: " + door.DoorState);
