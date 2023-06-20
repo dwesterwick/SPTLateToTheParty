@@ -88,6 +88,11 @@ namespace LateToTheParty.Controllers
 
         public static Player GetNearestPlayer(Vector3 position)
         {
+            if (!Singleton<GameWorld>.Instantiated)
+            {
+                return null;
+            }
+
             float closestDistance = float.MaxValue;
             Player closestPlayer = Singleton<GameWorld>.Instance.MainPlayer;
 
@@ -228,6 +233,21 @@ namespace LateToTheParty.Controllers
                 if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.DrawIncompletePaths)
                 {
                     accessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.white);
+
+                    // Draw a sphere around the target NavMesh point
+                    Vector3 targetNavMeshPosition = new Vector3
+                    (
+                        targetNearestPoint.Value.x,
+                        targetNearestPoint.Value.y + ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.NavMeshHeightOffsetIncomplete,
+                        targetNearestPoint.Value.z
+                    );
+                    Vector3[] targetCirclePoints = PathRender.GetSpherePoints
+                    (
+                        targetNavMeshPosition,
+                        ConfigController.Config.Debug.LootPathVisualization.CollisionPointRadius,
+                        ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
+                    );
+                    accessibilityData.LastNavPointOutline = new PathVisualizationData(targetPositionName + "_targetNavMeshPoint", targetCirclePoints, Color.yellow);
                 }
 
                 return accessibilityData;

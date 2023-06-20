@@ -12,6 +12,7 @@ namespace LateToTheParty.Models
     {
         public bool IsAccessible { get; set; } = false;
         public PathVisualizationData PathData { get; set; }
+        public PathVisualizationData LastNavPointOutline { get; set; }
         public PathVisualizationData PathEndPointData { get; set; }
         public PathVisualizationData LootOutlineData { get; set; }
         public List<PathVisualizationData> BoundingBoxes { get; set; } = new List<PathVisualizationData>();
@@ -35,6 +36,17 @@ namespace LateToTheParty.Models
                 else
                 {
                     PathData = other.PathData;
+                }
+            }
+            if (other.LastNavPointOutline != null)
+            {
+                if (LastNavPointOutline != null)
+                {
+                    LastNavPointOutline.Replace(other.LastNavPointOutline);
+                }
+                else
+                {
+                    LastNavPointOutline = other.LastNavPointOutline;
                 }
             }
             if (other.PathEndPointData != null)
@@ -96,6 +108,7 @@ namespace LateToTheParty.Models
         public void Update()
         {
             PathRender.AddOrUpdatePath(PathData);
+            PathRender.AddOrUpdatePath(LastNavPointOutline);
             PathRender.AddOrUpdatePath(PathEndPointData);
             PathRender.AddOrUpdatePath(LootOutlineData);
 
@@ -116,7 +129,11 @@ namespace LateToTheParty.Models
                 PathRender.RemovePath(PathData);
                 PathData.Clear();
             }
-
+            if (LastNavPointOutline != null)
+            {
+                PathRender.RemovePath(LastNavPointOutline);
+                LastNavPointOutline.Clear();
+            }
             if (PathEndPointData != null)
             {
                 PathRender.RemovePath(PathEndPointData);

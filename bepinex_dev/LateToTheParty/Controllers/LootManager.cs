@@ -354,6 +354,11 @@ namespace LateToTheParty.Controllers
 
         private static void UpdateLootAccessibility(Item item)
         {
+            if (!Singleton<GameWorld>.Instantiated)
+            {
+                return;
+            }
+
             string lootPathName = GetLootPathName(item);
             Vector3 itemPosition = LootInfo[item].Transform.position;            
             
@@ -432,6 +437,10 @@ namespace LateToTheParty.Controllers
 
             // Find the nearest position where a player could realistically exist
             Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
+            if (nearestPlayer == null)
+            {
+                return;
+            }
             Vector3? nearestSpawnPointPosition = LocationSettingsController.GetNearestSpawnPointPosition(itemPosition);
             Vector3 nearestPosition = nearestPlayer.Transform.position;
             if (nearestSpawnPointPosition.HasValue && (Vector3.Distance(itemPosition, nearestSpawnPointPosition.Value) < Vector3.Distance(itemPosition, nearestPosition)))
@@ -447,7 +456,15 @@ namespace LateToTheParty.Controllers
 
             // Try to find a path to the loot item via the NavMesh from the nearest realistic position determined above
             PathAccessibilityData fullAccessibilityData = NavMeshController.GetPathAccessibilityData(nearestPosition, itemPosition, lootPathName);
-            LootInfo[item].PathData.MergeAndUpdate(fullAccessibilityData);
+            LootInfo[item].PathData.Merge(fullAccessibilityData);
+
+            // If the last search resulted in an incomplete path, remove the marker for the previous target NavMesh position
+            if (LootInfo[item].PathData.IsAccessible && (LootInfo[item].PathData.LastNavPointOutline != null))
+            {
+                LootInfo[item].PathData.LastNavPointOutline.Clear();
+            }
+
+            LootInfo[item].PathData.Update();
         }
 
         private static string GetLootPathName(Item item)
