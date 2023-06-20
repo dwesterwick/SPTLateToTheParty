@@ -14,7 +14,7 @@ namespace LateToTheParty.Models
         public Color LineColor { get; set; } = Color.magenta;
         public float LineThickness { get; set; } = 0.05f;
 
-        private Vector3[] pathData;
+        private Vector3[] pathData = new Vector3[0];
         private LineRenderer lineRenderer;
         private static object lineRendererLockObj = new object();
 
@@ -96,8 +96,15 @@ namespace LateToTheParty.Models
             Erase();
             lock (lineRendererLockObj)
             {
-                pathData = null;
+                pathData = new Vector3[0];
             }
+        }
+
+        public void Replace(PathVisualizationData other)
+        {
+            pathData = other.PathData.ToArray();
+            LineColor = other.LineColor;
+            LineThickness = other.LineThickness;
         }
     }
 }

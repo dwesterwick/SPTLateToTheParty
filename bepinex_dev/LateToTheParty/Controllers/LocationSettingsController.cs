@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
+using EFT.Game.Spawning;
+using UnityEngine;
 
 namespace LateToTheParty.Controllers
 {
@@ -15,12 +17,14 @@ namespace LateToTheParty.Controllers
 
         private static string[] CarExtractNames = new string[0];
         private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
+        private static Dictionary<Vector3, Vector3> nearestSpawnPointPositions = new Dictionary<Vector3, Vector3>();
         private static BackendConfigSettingsClass.GClass1306.GClass1313 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
         public static void ClearOriginalSettings()
         {
             LoggingController.LogInfo("Discarding original raid settings...");
+            nearestSpawnPointPositions.Clear();
             OriginalSettings.Clear();
             LastLocationSelected = null;
             LastOriginalEscapeTime = -1;
@@ -87,6 +91,45 @@ namespace LateToTheParty.Controllers
             AdjustVExChance(LastLocationSelected, timeReductionFactor);
             AdjustBotWaveTimes(LastLocationSelected);
             AdjustBossSpawnChances(LastLocationSelected, timeReductionFactor);
+        }
+
+        public static Vector3? GetNearestSpawnPointPosition(Vector3 position)
+        {
+            // Use the buffered nearest position if available
+            if (nearestSpawnPointPositions.ContainsKey(position))
+            {
+                return nearestSpawnPointPositions[position];
+            }
+
+            Vector3? nearestPosition = null;
+            float nearestDistance = float.MaxValue;
+
+            // Find the nearest PMC spawn point to the desired position
+            EPlayerSideMask playerSideMask = EPlayerSideMask.Pmc;
+            foreach (SpawnPointParams spawnPoint in LastLocationSelected.SpawnPointParams)
+            {
+                // Make sure the spawn point is a PMC spawn
+                if (!spawnPoint.Sides.Any(playerSideMask))
+                {
+                    continue;
+                }
+
+                Vector3 spawnPointPosition = spawnPoint.Position.ToUnityVector3();
+                float distance = Vector3.Distance(position, spawnPointPosition);
+                if (distance < nearestDistance)
+                {
+                    nearestPosition = spawnPointPosition;
+                    nearestDistance = distance;
+                }
+            }
+
+            // If a spawn point was selected, buffer it
+            if (nearestPosition.HasValue)
+            {
+                nearestSpawnPointPositions.Add(position, nearestPosition.Value);
+            }
+
+            return nearestPosition;
         }
 
         public static double InterpolateForFirstCol(double[][] array, double value)
@@ -182,7 +225,7 @@ namespace LateToTheParty.Controllers
 
         private static double GenerateTimeReductionFactor(bool isScav)
         {
-            Random random = new Random();
+            System.Random random = new System.Random();
 
             Configuration.EscapeTimeConfig config = isScav ? ConfigController.Config.AdjustRaidTimes.Scav : ConfigController.Config.AdjustRaidTimes.PMC;
 

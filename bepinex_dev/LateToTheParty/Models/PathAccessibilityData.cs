@@ -24,17 +24,66 @@ namespace LateToTheParty.Models
 
         public void Merge(PathAccessibilityData other)
         {
-            if (other.PathData != null) { PathData = other.PathData; }
-            if (other.PathEndPointData != null) { PathEndPointData = other.PathEndPointData; }
-            if (other.LootOutlineData != null) { LootOutlineData = other.LootOutlineData; }
+            IsAccessible |= other.IsAccessible;
 
-            foreach (PathVisualizationData data in other.BoundingBoxes)
+            if (other.PathData != null)
             {
-                if (!BoundingBoxes.Contains(data)) { BoundingBoxes.Add(data); }
+                if (PathData != null)
+                {
+                    PathData.Replace(other.PathData);
+                }
+                else
+                {
+                    PathData = other.PathData;
+                }
             }
-            foreach (PathVisualizationData data in other.RaycastHitMarkers)
+            if (other.PathEndPointData != null)
             {
-                if (!RaycastHitMarkers.Contains(data)) { RaycastHitMarkers.Add(data); }
+                if (PathEndPointData != null)
+                {
+                    PathEndPointData.Replace(other.PathEndPointData);
+                }
+                else
+                {
+                    PathEndPointData = other.PathEndPointData;
+                }
+            }
+            if (other.LootOutlineData != null)
+            {
+                if (LootOutlineData != null)
+                {
+                    LootOutlineData.Replace(other.LootOutlineData);
+                }
+                else
+                {
+                    LootOutlineData = other.LootOutlineData;
+                }
+            }
+
+            if (other.BoundingBoxes.Count > 0)
+            {
+                foreach (PathVisualizationData data in BoundingBoxes)
+                {
+                    PathRender.RemovePath(data);
+                }
+                BoundingBoxes.Clear();
+                foreach (PathVisualizationData data in other.BoundingBoxes)
+                {
+                    BoundingBoxes.Add(data);
+                }
+            }
+
+            if (other.RaycastHitMarkers.Count > 0)
+            {
+                foreach (PathVisualizationData data in RaycastHitMarkers)
+                {
+                    PathRender.RemovePath(data);
+                }
+                RaycastHitMarkers.Clear();
+                foreach (PathVisualizationData data in other.RaycastHitMarkers)
+                {
+                    RaycastHitMarkers.Add(data);
+                }
             }
         }
 
@@ -62,22 +111,40 @@ namespace LateToTheParty.Models
 
         public void Clear(bool keepLootOutline = false)
         {
-            PathRender.RemovePath(PathData);
-            PathRender.RemovePath(PathEndPointData);
+            if (PathData != null)
+            {
+                PathRender.RemovePath(PathData);
+                PathData.Clear();
+            }
+
+            if (PathEndPointData != null)
+            {
+                PathRender.RemovePath(PathEndPointData);
+                PathEndPointData.Clear();
+            }
 
             if (!keepLootOutline)
             {
-                PathRender.RemovePath(LootOutlineData);
+                if (LootOutlineData != null)
+                {
+                    PathRender.RemovePath(LootOutlineData);
+                    LootOutlineData.Clear();
+                }
             }
 
             foreach (PathVisualizationData data in BoundingBoxes)
             {
                 PathRender.RemovePath(data);
+                data.Clear();
             }
+            BoundingBoxes.Clear();
+
             foreach (PathVisualizationData data in RaycastHitMarkers)
             {
                 PathRender.RemovePath(data);
+                data.Clear();
             }
+            RaycastHitMarkers.Clear();
         }
     }
 }

@@ -177,7 +177,7 @@ namespace LateToTheParty.Controllers
 
         public static PathAccessibilityData GetPathAccessibilityData(Vector3 sourcePosition, Vector3 targetPosition, string targetPositionName)
         {
-            PathAccessibilityData lootAccessibilityData = new PathAccessibilityData();
+            PathAccessibilityData accessibilityData = new PathAccessibilityData();
 
             // Draw a sphere around the loot item (white = accessibility is undetermined)
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
@@ -188,21 +188,21 @@ namespace LateToTheParty.Controllers
                     ConfigController.Config.Debug.LootPathVisualization.LootOutlineRadius,
                     ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
                 );
-                lootAccessibilityData.LootOutlineData = new PathVisualizationData(targetPositionName + "_itemOutline", targetCirclePoints, Color.white);
+                accessibilityData.LootOutlineData = new PathVisualizationData(targetPositionName + "_itemOutline", targetCirclePoints, Color.white);
             }
 
             // Find the nearest NavMesh point to the source position. If one can't be found, give up. 
             Vector3? sourceNearestPoint = FindNearestNavMeshPosition(sourcePosition, ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.NavMeshSearchMaxDistancePlayer);
             if (!sourceNearestPoint.HasValue)
             {
-                return lootAccessibilityData;
+                return accessibilityData;
             }
 
             // Find the nearest NavMesh point to the target position. If one can't be found, give up. 
             Vector3? targetNearestPoint = FindNearestNavMeshPosition(targetPosition, ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.NavMeshSearchMaxDistanceLoot);
             if (!targetNearestPoint.HasValue)
             {
-                return lootAccessibilityData;
+                return accessibilityData;
             }
 
             // Try to find a path using the NavMesh from the source position to the target position (using the nearest NavMesh points found above)
@@ -227,17 +227,17 @@ namespace LateToTheParty.Controllers
 
                 if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.DrawIncompletePaths)
                 {
-                    lootAccessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.white);
+                    accessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.white);
                 }
 
-                return lootAccessibilityData;
+                return accessibilityData;
             }
 
             // Draw the path in the game
             Vector3[] endLine = new Vector3[] { pathPoints.Last(), targetPosition };
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.DrawCompletePaths)
             {
-                lootAccessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.blue);
+                accessibilityData.PathData = new PathVisualizationData(targetPositionName + "_path", pathPoints, Color.blue);
             }
 
             // Check for obstacles between the last NavMesh point (determined above) and the actual target position
@@ -256,7 +256,7 @@ namespace LateToTheParty.Controllers
                 for (int ray = 0; ray < targetRaycastHits.Length; ray++)
                 {
                     Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
-                    lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBox" + ray, boundingBoxPoints, Color.magenta));
+                    accessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBox" + ray, boundingBoxPoints, Color.magenta));
 
                     /*LoggingController.LogInfo(
                         targetPositionName
@@ -284,7 +284,7 @@ namespace LateToTheParty.Controllers
                     if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineObstacles)
                     {
                         Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHitsFiltered[ray].collider.bounds);
-                        lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBoxFiltered" + ray, boundingBoxPoints, Color.red));
+                        accessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBoxFiltered" + ray, boundingBoxPoints, Color.red));
                     }
 
                     if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.ShowObstacleCollisionPoints)
@@ -295,7 +295,7 @@ namespace LateToTheParty.Controllers
                             ConfigController.Config.Debug.LootPathVisualization.CollisionPointRadius,
                             ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
                         );
-                        lootAccessibilityData.RaycastHitMarkers.Add(new PathVisualizationData(targetPositionName + "_ray" + ray, circlepoints, Color.red));
+                        accessibilityData.RaycastHitMarkers.Add(new PathVisualizationData(targetPositionName + "_ray" + ray, circlepoints, Color.red));
                     }
 
                     /*LoggingController.LogInfo(
@@ -311,25 +311,25 @@ namespace LateToTheParty.Controllers
                 // Draw a line from the last NavMesh point (determined above) and the actual target position
                 if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.ShowObstacleCollisionPoints)
                 {
-                    lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.red));
+                    accessibilityData.PathEndPointData = new PathVisualizationData(targetPositionName + "_end", endLine, Color.red);
                 }
-                return lootAccessibilityData;
+                return accessibilityData;
             }
 
             // Draw a line from the last NavMesh point (determined above) and the actual target position
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.DrawCompletePaths)
             {
-                lootAccessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_end", endLine, Color.green));
+                accessibilityData.PathEndPointData = new PathVisualizationData(targetPositionName + "_end", endLine, Color.green);
             }
 
             // Update accessibility and the color of the sphere around the item
-            lootAccessibilityData.IsAccessible = true;
-            if (lootAccessibilityData.LootOutlineData != null)
+            accessibilityData.IsAccessible = true;
+            if (accessibilityData.LootOutlineData != null)
             {
-                lootAccessibilityData.LootOutlineData.LineColor = Color.green;
+                accessibilityData.LootOutlineData.LineColor = Color.green;
             }
 
-            return lootAccessibilityData;
+            return accessibilityData;
         }
     }
 }

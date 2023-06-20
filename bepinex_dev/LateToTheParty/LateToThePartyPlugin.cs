@@ -38,11 +38,7 @@ namespace LateToTheParty
 
                 if (ConfigController.Config.Debug.Enabled)
                 {
-                    if (ConfigController.Config.Debug.LootPathVisualization.Enabled)
-                    {
-                        this.GetOrAddComponent<PathRender>();
-                    }
-
+                    this.GetOrAddComponent<PathRender>();
                     AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
                 }
             }

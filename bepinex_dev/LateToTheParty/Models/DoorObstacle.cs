@@ -63,6 +63,7 @@ namespace LateToTheParty.Models
             {
                 PathRender.RemovePath(visualizationData);
                 visualizationData.Clear();
+                visualizationData = null;
             }
         }
 

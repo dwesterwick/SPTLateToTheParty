@@ -13,6 +13,7 @@ namespace LateToTheParty.Controllers
     public class PathRender : MonoBehaviour
     {
         private static Dictionary<string, Models.PathVisualizationData> paths = new Dictionary<string, Models.PathVisualizationData>();
+        private static object pathDictLock = new object();
 
         private void OnDisable()
         {
@@ -27,21 +28,27 @@ namespace LateToTheParty.Controllers
             }
 
             // Update each registered path
-            foreach (string pathName in paths.Keys)
+            lock (pathDictLock)
             {
-                paths[pathName].Update();
+                foreach (string pathName in paths.Keys)
+                {
+                    paths[pathName].Update();
+                }
             }
         }
 
         public static void Clear()
         {
             // Prevent registered paths from being drawn again
-            foreach (string pathName in paths.Keys)
+            lock (pathDictLock)
             {
-                paths[pathName].Clear();
-            }
+                foreach (string pathName in paths.Keys)
+                {
+                    paths[pathName].Clear();
+                }
 
-            paths.Clear();
+                paths.Clear();
+            }
         }
 
         public static bool AddOrUpdatePath(Models.PathVisualizationData data)
@@ -51,32 +58,38 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            if (paths.ContainsKey(data.PathName))
+            lock (pathDictLock)
             {
-                // Need to erase the existing path before replacing it
-                paths[data.PathName].Erase();
-                paths[data.PathName] = data;
-            }
-            else
-            {
-                paths.Add(data.PathName, data);
-            }
+                if (paths.ContainsKey(data.PathName))
+                {
+                    // Need to erase the existing path before replacing it
+                    //paths[data.PathName].Erase();
+                    paths[data.PathName].Replace(data);
+                }
+                else
+                {
+                    paths.Add(data.PathName, data);
+                }
 
-            // Draw the new or updated path
-            paths[data.PathName].Update();
+                // Draw the new or updated path
+                paths[data.PathName].Update();
+            }
 
             return true;
         }
 
         public static bool RemovePath(string pathName)
         {
-            if (paths.ContainsKey(pathName))
+            lock (pathDictLock)
             {
-                // Prevent the path from being drawn again
-                paths[pathName].Clear();
+                if (paths.ContainsKey(pathName))
+                {
+                    // Prevent the path from being drawn again
+                    paths[pathName].Clear();
 
-                paths.Remove(pathName);
-                return true;
+                    paths.Remove(pathName);
+                    return true;
+                }
             }
 
             return false;
@@ -86,12 +99,14 @@ namespace LateToTheParty.Controllers
         {
             if (data == null)
             {
+                LoggingController.LogInfo("Path data is null");
                 return false;
             }
 
             // In case the path isn't registered, erase it anyway
             if (!RemovePath(data.PathName))
             {
+                LoggingController.LogInfo("Path " + data.PathName + " not found");
                 data.Clear();
             }
 

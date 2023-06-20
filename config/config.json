@@ -56,7 +56,8 @@
 		"excluded_parents": [ "55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571" ],
 		"check_loot_accessibility": {
 			"enabled": true,
-			"inclusion_radius": 25,
+			"exclusion_radius": 25,
+			"max_path_search_distance": 300,
 			"navmesh_search_max_distance_player": 10,
 			"navmesh_search_max_distance_loot": 2,
 			"navmesh_height_offset_complete": 1.25,

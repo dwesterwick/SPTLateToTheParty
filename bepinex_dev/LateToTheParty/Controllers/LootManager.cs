@@ -354,12 +354,6 @@ namespace LateToTheParty.Controllers
 
         private static void UpdateLootAccessibility(Item item)
         {
-            PathAccessibilityData accessibilityData = new PathAccessibilityData();
-            if (LootInfo[item].PathData == null)
-            {
-                LootInfo[item].PathData = accessibilityData;
-            }
-            
             string lootPathName = GetLootPathName(item);
             Vector3 itemPosition = LootInfo[item].Transform.position;            
             
@@ -372,7 +366,15 @@ namespace LateToTheParty.Controllers
                     ConfigController.Config.Debug.LootPathVisualization.LootOutlineRadius,
                     ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
                 );
-                accessibilityData.LootOutlineData = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.green);
+                PathVisualizationData lootOutline = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.white);
+                if (LootInfo[item].PathData.LootOutlineData == null)
+                {
+                    LootInfo[item].PathData.LootOutlineData = lootOutline;
+                }
+                else
+                {
+                    LootInfo[item].PathData.LootOutlineData.Replace(lootOutline);
+                }
                 LootInfo[item].PathData.Update();
             }
 
@@ -396,6 +398,11 @@ namespace LateToTheParty.Controllers
             {
                 LootInfo[item].PathData.IsAccessible = true;
 
+                if (LootInfo[item].PathData.LootOutlineData != null)
+                {
+                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.green;
+                }
+
                 LootInfo[item].PathData.Clear(true);
                 LootInfo[item].PathData.Update();
 
@@ -407,10 +414,15 @@ namespace LateToTheParty.Controllers
             if
             (
                 (distanceToNearestLockedDoor < float.MaxValue)
-                && (distanceToNearestLockedDoor > ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.InclusionRadius)
+                && (distanceToNearestLockedDoor > ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.ExclusionRadius)
             )
             {
                 LootInfo[item].PathData.IsAccessible = true;
+
+                if (LootInfo[item].PathData.LootOutlineData != null)
+                {
+                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.green;
+                }
 
                 LootInfo[item].PathData.Clear(true);
                 LootInfo[item].PathData.Update();
@@ -418,15 +430,24 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Find a path using the NavMesh from the nearest player (you or a bot) to the loot
+            // Find the nearest position where a player could realistically exist
             Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
-            PathAccessibilityData fullAccessibilityData = NavMeshController.GetPathAccessibilityData
-            (
-                nearestPlayer.Transform.position,
-                itemPosition,
-                lootPathName
-            );
-            accessibilityData.MergeAndUpdate(fullAccessibilityData);
+            Vector3? nearestSpawnPointPosition = LocationSettingsController.GetNearestSpawnPointPosition(itemPosition);
+            Vector3 nearestPosition = nearestPlayer.Transform.position;
+            if (nearestSpawnPointPosition.HasValue && (Vector3.Distance(itemPosition, nearestSpawnPointPosition.Value) < Vector3.Distance(itemPosition, nearestPosition)))
+            {
+                nearestPosition = nearestSpawnPointPosition.Value;
+            }
+
+            // Do not try finding a NavMesh path if the item is too far away due to performance concerns
+            if (Vector3.Distance(nearestPosition, itemPosition) > ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.MaxPathSearchDistance)
+            {
+                return;
+            }
+
+            // Try to find a path to the loot item via the NavMesh from the nearest realistic position determined above
+            PathAccessibilityData fullAccessibilityData = NavMeshController.GetPathAccessibilityData(nearestPosition, itemPosition, lootPathName);
+            LootInfo[item].PathData.MergeAndUpdate(fullAccessibilityData);
         }
 
         private static string GetLootPathName(Item item)

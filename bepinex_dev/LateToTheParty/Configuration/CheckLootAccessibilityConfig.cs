@@ -12,8 +12,11 @@ namespace LateToTheParty.Configuration
         [JsonProperty("enabled")]
         public bool Enabled { get; set; } = false;
 
-        [JsonProperty("inclusion_radius")]
-        public double InclusionRadius { get; set; } = 25;
+        [JsonProperty("exclusion_radius")]
+        public double ExclusionRadius { get; set; } = 25;
+
+        [JsonProperty("max_path_search_distance")]
+        public double MaxPathSearchDistance { get; set; } = 300;
 
         [JsonProperty("navmesh_search_max_distance_player")]
         public float NavMeshSearchMaxDistancePlayer { get; set; } = 10;
