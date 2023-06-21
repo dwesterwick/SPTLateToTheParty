@@ -17,7 +17,7 @@ export class CommonUtils
 	
     public logInfo(message: string, alwaysShow = false): void
     {
-        if (modConfig.debug || alwaysShow)
+        if (modConfig.debug.enabled || alwaysShow)
             this.logger.info(this.debugMessagePrefix + message);
     }
 
