@@ -80,37 +80,6 @@ namespace LateToTheParty.Controllers
             return secureContainerIDs;
         }
 
-        public static double GetDistanceToNearestSpawnPoint(Vector3 position)
-        {
-            return GetDistanceToNearestSpawnPoint(position, Controllers.LocationSettingsController.LastLocationSelected, EPlayerSideMask.Pmc);
-        }
-
-        public static double GetDistanceToNearestSpawnPoint(Vector3 position, LocationSettingsClass.Location location, EPlayerSideMask playerSideMask)
-        {
-            double distance = double.MaxValue;
-
-            foreach (EFT.Game.Spawning.SpawnPointParams spawnPoint in location.SpawnPointParams)
-            {
-                if (!spawnPoint.Sides.HasFlag(playerSideMask))
-                {
-                    continue;
-                }
-
-                double _dist = Vector3.Distance(position, spawnPoint.Position.ToUnityVector3());
-                if (_dist < distance)
-                {
-                    distance = _dist;
-                }
-            }
-
-            if (distance == double.MaxValue)
-            {
-                return 0;
-            }
-
-            return distance;
-        }
-
         public static Dictionary<string, Item> GetAllItems()
         {
             if (allItems.Count > 0)

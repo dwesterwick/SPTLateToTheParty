@@ -17,7 +17,7 @@ namespace LateToTheParty.Controllers
 
         private static string[] CarExtractNames = new string[0];
         private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
-        private static Dictionary<Vector3, Vector3> nearestSpawnPointPositions = new Dictionary<Vector3, Vector3>();
+        private static Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>> nearestSpawnPointPositions = new Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>>();
         private static BackendConfigSettingsClass.GClass1306.GClass1313 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
@@ -93,22 +93,26 @@ namespace LateToTheParty.Controllers
             AdjustBossSpawnChances(LastLocationSelected, timeReductionFactor);
         }
 
-        public static Vector3? GetNearestSpawnPointPosition(Vector3 position)
+        public static Vector3? GetNearestSpawnPointPosition(Vector3 position, EPlayerSideMask playerSideMask = EPlayerSideMask.All)
         {
-            // Use the buffered nearest position if available
-            if (nearestSpawnPointPositions.ContainsKey(position))
+            if (LastLocationSelected == null)
             {
-                return nearestSpawnPointPositions[position];
+                return null;
+            }
+
+            // Use the cached nearest position if available
+            if (nearestSpawnPointPositions.ContainsKey(playerSideMask) && nearestSpawnPointPositions[playerSideMask].ContainsKey(position))
+            {
+                return nearestSpawnPointPositions[playerSideMask][position];
             }
 
             Vector3? nearestPosition = null;
             float nearestDistance = float.MaxValue;
 
-            // Find the nearest PMC spawn point to the desired position
-            EPlayerSideMask playerSideMask = EPlayerSideMask.Pmc;
+            // Find the nearest spawn point to the desired position
             foreach (SpawnPointParams spawnPoint in LastLocationSelected.SpawnPointParams)
             {
-                // Make sure the spawn point is a PMC spawn
+                // Make sure the spawn point is valid for at least one of the specified player sides
                 if (!spawnPoint.Sides.Any(playerSideMask))
                 {
                     continue;
@@ -123,10 +127,15 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            // If a spawn point was selected, buffer it
+            // If a spawn point was selected, cache it
             if (nearestPosition.HasValue)
             {
-                nearestSpawnPointPositions.Add(position, nearestPosition.Value);
+                if (!nearestSpawnPointPositions.ContainsKey(playerSideMask))
+                {
+                    nearestSpawnPointPositions.Add(playerSideMask, new Dictionary<Vector3, Vector3>());
+                }
+
+                nearestSpawnPointPositions[playerSideMask].Add(position, nearestPosition.Value);
             }
 
             return nearestPosition;

@@ -205,6 +205,14 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Find the nearest spawn point. If none is found, the map is invalid or the raid has ended
+            Vector3? nearestSpawnPoint = LocationSettingsController.GetNearestSpawnPointPosition(lootItem.transform.position, EPlayerSideMask.Pmc);
+            if (!nearestSpawnPoint.HasValue)
+            {
+                return;
+            }
+            double distanceToNearestSpawnPoint = Vector3.Distance(lootItem.transform.position, nearestSpawnPoint.Value);
+
             // Find all items associated with lootItem that are eligible for despawning
             IEnumerable<Item> allItems = lootItem.Item.FindAllItemsInContainer(true).RemoveExcludedItems().RemoveItemsDroppedByPlayer();
             foreach (Item item in allItems)
@@ -215,7 +223,7 @@ namespace LateToTheParty.Controllers
                             Models.ELootType.Loose,
                             lootItem.ItemOwner,
                             lootItem.transform,
-                            ItemHelpers.GetDistanceToNearestSpawnPoint(lootItem.transform.position),
+                            distanceToNearestSpawnPoint,
                             GetLootFoundTime(raidET)
                     );
                     LootInfo.Add(item, newLoot);
@@ -230,6 +238,14 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Find the nearest spawn point. If none is found, the map is invalid or the raid has ended
+            Vector3? nearestSpawnPoint = LocationSettingsController.GetNearestSpawnPointPosition(lootableContainer.transform.position, EPlayerSideMask.Pmc);
+            if (!nearestSpawnPoint.HasValue)
+            {
+                return;
+            }
+            double distanceToNearestSpawnPoint = Vector3.Distance(lootableContainer.transform.position, nearestSpawnPoint.Value);
+
             // NOTE: This level is for containers like weapon boxes, not like backpacks
             foreach (Item containerItem in lootableContainer.ItemOwner.Items)
             {
@@ -241,7 +257,7 @@ namespace LateToTheParty.Controllers
                             Models.ELootType.Static,
                             lootableContainer.ItemOwner,
                             lootableContainer.transform,
-                            ItemHelpers.GetDistanceToNearestSpawnPoint(lootableContainer.transform.position),
+                            distanceToNearestSpawnPoint,
                             GetLootFoundTime(raidET)
                         );
                         LootInfo.Add(item, newLoot);
