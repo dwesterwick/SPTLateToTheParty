@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LateToTheParty.Controllers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -55,6 +56,11 @@ namespace LateToTheParty.Models
 
         public void Update()
         {
+            if (!ConfigController.Config.Debug.Enabled || !ConfigController.Config.Debug.LootPathVisualization.Enabled)
+            {
+                return;
+            }
+
             lock (lineRendererLockObj)
             {
                 if (lineRenderer == null)
