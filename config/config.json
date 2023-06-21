@@ -2,7 +2,7 @@
 	"enabled": true,
 	"debug": {
 		"enabled": true,
-		"scav_cooldown_time": 1,
+		"scav_cooldown_time": 1500,
 		"loot_path_visualization": {
 			"enabled": true,
 			"points_per_circle": 10,
