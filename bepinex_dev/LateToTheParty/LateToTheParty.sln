@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToTheParty", "LateToThe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LootRankingDataReader", "..\LookRankingDataReader\LootRankingDataReader.csproj", "{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SphereOverlapTest", "..\SphereOverlapTest\SphereOverlapTest.csproj", "{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{602B605E-8D26-4EFB-97A5-60FDE7F1A0B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
