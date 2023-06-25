@@ -35,6 +35,14 @@
             this.controlsTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.overallRadiusLabel = new System.Windows.Forms.Label();
             this.overallRadiusTrackBar = new System.Windows.Forms.TrackBar();
+            this.maxYRadiusLabel = new System.Windows.Forms.Label();
+            this.maxYRadiusTrackBar = new System.Windows.Forms.TrackBar();
+            this.minOverlapLabel = new System.Windows.Forms.Label();
+            this.minOverlapTrackBar = new System.Windows.Forms.TrackBar();
+            this.minCirclesPerRingLabel = new System.Windows.Forms.Label();
+            this.minCirclesPerRingTrackBar = new System.Windows.Forms.TrackBar();
+            this.totalCirclesLabel = new System.Windows.Forms.Label();
+            this.totalCirclesValueLabel = new System.Windows.Forms.Label();
             this.mainTableLayoutPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.renderingSplitContainer)).BeginInit();
             this.renderingSplitContainer.Panel1.SuspendLayout();
@@ -42,6 +50,9 @@
             this.renderingSplitContainer.SuspendLayout();
             this.controlsTableLayoutPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.overallRadiusTrackBar)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.maxYRadiusTrackBar)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.minOverlapTrackBar)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.minCirclesPerRingTrackBar)).BeginInit();
             this.SuspendLayout();
             // 
             // mainTableLayoutPanel
@@ -98,14 +109,26 @@
             // controlsTableLayoutPanel
             // 
             this.controlsTableLayoutPanel.ColumnCount = 2;
-            this.controlsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 29.93197F));
-            this.controlsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 70.06802F));
+            this.controlsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 120F));
+            this.controlsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.controlsTableLayoutPanel.Controls.Add(this.totalCirclesValueLabel, 1, 4);
             this.controlsTableLayoutPanel.Controls.Add(this.overallRadiusLabel, 0, 0);
             this.controlsTableLayoutPanel.Controls.Add(this.overallRadiusTrackBar, 1, 0);
+            this.controlsTableLayoutPanel.Controls.Add(this.maxYRadiusLabel, 0, 1);
+            this.controlsTableLayoutPanel.Controls.Add(this.maxYRadiusTrackBar, 1, 1);
+            this.controlsTableLayoutPanel.Controls.Add(this.minOverlapLabel, 0, 2);
+            this.controlsTableLayoutPanel.Controls.Add(this.minOverlapTrackBar, 1, 2);
+            this.controlsTableLayoutPanel.Controls.Add(this.minCirclesPerRingLabel, 0, 3);
+            this.controlsTableLayoutPanel.Controls.Add(this.minCirclesPerRingTrackBar, 1, 3);
+            this.controlsTableLayoutPanel.Controls.Add(this.totalCirclesLabel, 0, 4);
             this.controlsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.controlsTableLayoutPanel.Location = new System.Drawing.Point(3, 3);
             this.controlsTableLayoutPanel.Name = "controlsTableLayoutPanel";
-            this.controlsTableLayoutPanel.RowCount = 3;
+            this.controlsTableLayoutPanel.RowCount = 7;
+            this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
+            this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
+            this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
+            this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
             this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
             this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
             this.controlsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -124,16 +147,97 @@
             // 
             // overallRadiusTrackBar
             // 
-            this.overallRadiusTrackBar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.overallRadiusTrackBar.Location = new System.Drawing.Point(91, 3);
-            this.overallRadiusTrackBar.Maximum = 100;
+            this.overallRadiusTrackBar.Location = new System.Drawing.Point(123, 3);
+            this.overallRadiusTrackBar.Maximum = 200;
             this.overallRadiusTrackBar.Minimum = 10;
             this.overallRadiusTrackBar.Name = "overallRadiusTrackBar";
-            this.overallRadiusTrackBar.Size = new System.Drawing.Size(200, 20);
+            this.overallRadiusTrackBar.Size = new System.Drawing.Size(171, 20);
             this.overallRadiusTrackBar.TabIndex = 1;
             this.overallRadiusTrackBar.TickFrequency = 5;
             this.overallRadiusTrackBar.Value = 10;
             this.overallRadiusTrackBar.ValueChanged += new System.EventHandler(this.Refresh);
+            // 
+            // maxYRadiusLabel
+            // 
+            this.maxYRadiusLabel.AutoSize = true;
+            this.maxYRadiusLabel.Location = new System.Drawing.Point(3, 26);
+            this.maxYRadiusLabel.Name = "maxYRadiusLabel";
+            this.maxYRadiusLabel.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.maxYRadiusLabel.Size = new System.Drawing.Size(73, 19);
+            this.maxYRadiusLabel.TabIndex = 2;
+            this.maxYRadiusLabel.Text = "Max Y Radius";
+            // 
+            // maxYRadiusTrackBar
+            // 
+            this.maxYRadiusTrackBar.Location = new System.Drawing.Point(123, 29);
+            this.maxYRadiusTrackBar.Maximum = 200;
+            this.maxYRadiusTrackBar.Minimum = 10;
+            this.maxYRadiusTrackBar.Name = "maxYRadiusTrackBar";
+            this.maxYRadiusTrackBar.Size = new System.Drawing.Size(171, 20);
+            this.maxYRadiusTrackBar.TabIndex = 3;
+            this.maxYRadiusTrackBar.TickFrequency = 5;
+            this.maxYRadiusTrackBar.Value = 10;
+            this.maxYRadiusTrackBar.ValueChanged += new System.EventHandler(this.Refresh);
+            // 
+            // minOverlapLabel
+            // 
+            this.minOverlapLabel.AutoSize = true;
+            this.minOverlapLabel.Location = new System.Drawing.Point(3, 52);
+            this.minOverlapLabel.Name = "minOverlapLabel";
+            this.minOverlapLabel.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.minOverlapLabel.Size = new System.Drawing.Size(81, 19);
+            this.minOverlapLabel.TabIndex = 4;
+            this.minOverlapLabel.Text = "Min Overlap (%)";
+            // 
+            // minOverlapTrackBar
+            // 
+            this.minOverlapTrackBar.Location = new System.Drawing.Point(123, 55);
+            this.minOverlapTrackBar.Maximum = 90;
+            this.minOverlapTrackBar.Name = "minOverlapTrackBar";
+            this.minOverlapTrackBar.Size = new System.Drawing.Size(171, 20);
+            this.minOverlapTrackBar.TabIndex = 5;
+            this.minOverlapTrackBar.TickFrequency = 5;
+            this.minOverlapTrackBar.ValueChanged += new System.EventHandler(this.Refresh);
+            // 
+            // minCirclesPerRingLabel
+            // 
+            this.minCirclesPerRingLabel.AutoSize = true;
+            this.minCirclesPerRingLabel.Location = new System.Drawing.Point(3, 78);
+            this.minCirclesPerRingLabel.Name = "minCirclesPerRingLabel";
+            this.minCirclesPerRingLabel.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.minCirclesPerRingLabel.Size = new System.Drawing.Size(101, 19);
+            this.minCirclesPerRingLabel.TabIndex = 6;
+            this.minCirclesPerRingLabel.Text = "Min Circles per Ring";
+            // 
+            // minCirclesPerRingTrackBar
+            // 
+            this.minCirclesPerRingTrackBar.Location = new System.Drawing.Point(123, 81);
+            this.minCirclesPerRingTrackBar.Minimum = 1;
+            this.minCirclesPerRingTrackBar.Name = "minCirclesPerRingTrackBar";
+            this.minCirclesPerRingTrackBar.Size = new System.Drawing.Size(171, 20);
+            this.minCirclesPerRingTrackBar.TabIndex = 7;
+            this.minCirclesPerRingTrackBar.Value = 1;
+            this.minCirclesPerRingTrackBar.ValueChanged += new System.EventHandler(this.Refresh);
+            // 
+            // totalCirclesLabel
+            // 
+            this.totalCirclesLabel.AutoSize = true;
+            this.totalCirclesLabel.Location = new System.Drawing.Point(3, 104);
+            this.totalCirclesLabel.Name = "totalCirclesLabel";
+            this.totalCirclesLabel.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.totalCirclesLabel.Size = new System.Drawing.Size(65, 19);
+            this.totalCirclesLabel.TabIndex = 8;
+            this.totalCirclesLabel.Text = "Total Circles";
+            // 
+            // totalCirclesValueLabel
+            // 
+            this.totalCirclesValueLabel.AutoSize = true;
+            this.totalCirclesValueLabel.Location = new System.Drawing.Point(123, 104);
+            this.totalCirclesValueLabel.Name = "totalCirclesValueLabel";
+            this.totalCirclesValueLabel.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.totalCirclesValueLabel.Size = new System.Drawing.Size(13, 19);
+            this.totalCirclesValueLabel.TabIndex = 9;
+            this.totalCirclesValueLabel.Text = "0";
             // 
             // SphereOverlapTestForm
             // 
@@ -151,6 +255,9 @@
             this.controlsTableLayoutPanel.ResumeLayout(false);
             this.controlsTableLayoutPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.overallRadiusTrackBar)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.maxYRadiusTrackBar)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.minOverlapTrackBar)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.minCirclesPerRingTrackBar)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -164,6 +271,14 @@
         private System.Windows.Forms.TableLayoutPanel controlsTableLayoutPanel;
         private System.Windows.Forms.Label overallRadiusLabel;
         private System.Windows.Forms.TrackBar overallRadiusTrackBar;
+        private System.Windows.Forms.Label maxYRadiusLabel;
+        private System.Windows.Forms.TrackBar maxYRadiusTrackBar;
+        private System.Windows.Forms.Label minOverlapLabel;
+        private System.Windows.Forms.TrackBar minOverlapTrackBar;
+        private System.Windows.Forms.Label minCirclesPerRingLabel;
+        private System.Windows.Forms.TrackBar minCirclesPerRingTrackBar;
+        private System.Windows.Forms.Label totalCirclesValueLabel;
+        private System.Windows.Forms.Label totalCirclesLabel;
     }
 }
 
