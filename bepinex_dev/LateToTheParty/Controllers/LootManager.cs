@@ -79,7 +79,7 @@ namespace LateToTheParty.Controllers
             // Only run this once per map
             if (currentLocationName == _currentMapName)
             {
-                return 0;
+                return LootableContainerCount;
             }
 
             LoggingController.LogInfo("Searching for lootable containers in the map...");
