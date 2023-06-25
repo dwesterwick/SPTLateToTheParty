@@ -24,6 +24,7 @@ import { VFS } from "@spt-aki/utils/VFS";
 import { LocaleService } from "@spt-aki/services/LocaleService";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
+import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 
 const modName = "LateToTheParty";
 
@@ -45,6 +46,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private localeService: LocaleService;
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
+    private profileHelper: ProfileHelper;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -91,6 +93,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 {
                     this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
                     this.generateLootRankingData(sessionId);
+
+                    if (modConfig.debug.enabled)
+                    {
+                        this.updateScavTimer(sessionId);
+                    }
 
                     return output;
                 }
@@ -172,6 +179,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.localeService = container.resolve<LocaleService>("LocaleService");
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
+        this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");		
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -213,6 +221,40 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
+    }
+
+    private updateScavTimer(sessionId: string): void
+    {
+        const pmcData = this.profileHelper.getPmcProfile(sessionId);
+        const scavData = this.profileHelper.getScavProfile(sessionId);
+		
+        if ((scavData.Info === null) || (scavData.Info === undefined))
+        {
+            this.commonUtils.logInfo("Scav profile hasn't been created yet.");
+            return;
+        }
+		
+        // In case somebody disables scav runs and later wants to enable them, we need to reset their Scav timer unless it's plausible
+        const worstCooldownFactor = this.getWorstSavageCooldownModifier();
+        if (scavData.Info.SavageLockTime - pmcData.Info.LastTimePlayedAsSavage > this.databaseTables.globals.config.SavagePlayCooldown * worstCooldownFactor * 1.1)
+        {
+            this.commonUtils.logInfo(`Resetting scav timer for sessionId=${sessionId}...`);
+            scavData.Info.SavageLockTime = 0;
+        }
+    }
+	
+    // Return the highest Scav cooldown factor from Fence's rep levels
+    private getWorstSavageCooldownModifier(): number
+    {
+        // Initialize the return value at something very low
+        let worstCooldownFactor = 0.01;
+
+        for (const level in this.databaseTables.globals.config.FenceSettings.Levels)
+        {
+            if (this.databaseTables.globals.config.FenceSettings.Levels[level].SavageCooldownModifier > worstCooldownFactor)
+                worstCooldownFactor = this.databaseTables.globals.config.FenceSettings.Levels[level].SavageCooldownModifier;
+        }
+        return worstCooldownFactor;
     }
 
     private getLootMultipliers(): void
