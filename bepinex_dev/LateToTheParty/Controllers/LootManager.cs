@@ -167,10 +167,6 @@ namespace LateToTheParty.Controllers
                     yield break;
                 }
 
-                // Determine which loot is eligible to destroy
-                enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
-
                 // Enumerate loot that hasn't been destroyed and hasn't previously been deemed accessible
                 IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
@@ -178,7 +174,11 @@ namespace LateToTheParty.Controllers
                 // Check which items are accessible
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
-                
+
+                // Determine which loot is eligible to destroy
+                enumeratorWithTimeLimit.Reset();
+                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
+
                 // Sort eligible loot
                 IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible);
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
@@ -301,7 +301,7 @@ namespace LateToTheParty.Controllers
             //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
 
             // Calculate the number of loot items to destroy
-            int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * LootInfo.Count);
+            int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * accessibleItems.Count());
 
             return lootItemsToDestroy;
         }
