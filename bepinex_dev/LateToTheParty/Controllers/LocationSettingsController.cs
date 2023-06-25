@@ -12,6 +12,7 @@ namespace LateToTheParty.Controllers
 {
     public static class LocationSettingsController
     {
+        public static bool HasRaidStarted { get; set; } = false;
         public static int LastOriginalEscapeTime { get; private set; } = -1;
         public static LocationSettingsClass.Location LastLocationSelected { get; private set; } = null;
 
@@ -23,15 +24,17 @@ namespace LateToTheParty.Controllers
 
         public static void ClearOriginalSettings()
         {
-            LoggingController.LogInfo("Discarding original raid settings...");
+            LoggingController.LogInfo("Discarding cached location parameters...");
             nearestSpawnPointPositions.Clear();
             OriginalSettings.Clear();
             LastLocationSelected = null;
             LastOriginalEscapeTime = -1;
+            HasRaidStarted = false;
         }
 
         public static void ModifyLocationSettings(LocationSettingsClass.Location location, bool isScavRun)
         {
+            HasRaidStarted = false;
             LastLocationSelected = location;
 
             if (!ConfigController.Config.AdjustRaidTimes.Enabled)
@@ -39,6 +42,8 @@ namespace LateToTheParty.Controllers
                 LastOriginalEscapeTime = LastLocationSelected.EscapeTimeLimit;
                 return;
             }
+
+            LoggingController.Logger.LogInfo("Updating raid settings for " + LastLocationSelected.Id + "...");
 
             if (CarExtractNames.Length == 0)
             {
@@ -314,7 +319,7 @@ namespace LateToTheParty.Controllers
                 if (CarExtractNames.Contains(exit.Name))
                 {
                     exit.Chance *= (float)reductionFactor;
-                    LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + exit.Chance);
+                    LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + Math.Round(exit.Chance, 1) + "%");
                 }
             }
         }

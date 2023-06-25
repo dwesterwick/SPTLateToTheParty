@@ -76,6 +76,12 @@ namespace LateToTheParty.Controllers
 
         public static int FindAllLootableContainers(string _currentMapName)
         {
+            // Only run this once per map
+            if (currentLocationName == _currentMapName)
+            {
+                return 0;
+            }
+
             LoggingController.LogInfo("Searching for lootable containers in the map...");
             AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
             LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
@@ -145,7 +151,6 @@ namespace LateToTheParty.Controllers
                 // Ensure there is still loot on the map
                 if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
                 {
-                    IsFindingAndDestroyingLoot = false;
                     yield break;
                 }
 
@@ -693,14 +698,15 @@ namespace LateToTheParty.Controllers
             LoggingController.LogInfo("Writing loot log file...");
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed");
+            sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed,Accessible");
             foreach(Item item in LootInfo.Keys)
             {
                 sb.Append(item.LocalizedName() + ",");
                 sb.Append(item.TemplateId + ",");
                 sb.Append(ConfigController.LootRanking.Items[item.TemplateId].Value + ",");
                 sb.Append(LootInfo[item].RaidETWhenFound + ",");
-                sb.AppendLine(LootInfo[item].RaidETWhenDestroyed >= 0 ? LootInfo[item].RaidETWhenDestroyed.ToString() : "");
+                sb.Append(LootInfo[item].RaidETWhenDestroyed >= 0 ? LootInfo[item].RaidETWhenDestroyed.ToString() : "");
+                sb.AppendLine("," + LootInfo[item].PathData.IsAccessible.ToString());
             }
 
             string filename = LoggingController.LoggingPath

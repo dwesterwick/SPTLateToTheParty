@@ -117,6 +117,10 @@ namespace LateToTheParty.CoroutineExtensions
             {
                 LoggingController.LogError("The task for " + MethodName + " timed out.");
             }
+            else
+            {
+                //LoggingController.LogInfo("The task for " + MethodName + " is complete.");
+            }
         }
 
         public void Abort()

@@ -19,6 +19,12 @@ namespace LateToTheParty.Patches
         [PatchPostfix]
         private static void PatchPostfix()
         {
+            // Don't do anything if this is for the hideout
+            if (!Controllers.LocationSettingsController.HasRaidStarted)
+            {
+                return;
+            }
+
             // Needed for compatibility with Refringe's CustomRaidTimes mod
             Controllers.LocationSettingsController.ClearOriginalSettings();
         }

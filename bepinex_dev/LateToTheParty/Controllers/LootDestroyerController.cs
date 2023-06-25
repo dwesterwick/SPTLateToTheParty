@@ -12,7 +12,6 @@ namespace LateToTheParty.Controllers
     {
         private static Vector3 lastUpdatePosition = Vector3.zero;        
         private static Stopwatch updateTimer = Stopwatch.StartNew();
-        private static int foundLootableContainers = -1;
 
         private void Update()
         {
@@ -31,7 +30,6 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 LootManager.Clear();
-                foundLootableContainers = -1;
 
                 return;
             }
@@ -61,15 +59,9 @@ namespace LateToTheParty.Controllers
             }
 
             // This should only be run once to generate the list of lootable containers in the map
-            if (foundLootableContainers == -1)
+            if (LootManager.LootableContainerCount == 0)
             {
-                foundLootableContainers = LootManager.FindAllLootableContainers(LocationSettingsController.LastLocationSelected.Name);
-            }
-
-            // Ensure there are loot containers on the map
-            if (foundLootableContainers == 0)
-            {
-                return;
+                LootManager.FindAllLootableContainers(LocationSettingsController.LastLocationSelected.Name);
             }
 
             // Spread the work out across multiple frames to avoid stuttering

@@ -113,6 +113,11 @@ namespace LateToTheParty.Controllers
 
         public static void Clear()
         {
+            if (IsFindingDoors)
+            {
+                enumeratorWithTimeLimit.Abort();
+                TaskWithTimeLimit.WaitForCondition(() => !IsFindingDoors);
+            }
             if (IsTogglingDoors)
             {
                 enumeratorWithTimeLimit.Abort();
@@ -156,18 +161,24 @@ namespace LateToTheParty.Controllers
 
         private IEnumerator FindAllEligibleDoors()
         {
-            IsFindingDoors = true;
-            eligibleDoors.Clear();
+            try
+            {
+                IsFindingDoors = true;
+                eligibleDoors.Clear();
 
-            LoggingController.LogInfo("Searching for valid doors...");
-            Door[] allDoors = UnityEngine.Object.FindObjectsOfType<Door>();
-            LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Length + " possible doors.");
+                LoggingController.LogInfo("Searching for valid doors...");
+                Door[] allDoors = UnityEngine.Object.FindObjectsOfType<Door>();
+                LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Length + " possible doors.");
 
-            enumeratorWithTimeLimit.Reset();
-            yield return enumeratorWithTimeLimit.Run(allDoors, CheckIfDoorIsEligible);
+                enumeratorWithTimeLimit.Reset();
+                yield return enumeratorWithTimeLimit.Run(allDoors, CheckIfDoorIsEligible);
 
-            LoggingController.LogInfo("Searching for valid doors...found " + eligibleDoors.Count + " doors.");
-            IsFindingDoors = false;
+                LoggingController.LogInfo("Searching for valid doors...found " + eligibleDoors.Count + " doors.");
+            }
+            finally
+            {
+                IsFindingDoors = false;
+            }
         }
 
         private void CheckIfDoorIsEligible(Door door)
