@@ -178,9 +178,7 @@ namespace LateToTheParty.Controllers
                 // Check which items are accessible
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
-                double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
-                LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
-
+                
                 // Sort eligible loot
                 IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible);
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
@@ -189,6 +187,13 @@ namespace LateToTheParty.Controllers
                 List<Item> itemsToDestroy = new List<Item>();
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy, itemsToDestroy);
+                
+                // Show the percentage of accessible loot before destroying any of it
+                if (itemsToDestroy.Count > 0)
+                {
+                    double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
+                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
+                }
 
                 // Destroy items
                 enumeratorWithTimeLimit.Reset();
