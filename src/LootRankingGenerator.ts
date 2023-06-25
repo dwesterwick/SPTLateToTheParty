@@ -396,7 +396,7 @@ export class LootRankingGenerator
 
             for (const slot in itemTemplate._props.Slots)
             {
-                if (!itemTemplate._props.Slots[slot]._required)
+                if ((itemTemplate._props.Slots[slot]._required !== undefined) && !itemTemplate._props.Slots[slot]._required)
                 {
                     continue;
                 }
