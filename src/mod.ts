@@ -197,9 +197,16 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Adjust parameters to make debugging easier
         if (modConfig.debug.enabled)
         {
+            this.commonUtils.logInfo("Applying debug options...");
+
             if (modConfig.debug.scav_cooldown_time < this.databaseTables.globals.config.SavagePlayCooldown)
             {
                 this.databaseTables.globals.config.SavagePlayCooldown = modConfig.debug.scav_cooldown_time;
+            }
+
+            if (modConfig.debug.free_labs_access)
+            {
+                this.databaseTables.locations.laboratory.base.AccessKeys = [];
             }
 
             //this.iAirdropConfig.airdropChancePercent.bigmap = 100;

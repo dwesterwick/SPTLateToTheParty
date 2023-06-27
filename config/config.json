@@ -3,6 +3,7 @@
 	"debug": {
 		"enabled": false,
 		"scav_cooldown_time": 1500,
+		"free_labs_access": false,
 		"loot_path_visualization": {
 			"enabled": false,
 			"points_per_circle": 10,
