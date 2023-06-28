@@ -4,9 +4,11 @@ import { CommonUtils } from "./CommonUtils";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { TraderController } from "@spt-aki/controllers/TraderController";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
+import { FenceService } from "@spt-aki/services/FenceService";
 import { IGetBodyResponseData } from "@spt-aki/models/eft/httpResponse/IGetBodyResponseData";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
+import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
 
 export class FenceAssortGenerator
 {
@@ -16,34 +18,42 @@ export class FenceAssortGenerator
     (
         private commonUtils: CommonUtils,
         private databaseTables: IDatabaseTables,
+        private fenceService: FenceService,
         private traderController: TraderController,
         private httpResponseUtil: HttpResponseUtil
     )
     {
         // Store original Fence assort ID's
         const assortIDs = this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items;
+        this.commonUtils.logInfo(`Fence assorts currently has ${Object.keys(assortIDs).length} items`);
         for (const itemID in assortIDs)
         {
             this.originalAssortIDs[itemID] = assortIDs[itemID];
         }
     }
 
-    public getFenceAssort(sessionID: string): IGetBodyResponseData<ITraderAssort>
+    public getFenceAssort(pmcProfile: IPmcData): IGetBodyResponseData<ITraderAssort>
     {
-        this.commonUtils.logInfo("Updating Fence assort...");
-
-        return this.httpResponseUtil.getBody(this.traderController.getAssort(sessionID, Traders.FENCE));
+        this.updateFenceAssortIDs();
+        this.fenceService.generateFenceAssorts();
+        
+        return this.httpResponseUtil.getBody(this.fenceService.getFenceAssorts(pmcProfile));
     }
 
-    private updateFenceAssortIDs(): void
+    public updateFenceAssortIDs(): void
     {
-        this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items = {};
+        let assortIDs = this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items;
+        this.commonUtils.logInfo(`Updating Fence assorts... currently has ${Object.keys(assortIDs).length} items...`);
+
+        assortIDs = {};
         for (const itemID in this.originalAssortIDs)
         {
             if (this.commonUtils.getMaxItemPrice(itemID) < 50000)
             {
-                this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items[itemID] = this.originalAssortIDs[itemID];
+                assortIDs[itemID] = this.originalAssortIDs[itemID];
             }
         }
+
+        this.commonUtils.logInfo(`Updating Fence assorts... updated to have ${Object.keys(assortIDs).length} items`);
     }
 }

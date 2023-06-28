@@ -27,6 +27,7 @@ import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 import { TraderController } from "@spt-aki/controllers/TraderController";
+import { FenceService } from "@spt-aki/services/FenceService";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
 
@@ -54,6 +55,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private profileHelper: ProfileHelper;
     private traderController: TraderController;
     private httpResponseUtil: HttpResponseUtil;
+    private fenceService: FenceService;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -120,7 +122,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
                     if (traderID == Traders.FENCE)
                     {
-                        return this.fenceAssortGenerator.getFenceAssort(sessionId);
+                        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
+                        return this.fenceAssortGenerator.getFenceAssort(pmcProfile);
                     }
 
                     return output;
@@ -205,7 +208,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
         this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
         this.traderController = container.resolve<TraderController>("TraderController");
-        this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");		
+        this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
+        this.fenceService = container.resolve<FenceService>("FenceService");		
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -213,8 +217,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
-        this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.traderController, this.httpResponseUtil);
-
+        
         if (!modConfig.enabled)
         {
             this.commonUtils.logInfo("Mod disabled in config.json.");
@@ -257,6 +260,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
+
+        this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.fenceService, this.traderController, this.httpResponseUtil);
     }
 
     private updateScavTimer(sessionId: string): void
