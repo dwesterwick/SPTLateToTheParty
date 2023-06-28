@@ -43,14 +43,16 @@ export class FenceAssortGenerator
         {
             const itemPrice = this.commonUtils.getMaxItemPrice(itemID);
             const permittedChance = CommonUtils.interpolateForFirstCol(modConfig.fence_item_value_permitted_chance, itemPrice);
-            
+            const randNum = this.randomUtil.getFloat(0, 100);
+
             // Determine if the item should be allowed in Fence's assorts
-            if ((itemPrice >= modConfig.fence_assort_changes.min_allowed_item_value) || (permittedChance <= this.randomUtil.getInt(0, 100)))
+            if ((itemPrice >= modConfig.fence_assort_changes.min_allowed_item_value) && (permittedChance <= randNum))
             {
                 // Ensure the index is valid
                 const itemIndex = assort.items.findIndex((i) => i._id == itemID);
                 if (itemIndex < 0)
                 {
+                    this.commonUtils.logError(`Invalid item: ${itemID}`);
                     continue;
                 }
 
