@@ -120,7 +120,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
                     if (traderID == Traders.FENCE)
                     {
-                        this.fenceAssortGenerator.getFenceAssort(sessionId);
+                        return this.fenceAssortGenerator.getFenceAssort(sessionId);
                     }
 
                     return output;

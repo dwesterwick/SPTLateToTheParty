@@ -47,6 +47,26 @@ export class CommonUtils
         return item._name;
     }
 
+    public getMaxItemPrice(itemID: string): number
+    {
+        // Get the handbook.json price, if any exists
+        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((i) => i.Id == itemID);
+        let handbookPrice = 0;
+        if (matchingHandbookItems.length == 1)
+        {
+            handbookPrice = matchingHandbookItems[0].Price;
+        }
+
+        // Get the prices.json price, if any exists
+        let price = 0;
+        if (itemID in this.databaseTables.templates.prices)
+        {
+            price = this.databaseTables.templates.prices[itemID];
+        }
+        
+        return Math.max(handbookPrice, price);
+    }
+
     /**
      * Check if @param item is a child of the item with ID @param parentID
      */

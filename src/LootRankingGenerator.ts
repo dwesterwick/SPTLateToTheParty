@@ -120,7 +120,7 @@ export class LootRankingGenerator
     private generateLookRankingForItem(item: ITemplateItem, sessionId: string): LootRankingData
     {
         // Get required item properties from the server database
-        const cost = this.getItemPrice(item);
+        const cost = this.commonUtils.getMaxItemPrice(item._id);
         let weight = item._props.Weight;
         let size = item._props.Width * item._props.Height;
         let maxDim = Math.max(item._props.Width, item._props.Height);
@@ -213,26 +213,6 @@ export class LootRankingGenerator
         }
 
         return data;
-    }
-
-    private getItemPrice(item: ITemplateItem): number
-    {
-        // Get the handbook.json price, if any exists
-        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((item) => item.Id == item.Id);
-        let handbookPrice = 0;
-        if (matchingHandbookItems.length == 1)
-        {
-            handbookPrice = matchingHandbookItems[0].Price;
-        }
-
-        // Get the prices.json price, if any exists
-        let price = 0;
-        if (item._id in this.databaseTables.templates.prices)
-        {
-            price = this.databaseTables.templates.prices[item._id];
-        }
-        
-        return Math.max(handbookPrice, price);
     }
 
     /**
@@ -406,8 +386,8 @@ export class LootRankingGenerator
                 const filtersSorted = filters.sort(
                     (f1, f2) => 
                     {
-                        const f1Price = this.getItemPrice(this.databaseTables.templates.items[f1]);
-                        const f2Price = this.getItemPrice(this.databaseTables.templates.items[f2]);
+                        const f1Price = this.commonUtils.getMaxItemPrice(this.databaseTables.templates.items[f1]._id);
+                        const f2Price = this.commonUtils.getMaxItemPrice(this.databaseTables.templates.items[f2]._id);
 
                         if (f1Price > f2Price) return -1;
                         if (f1Price < f2Price) return 1;

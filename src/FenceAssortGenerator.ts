@@ -35,5 +35,15 @@ export class FenceAssortGenerator
         return this.httpResponseUtil.getBody(this.traderController.getAssort(sessionID, Traders.FENCE));
     }
 
-
+    private updateFenceAssortIDs(): void
+    {
+        this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items = {};
+        for (const itemID in this.originalAssortIDs)
+        {
+            if (this.commonUtils.getMaxItemPrice(itemID) < 50000)
+            {
+                this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items[itemID] = this.originalAssortIDs[itemID];
+            }
+        }
+    }
 }
