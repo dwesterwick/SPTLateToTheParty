@@ -91,7 +91,7 @@ export class CommonUtils
     {
         if (array.length == 1)
         {
-            return array[array.length][1];
+            return array[array.length - 1][1];
         }
 
         if (value <= array[0][0])
@@ -112,6 +112,6 @@ export class CommonUtils
             }
         }
 
-        return array[array.length][1];
+        return array[array.length - 1][1];
     }
 }

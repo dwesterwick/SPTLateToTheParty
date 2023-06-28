@@ -26,6 +26,7 @@ import { LocaleService } from "@spt-aki/services/LocaleService";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
@@ -53,6 +54,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
     private jsonUtil: JsonUtil;
+    private randomUtil: RandomUtil;
     private profileHelper: ProfileHelper;
     private httpResponseUtil: HttpResponseUtil;
     private fenceService: FenceService;
@@ -121,7 +123,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 {
                     // Only modify assort data for Fence
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
-                    if (traderID == Traders.FENCE)
+                    if (modConfig.fence_assort_changes.enabled && (traderID == Traders.FENCE))
                     {
                         const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
                         return this.fenceAssortGenerator.getFenceAssort(pmcProfile);
@@ -208,6 +210,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
         this.jsonUtil = container.resolve<JsonUtil>("JsonUtil");
+        this.randomUtil = container.resolve<RandomUtil>("RandomUtil");
         this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
         this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
         this.fenceService = container.resolve<FenceService>("FenceService");		
@@ -263,7 +266,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.getLootMultipliers();
 
         // Get the unmodified Fence assort data
-        this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.jsonUtil, this.fenceService, this.httpResponseUtil);
+        if (modConfig.fence_assort_changes.enabled)
+        {
+            this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.jsonUtil, this.fenceService, this.httpResponseUtil, this.randomUtil);
+        }
     }
 
     private updateScavTimer(sessionId: string): void

@@ -161,6 +161,10 @@
 		"update_rate": 10,
 		"excluded_bosses": [ "sptBear", "sptUsec" ]
 	},
+	"fence_assort_changes": {
+		"enabled": true,
+		"min_allowed_item_value": 20000
+	},
 	"loot_multipliers": [
 		[0, 0.18],
 		[0.1, 0.2],
@@ -191,5 +195,13 @@
 		[0.6, 0.5],
 		[0.75, 1],
 		[1, 1]
+	],
+	"fence_item_value_permitted_chance" : [
+		[0, 100],
+		[20000, 90],
+		[50000, 60],
+		[80000, 30],
+		[150000, 10],
+		[999999, 1]
 	]
 }

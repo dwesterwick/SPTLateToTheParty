@@ -7,6 +7,7 @@ import { FenceService } from "@spt-aki/services/FenceService";
 import { IGetBodyResponseData } from "@spt-aki/models/eft/httpResponse/IGetBodyResponseData";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
 
@@ -20,7 +21,8 @@ export class FenceAssortGenerator
         private databaseTables: IDatabaseTables,
         private jsonUtil: JsonUtil,
         private fenceService: FenceService,
-        private httpResponseUtil: HttpResponseUtil
+        private httpResponseUtil: HttpResponseUtil,
+        private randomUtil: RandomUtil
     )
     {
         this.originalAssortData = this.jsonUtil.clone(this.databaseTables.traders[Traders.FENCE].assort);
@@ -39,7 +41,11 @@ export class FenceAssortGenerator
         const assort = this.jsonUtil.clone(this.originalAssortData);
         for (const itemID in this.originalAssortData.loyal_level_items)
         {
-            if (this.commonUtils.getMaxItemPrice(itemID) > 20000)
+            const itemPrice = this.commonUtils.getMaxItemPrice(itemID);
+            const permittedChance = CommonUtils.interpolateForFirstCol(modConfig.fence_item_value_permitted_chance, itemPrice);
+            
+            // Determine if the item should be allowed in Fence's assorts
+            if ((itemPrice >= modConfig.fence_assort_changes.min_allowed_item_value) || (permittedChance <= this.randomUtil.getInt(0, 100)))
             {
                 // Ensure the index is valid
                 const itemIndex = assort.items.findIndex((i) => i._id == itemID);
