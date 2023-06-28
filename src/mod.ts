@@ -119,6 +119,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 url: "/client/trading/api/getTraderAssort/",
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
+                    // Only modify assort data for Fence
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
                     if (traderID == Traders.FENCE)
                     {
@@ -261,6 +262,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
 
+        // Get the unmodified Fence assort data
         this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.jsonUtil, this.fenceService, this.httpResponseUtil);
     }
 

@@ -36,11 +36,12 @@ export class FenceAssortGenerator
 
     public updateFenceAssortIDs(): void
     {
-        const assort = this.databaseTables.traders[Traders.FENCE].assort;
+        const assort = this.jsonUtil.clone(this.originalAssortData);
         for (const itemID in this.originalAssortData.loyal_level_items)
         {
             if (this.commonUtils.getMaxItemPrice(itemID) > 20000)
             {
+                // Ensure the index is valid
                 const itemIndex = assort.items.findIndex((i) => i._id == itemID);
                 if (itemIndex < 0)
                 {
@@ -53,6 +54,10 @@ export class FenceAssortGenerator
             }
         }
 
-        this.commonUtils.logInfo(`Updating Fence assorts... updated to have ${Object.keys(assort.loyal_level_items).length} items`);
+        this.databaseTables.traders[Traders.FENCE].assort = assort;
+
+        const originalAssortCount = Object.keys(this.originalAssortData.loyal_level_items).length;
+        const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
+        this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
     }
 }
