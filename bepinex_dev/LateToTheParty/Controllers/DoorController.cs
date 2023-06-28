@@ -345,6 +345,13 @@ namespace LateToTheParty.Controllers
             {
                 if (door.KeyId.Length > 0)
                 {
+                    // Check if the door can be unlocked based on chance
+                    System.Random randomObj = new System.Random();
+                    if (randomObj.Next(0, 100) > ConfigController.Config.OpenDoorsDuringRaid.ChanceOfUnlockingDoors)
+                    {
+                        return false;
+                    }
+
                     LoggingController.LogInfo("Unlocking door: " + door.Id + " (Key ID: " + door.KeyId + ")");
                 }
                 else

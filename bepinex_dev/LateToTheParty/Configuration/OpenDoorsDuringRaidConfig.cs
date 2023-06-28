@@ -33,6 +33,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("percentage_of_doors_per_event")]
         public double PercentageOfDoorsPerEvent { get; set; } = 10;
 
+        [JsonProperty("chance_of_unlocking_doors")]
+        public double ChanceOfUnlockingDoors { get; set; } = 50;
+
         [JsonProperty("chance_of_closing_doors")]
         public double ChanceOfClosingDoors { get; set; } = 30;
 

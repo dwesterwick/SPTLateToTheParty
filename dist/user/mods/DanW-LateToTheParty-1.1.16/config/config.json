@@ -150,6 +150,7 @@
 		"min_raid_time_remaining": 300,
 		"time_between_door_events": 60,
 		"percentage_of_doors_per_event": 3,
+		"chance_of_unlocking_doors": 50,
 		"chance_of_closing_doors": 15,
 		"max_calc_time_per_frame_ms": 3
 	},
