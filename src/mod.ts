@@ -3,13 +3,14 @@ import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 import { BotConversionHelper } from "./BotConversionHelper";
 import { LootRankingGenerator } from "./LootRankingGenerator";
+import { FenceAssortGenerator } from "./FenceAssortGenerator";
 
 import { DependencyContainer } from "tsyringe";
 import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
 import type { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
 import type { IPostAkiLoadMod } from "@spt-aki/models/external/IPostAkiLoadMod";
-import type {StaticRouterModService} from "@spt-aki/services/mod/staticRouter/StaticRouterModService";
-import type {DynamicRouterModService} from "@spt-aki/services/mod/dynamicRouter/DynamicRouterModService";
+import type { StaticRouterModService } from "@spt-aki/services/mod/staticRouter/StaticRouterModService";
+import type { DynamicRouterModService } from "@spt-aki/services/mod/dynamicRouter/DynamicRouterModService";
 
 import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
@@ -25,6 +26,9 @@ import { LocaleService } from "@spt-aki/services/LocaleService";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
+import { TraderController } from "@spt-aki/controllers/TraderController";
+import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
+import { Traders } from "@spt-aki/models/enums/Traders";
 
 const modName = "LateToTheParty";
 
@@ -33,6 +37,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private commonUtils: CommonUtils
     private botConversionHelper: BotConversionHelper
     private lootRankingGenerator: LootRankingGenerator
+    private fenceAssortGenerator: FenceAssortGenerator
     
     private logger: ILogger;
     private locationConfig: ILocationConfig;
@@ -47,6 +52,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
     private profileHelper: ProfileHelper;
+    private traderController: TraderController;
+    private httpResponseUtil: HttpResponseUtil;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -97,6 +104,23 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                     if (modConfig.debug.enabled)
                     {
                         this.updateScavTimer(sessionId);
+                    }
+
+                    return output;
+                }
+            }], "aki"
+        );
+
+        // Alters the items sold by Fence
+        dynamicRouterModService.registerDynamicRouter(`DynamicGetTraderAssort${modName}`,
+            [{
+                url: "/client/trading/api/getTraderAssort/",
+                action: (url: string, info: any, sessionId: string, output: string) => 
+                {
+                    const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
+                    if (traderID == Traders.FENCE)
+                    {
+                        this.fenceAssortGenerator.getFenceAssort(sessionId);
                     }
 
                     return output;
@@ -179,7 +203,9 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.localeService = container.resolve<LocaleService>("LocaleService");
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
-        this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");		
+        this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
+        this.traderController = container.resolve<TraderController>("TraderController");
+        this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");		
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -187,6 +213,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
+        this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.traderController, this.httpResponseUtil);
 
         if (!modConfig.enabled)
         {
