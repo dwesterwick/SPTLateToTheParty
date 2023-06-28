@@ -25,8 +25,8 @@ import { VFS } from "@spt-aki/utils/VFS";
 import { LocaleService } from "@spt-aki/services/LocaleService";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
+import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
-import { TraderController } from "@spt-aki/controllers/TraderController";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
@@ -52,8 +52,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private localeService: LocaleService;
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
+    private jsonUtil: JsonUtil;
     private profileHelper: ProfileHelper;
-    private traderController: TraderController;
     private httpResponseUtil: HttpResponseUtil;
     private fenceService: FenceService;
 
@@ -206,8 +206,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.localeService = container.resolve<LocaleService>("LocaleService");
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
+        this.jsonUtil = container.resolve<JsonUtil>("JsonUtil");
         this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
-        this.traderController = container.resolve<TraderController>("TraderController");
         this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
         this.fenceService = container.resolve<FenceService>("FenceService");		
 
@@ -261,7 +261,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
 
-        this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.fenceService, this.traderController, this.httpResponseUtil);
+        this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.jsonUtil, this.fenceService, this.httpResponseUtil);
     }
 
     private updateScavTimer(sessionId: string): void
