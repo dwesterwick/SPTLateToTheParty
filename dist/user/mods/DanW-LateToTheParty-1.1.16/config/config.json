@@ -4,6 +4,7 @@
 		"enabled": false,
 		"scav_cooldown_time": 1500,
 		"free_labs_access": false,
+		"min_level_for_flea": 15,
 		"loot_path_visualization": {
 			"enabled": false,
 			"points_per_circle": 10,

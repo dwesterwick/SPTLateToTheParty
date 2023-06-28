@@ -209,6 +209,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 this.databaseTables.locations.laboratory.base.AccessKeys = [];
             }
 
+            this.databaseTables.globals.config.RagFair.minUserLevel = modConfig.debug.min_level_for_flea;
+
             //this.iAirdropConfig.airdropChancePercent.bigmap = 100;
             //this.iAirdropConfig.airdropChancePercent.woods = 100;
             //this.iAirdropConfig.airdropChancePercent.lighthouse = 100;
