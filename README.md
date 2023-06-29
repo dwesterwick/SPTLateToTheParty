@@ -1,4 +1,4 @@
-Make your SPT experience closer to live Tarkov in all aspects except bot behavior and waiting for servers. Changes loot, open doors, bot spawn rates, and time remaining in the raid when your Scav spawns in. 
+Make your SPT experience closer to live Tarkov with loot disappearing and doors opening throughout the raid. You will now spawn in late as a Scav, PMC's are more likely to spawn early in the raid, Fence sells more junk, and much more!
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
@@ -7,7 +7,7 @@ This mod makes the the following changes to your SPT experience:
 * Your Scav will spawn into the raid with an unknown amount of time remaining in it. However, that also means you may be able to run directly to extract and get a "Survived" status if enough time has passed in the raid. There is also a small chance that your PMC will spawn into the raid slightly late. 
 * If you spawn into the map late as a Scav, bosses are less likely to spawn. 
 * If you spawn into the map late as a Scav, vehicle extracts are less likely to be available. 
-
+* Fence sells more items, but most are significantly less valuable than what he sells in the base game
 
 This mod is highly customizable by modifying the *config.json* file. Here are the settings you can change:
 
@@ -96,10 +96,18 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **adjust_bot_spawn_chances.update_rate**: The time (in seconds) that must elapse after the mod updates PMC conversion-rate chances before it updates them again.  
 * **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
+* **fence_assort_changes.enabled**: If the mod should change the number and variety of items sold by Fence.
+* **fence_assort_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
+* **fence_assort_changes.assort_size**: The number of items sold by Fence at LL1. The is **190** by default compared to the base game's **120**.
+* **fence_assort_changes.assort_size_discount**: The number of items sold by Fence at LL2. The is **90** by default compared to the base game's **50**.
+* **fence_assort_changes.min_allowed_item_value**: Fence will always be able to sell any item below this price (using the maximum found in *handbook.json* and *prices.json*) regardless of the chance of selling it as determined by the **fence_item_value_permitted_chance** array.
+* **fence_assort_changes.itemTypeLimits_Override**: A dictionary describing the maximum number of items of a given type that Fence is allowed to sell per reset. If an entry for the type already exists in **fence.itemTypeLimits** in the SPT-AKI *trader.json* config file, its value will be overriden with this one. 
+
 * **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid. A value of "1" means match the original loot amount. 
 * **vex_chance_reduction**: [time_remaining_factor, reduction_factor] pairs describing how the chance that a vehicle extract is available changes based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
+* **fence_item_value_permitted_chance**: [item_value, sell_chance_percent] pairs describing how likely Fence is to sell an item with a certain value. 
 
 The mod uses the following process to determine which loot is accessible:
 1. If the loot was previously determined to be accessible, it will always be considered accessible for the rest of the raid. 
@@ -131,6 +139,7 @@ If you're using this mod along with Kobrakon's Immersive Raids mod, please chang
 
 Known issues:
 * If **debug.enabled=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug.enabled=false**, the script is called twice unless you press "Ready" early. 
-* Any door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
+* Any locked door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors or in locked containers. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned. 
+* There are still some quirks with the items Fence sells (i.e. he never sells ammo). Also, you'll get an error in the server console if you examine an item that disappears after you refresh his inventory. 
