@@ -8,6 +8,7 @@ import { IGetBodyResponseData } from "@spt-aki/models/eft/httpResponse/IGetBodyR
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
+import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
 
@@ -21,17 +22,23 @@ export class FenceAssortGenerator
         private databaseTables: IDatabaseTables,
         private jsonUtil: JsonUtil,
         private fenceService: FenceService,
+        private iTraderConfig: ITraderConfig,
         private httpResponseUtil: HttpResponseUtil,
         private randomUtil: RandomUtil
     )
     {
         this.originalAssortData = this.jsonUtil.clone(this.databaseTables.traders[Traders.FENCE].assort);
+        this.modifyFenceConfig();
     }
 
     public getFenceAssort(pmcProfile: IPmcData): IGetBodyResponseData<ITraderAssort>
     {
         this.updateFenceAssortIDs();
-        this.fenceService.generateFenceAssorts();
+        
+        if (modConfig.fence_assort_changes.always_regenerate)
+        {
+            this.fenceService.generateFenceAssorts();
+        }
         
         return this.httpResponseUtil.getBody(this.fenceService.getFenceAssorts(pmcProfile));
     }
@@ -67,5 +74,16 @@ export class FenceAssortGenerator
         const originalAssortCount = Object.keys(this.originalAssortData.loyal_level_items).length;
         const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
         this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
+    }
+
+    private modifyFenceConfig(): void
+    {
+        this.iTraderConfig.fence.assortSize = modConfig.fence_assort_changes.assort_size;
+        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.fence_assort_changes.assort_size_discount;
+
+        for (const itemID in modConfig.fence_assort_changes.itemTypeLimits_Override)
+        {
+            this.iTraderConfig.fence.itemTypeLimits[itemID] = modConfig.fence_assort_changes.itemTypeLimits_Override[itemID];
+        }
     }
 }

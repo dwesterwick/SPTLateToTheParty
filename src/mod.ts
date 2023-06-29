@@ -18,6 +18,7 @@ import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILoc
 import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
 import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 import { IAirdropConfig } from "@spt-aki/models/spt/config/IAirdropConfig";
+import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
@@ -46,6 +47,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private inRaidConfig: IInRaidConfig;
     private iBotConfig: IBotConfig;
     private iAirdropConfig: IAirdropConfig;
+    private iTraderConfig: ITraderConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -219,6 +221,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
+        this.iTraderConfig = this.configServer.getConfig(ConfigTypes.TRADER);
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
         
@@ -268,7 +271,15 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Get the unmodified Fence assort data
         if (modConfig.fence_assort_changes.enabled)
         {
-            this.fenceAssortGenerator = new FenceAssortGenerator(this.commonUtils, this.databaseTables, this.jsonUtil, this.fenceService, this.httpResponseUtil, this.randomUtil);
+            this.fenceAssortGenerator = new FenceAssortGenerator(
+                this.commonUtils,
+                this.databaseTables,
+                this.jsonUtil,
+                this.fenceService,
+                this.iTraderConfig,
+                this.httpResponseUtil,
+                this.randomUtil
+            );
         }
     }
 
