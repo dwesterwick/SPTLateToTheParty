@@ -23,5 +23,10 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("weighting")]
         public LootRankingWeightingConfig Weighting { get; set; } = new LootRankingWeightingConfig();
+
+        public LootRankingConfig()
+        {
+
+        }
     }
 }

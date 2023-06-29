@@ -19,7 +19,7 @@ namespace LateToTheParty.Configuration
         public bool FreeLabsAccess { get; set; } = false;
 
         [JsonProperty("min_level_for_flea")]
-        public long MinLevelForFlea { get; set; } = 15;
+        public byte MinLevelForFlea { get; set; } = 15;
 
         [JsonProperty("loot_path_visualization")]
         public LootPathVisualizationConfig LootPathVisualization { get; set; } = new LootPathVisualizationConfig();

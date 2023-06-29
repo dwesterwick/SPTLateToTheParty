@@ -27,6 +27,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("adjust_bot_spawn_chances")]
         public AdjustBotSpawnChancesConfig AdjustBotSpawnChances { get; set; } = new AdjustBotSpawnChancesConfig();
 
+        [JsonProperty("fence_assort_changes")]
+        public FenceAssortChangesConfig FenceAssortChanges { get; set; } = new FenceAssortChangesConfig();
+
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
 
@@ -38,6 +41,9 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("boss_spawn_chance_multipliers")]
         public double[][] BossSpawnChanceMultipliers { get; set; } = new double[0][];
+
+        [JsonProperty("fence_item_value_permitted_chance")]
+        public double[][] FenceItemValuePermittedChance { get; set; } = new double[0][];
 
         public ModConfig()
         {

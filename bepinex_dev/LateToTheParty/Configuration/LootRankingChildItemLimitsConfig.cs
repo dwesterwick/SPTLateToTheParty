@@ -14,5 +14,10 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("total_weight")]
         public double TotalWeight { get; set; } = 10;
+
+        public LootRankingChildItemLimitsConfig()
+        {
+
+        }
     }
 }

@@ -20,5 +20,10 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("excluded_bosses")]
         public string[] ExcludedBosses { get; set; } = new string[0];
+
+        public AdjustBotSpawnChancesConfig()
+        {
+
+        }
     }
 }

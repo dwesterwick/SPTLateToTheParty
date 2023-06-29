@@ -14,5 +14,10 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("only_items_brought_into_raid")]
         public bool OnlyItemsBroughtIntoRaid { get; set; } = false;
+
+        public IgnoreItemsDroppedByPlayerConfig()
+        {
+
+        }
     }
 }
