@@ -42,7 +42,8 @@ export class FenceAssortGenerator
     {
         this.updateFenceAssortIDs();
         
-        if (modConfig.fence_assort_changes.always_regenerate)
+        // Ensure the new assorts are generated at least once
+        if ((this.lastResupplyTime < 0) || modConfig.fence_assort_changes.always_regenerate)
         {
             this.fenceService.generateFenceAssorts();
         }
