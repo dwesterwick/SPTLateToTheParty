@@ -34,6 +34,12 @@ export class TraderAssortGenerator
         this.originalFenceBaseAssortData = this.jsonUtil.clone(this.databaseTables.traders[Traders.FENCE].assort);
     }
 
+    public clearLastAssortData(): void
+    {
+        this.lastAssort = {};
+        this.lastAssortUpdate = {};
+    }
+
     public updateTraderStock(traderID: string, assort: ITraderAssort, deleteDepletedItems: boolean): ITraderAssort
     {
         const now = this.timeUtil.getTimestamp();
@@ -61,12 +67,16 @@ export class TraderAssortGenerator
             }
 
             // Determine the rate at which the item stock can be reduced
-            let maxBuyRate = modConfig.fence_assort_changes.max_item_buy_rate;
-            let maxStock = assort.items[i].upd.StackObjectsCount;
+            let maxBuyRate = modConfig.fence_assort_changes.max_item_buy_rate * ((traderID == Traders.FENCE) ? 0.01 : 1);
             if (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id)
             {
                 maxBuyRate = modConfig.fence_assort_changes.max_ammo_buy_rate;
-                maxStock = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
+
+                // Set max ammo stack size
+                if (traderID == Traders.FENCE)
+                {
+                    assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
+                }
 
                 // Remove duplicate ammo stacks
                 for (let j = i + 1; j < assort.items.length; j++)
@@ -74,31 +84,34 @@ export class TraderAssortGenerator
                     if (assort.items[j]._tpl == assort.items[i]._tpl)
                     {
                         this.commonUtils.logInfo(`Removing duplicate of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from assort...`);
-
-                        delete assort.loyal_level_items[assort.items[j]._id];
-                        delete assort.barter_scheme[assort.items[j]._id];
-                        assort.items.splice(j, 1);
+                        TraderAssortGenerator.removeIndexFromTraderAssort(assort, j);
                     }
                 }
             }
-
+            
             // Update the stack size
-            assort.items[i].upd.StackObjectsCount = maxStock;
             if ((this.lastAssort[traderID] !== undefined) && (this.lastAssort[traderID].nextResupply == assort.nextResupply))
             {
                 const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
                 if (lastAssortItem !== undefined)
                 {
-                    const maxStackSizeReduction = this.randomUtil.randInt(0, maxBuyRate * (now - this.lastAssortUpdate[traderID]));
-                    const newStackSize = lastAssortItem.upd.StackObjectsCount - maxStackSizeReduction;
+                    const stackSizeReduction = this.randomUtil.randInt(0, maxBuyRate * (now - this.lastAssortUpdate[traderID]));
+                    if (stackSizeReduction > 0)
+                    {
+                        const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
 
-                    this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
-                    assort.items[i].upd.StackObjectsCount = newStackSize;
+                        if (newStackSize <= 0)
+                        {
+                            this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
+                        }
+
+                        assort.items[i].upd.StackObjectsCount = newStackSize;
+                    }
                 }
                 else
                 {
                     // If the item wasn't in the previous assort, the stock was depleted
-                    this.commonUtils.logInfo(`Stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} is depleted.`);
+                    //this.commonUtils.logInfo(`Stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} is depleted.`);
                     assort.items[i].upd.StackObjectsCount = 0;
                 }
             }
@@ -109,9 +122,8 @@ export class TraderAssortGenerator
                 // Remove ammo that is sold out
                 if (deleteDepletedItems)
                 {
-                    delete assort.loyal_level_items[assort.items[i]._id];
-                    delete assort.barter_scheme[assort.items[i]._id];
-                    assort.items.splice(i, 1);
+                    TraderAssortGenerator.removeIndexFromTraderAssort(assort, i);
+                    i--;
                 }
                 else
                 {
@@ -160,9 +172,7 @@ export class TraderAssortGenerator
                     continue;
                 }
 
-                delete assort.loyal_level_items[itemID];
-                delete assort.barter_scheme[itemID];
-                assort.items.splice(itemIndex, 1);
+                TraderAssortGenerator.removeIndexFromTraderAssort(assort, itemIndex);
             }
         }
 
@@ -171,6 +181,15 @@ export class TraderAssortGenerator
         const originalAssortCount = Object.keys(this.originalFenceBaseAssortData.loyal_level_items).length;
         const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
         this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
+    }
+
+    private static removeIndexFromTraderAssort(assort: ITraderAssort, index: number): void
+    {
+        const itemID = assort.items[index]._id;
+
+        delete assort.loyal_level_items[itemID];
+        delete assort.barter_scheme[itemID];
+        assort.items.splice(index, 1);
     }
 
     private modifyFenceConfig(): void
