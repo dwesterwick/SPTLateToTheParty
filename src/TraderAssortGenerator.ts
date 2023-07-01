@@ -16,7 +16,8 @@ export class TraderAssortGenerator
 {
     private lastAssortUpdate: Record<string, number> = {};
     private lastAssort: Record<string, ITraderAssort> = {};
-    private originalFenceBaseAssortData: ITraderAssort
+    private originalFenceBaseAssortData: ITraderAssort;
+    private fenceAssortWarehouse: ITraderAssort;
 
     constructor
     (
@@ -83,8 +84,8 @@ export class TraderAssortGenerator
                 {
                     if (assort.items[j]._tpl == assort.items[i]._tpl)
                     {
-                        this.commonUtils.logInfo(`Removing duplicate of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from assort...`);
-                        TraderAssortGenerator.removeIndexFromTraderAssort(assort, j);
+                        //this.commonUtils.logInfo(`Removing duplicate of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from assort...`);
+                        this.removeIndexFromTraderAssort(assort, j);
                     }
                 }
             }
@@ -122,7 +123,7 @@ export class TraderAssortGenerator
                 // Remove ammo that is sold out
                 if (deleteDepletedItems)
                 {
-                    TraderAssortGenerator.removeIndexFromTraderAssort(assort, i);
+                    this.removeIndexFromTraderAssort(assort, i);
                     i--;
                 }
                 else
@@ -139,7 +140,7 @@ export class TraderAssortGenerator
         return assort;
     } 
 
-    public updateFenceAssort(pmcProfile: IPmcData): ITraderAssort
+    public updateFenceAssort(pmcProfile: IPmcData): void
     {
         this.updateFenceAssortIDs();
         
@@ -147,9 +148,21 @@ export class TraderAssortGenerator
         if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.fence_assort_changes.always_regenerate)
         {
             this.fenceService.generateFenceAssorts();
-        }
 
-        return this.fenceService.getFenceAssorts(pmcProfile);
+            this.fenceAssortWarehouse = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                barter_scheme: {},
+                items: [],
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                loyal_level_items: {},
+                nextResupply: 0
+            };
+
+            this.lastAssort[Traders.FENCE] = this.fenceService.getFenceAssorts(pmcProfile);
+            this.moveItemsToWarehouse(this.lastAssort[Traders.FENCE], 1, modConfig.fence_assort_changes.assort_size);
+            this.moveItemsToWarehouse(this.lastAssort[Traders.FENCE], 2, modConfig.fence_assort_changes.assort_size_discount);
+            this.lastAssortUpdate[Traders.FENCE] = this.timeUtil.getTimestamp();
+        }
     }
 
     public updateFenceAssortIDs(): void
@@ -172,7 +185,7 @@ export class TraderAssortGenerator
                     continue;
                 }
 
-                TraderAssortGenerator.removeIndexFromTraderAssort(assort, itemIndex);
+                this.removeIndexFromTraderAssort(assort, itemIndex);
             }
         }
 
@@ -183,7 +196,20 @@ export class TraderAssortGenerator
         this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
     }
 
-    private static removeIndexFromTraderAssort(assort: ITraderAssort, index: number): void
+    private removeIDfromTraderAssort(assort: ITraderAssort, id: string): void
+    {
+        const index = assort.items.findIndex((i) => i._id == id);
+        if (index > -1)
+        {
+            this.removeIndexFromTraderAssort(assort, index);
+        }
+        else
+        {
+            this.commonUtils.logError(`Could not find index ${id} in trader assort items`);
+        }
+    }
+
+    private removeIndexFromTraderAssort(assort: ITraderAssort, index: number): void
     {
         const itemID = assort.items[index]._id;
 
@@ -195,9 +221,10 @@ export class TraderAssortGenerator
     private modifyFenceConfig(): void
     {
         // Adjust assort size and variety
-        this.iTraderConfig.fence.assortSize = modConfig.fence_assort_changes.assort_size;
-        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.fence_assort_changes.assort_size_discount;
-
+        const assortGenFactor = 3;
+        this.iTraderConfig.fence.assortSize = modConfig.fence_assort_changes.assort_size * assortGenFactor;
+        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.fence_assort_changes.assort_size_discount * assortGenFactor;
+        
         for (const itemID in modConfig.fence_assort_changes.itemTypeLimits_Override)
         {
             this.iTraderConfig.fence.itemTypeLimits[itemID] = modConfig.fence_assort_changes.itemTypeLimits_Override[itemID];
@@ -249,5 +276,42 @@ export class TraderAssortGenerator
         this.databaseTables.traders[Traders.FENCE].assort.nextResupply = this.fenceService.getNextFenceUpdateTimestamp();
         this.fenceBaseAssortGenerator.generateFenceBaseAssorts();
         this.commonUtils.logInfo(`Updated Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
+    }
+
+    private static getTraderAssortIDsforLL(assort: ITraderAssort, ll: number): string[]
+    {
+        const ids: string[] = [];
+
+        for (const id in assort.loyal_level_items)
+        {
+            if (assort.loyal_level_items[id] == ll)
+            {
+                ids.push(id);
+            }
+        }
+
+        return ids;
+    }
+
+    private moveItemsToWarehouse(assort: ITraderAssort, ll: number, maxCount: number): void
+    {
+        const ids = TraderAssortGenerator.getTraderAssortIDsforLL(assort, ll);
+        let itemsMoved = 0;
+        while (ids.length > maxCount)
+        {
+            const randIDindex = this.randomUtil.getInt(0, ids.length - 1);
+            const item = assort.items.find((i) => i._id == ids[randIDindex]);
+
+            this.fenceAssortWarehouse.loyal_level_items[ids[randIDindex]] = assort.loyal_level_items[ids[randIDindex]];
+            this.fenceAssortWarehouse.barter_scheme[ids[randIDindex]] = assort.barter_scheme[ids[randIDindex]];
+            this.fenceAssortWarehouse.items.push(item);
+
+            this.removeIDfromTraderAssort(assort, ids[randIDindex]);
+
+            ids.splice(randIDindex, 1);
+
+            itemsMoved++;
+        }
+        this.commonUtils.logInfo(`Moved ${itemsMoved} items to the warehouse for LL${ll}.`);
     }
 }
