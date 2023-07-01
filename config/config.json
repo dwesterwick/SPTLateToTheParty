@@ -168,6 +168,7 @@
 		"assort_size_discount": 90,
 		"min_allowed_item_value": 20000,
 		"max_ammo_stack": 300,
+		"max_ammo_buy_rate": 20,
 		"itemTypeLimits_Override": {
 			"5448bc234bdc2d3c308b4569": 20,
 			"5a341c4086f77401f2541505": 10,

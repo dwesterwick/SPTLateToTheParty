@@ -16,7 +16,8 @@ import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
 
 export class FenceAssortGenerator
 {
-    private lastResupplyTime = -99;
+    private lastAssortUpdate = -99;
+    private lastAssort: ITraderAssort
     private originalAssortData: ITraderAssort
 
     constructor
@@ -43,7 +44,7 @@ export class FenceAssortGenerator
         this.updateFenceAssortIDs();
         
         // Ensure the new assorts are generated at least once
-        if ((this.lastResupplyTime < 0) || modConfig.fence_assort_changes.always_regenerate)
+        if ((this.lastAssort === undefined) || modConfig.fence_assort_changes.always_regenerate)
         {
             this.fenceService.generateFenceAssorts();
         }
@@ -148,6 +149,8 @@ export class FenceAssortGenerator
 
     private updateAmmoStacks(assort: ITraderAssort): void
     {
+        const now = this.timeUtil.getTimestamp();
+        
         for (let i = 0; i < assort.items.length; i++)
         {
             const itemTpl = this.databaseTables.templates.items[assort.items[i]._tpl];
@@ -169,19 +172,45 @@ export class FenceAssortGenerator
             {
                 if (assort.items[j]._tpl == assort.items[i]._tpl)
                 {
+                    this.commonUtils.logInfo(`Removing duplicate of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from Fence assort...`);
+
+                    delete assort.loyal_level_items[assort.items[j]._id];
+                    delete assort.barter_scheme[assort.items[j]._id];
                     assort.items.splice(j, 1);
                 }
             }
 
             // Update the stack size
-            const newStackSize = this.randomUtil.randInt(1, modConfig.fence_assort_changes.max_ammo_stack);
-            if ((this.lastResupplyTime != assort.nextResupply) || (assort.items[i].upd.StackObjectsCount == 1) || (assort.items[i].upd.StackObjectsCount > newStackSize))
+            if ((this.lastAssort === undefined) || (this.lastAssort.nextResupply != assort.nextResupply))
             {
+                const maxAmmoStackSize = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
+                assort.items[i].upd.StackObjectsCount = maxAmmoStackSize;
+            }
+            else
+            {
+                const maxStackSizeReduction = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_buy_rate * (now - this.lastAssortUpdate));
+                const newStackSize = this.lastAssort.items[i].upd.StackObjectsCount - maxStackSizeReduction;
+
+                this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${this.lastAssort.items[i].upd.StackObjectsCount} to ${newStackSize}...`);
                 assort.items[i].upd.StackObjectsCount = newStackSize;
+            }
+
+            // Remove ammo that is sold out
+            if (assort.items[i].upd.StackObjectsCount <= 1)
+            {
+                if ((this.lastAssort !== undefined) && (this.lastAssort.items[i].upd.StackObjectsCount > 1))
+                {
+                    this.commonUtils.logInfo(`Removing ${this.commonUtils.getItemName(assort.items[i]._tpl)} from Fence assort...`);
+                }
+
+                delete assort.loyal_level_items[assort.items[i]._id];
+                delete assort.barter_scheme[assort.items[i]._id];
+                assort.items.splice(i, 1);
             }
         }
 
-        // Update the resupply time
-        this.lastResupplyTime = assort.nextResupply;
+        // Update the resupply time and stock
+        this.lastAssort = this.jsonUtil.clone(assort);
+        this.lastAssortUpdate = now;
     }
 }
