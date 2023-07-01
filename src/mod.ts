@@ -27,9 +27,11 @@ import { LocaleService } from "@spt-aki/services/LocaleService";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 import { FenceService } from "@spt-aki/services/FenceService";
+import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
 
@@ -56,10 +58,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
     private jsonUtil: JsonUtil;
+    private timeutil: TimeUtil;
     private randomUtil: RandomUtil;
     private profileHelper: ProfileHelper;
     private httpResponseUtil: HttpResponseUtil;
     private fenceService: FenceService;
+    private fenceBaseAssortGenerator: FenceBaseAssortGenerator;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -212,10 +216,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
         this.jsonUtil = container.resolve<JsonUtil>("JsonUtil");
+        this.timeutil = container.resolve<TimeUtil>("TimeUtil");
         this.randomUtil = container.resolve<RandomUtil>("RandomUtil");
         this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
         this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
-        this.fenceService = container.resolve<FenceService>("FenceService");		
+        this.fenceService = container.resolve<FenceService>("FenceService");
+        this.fenceBaseAssortGenerator = container.resolve<FenceBaseAssortGenerator>("FenceBaseAssortGenerator");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -276,9 +282,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 this.databaseTables,
                 this.jsonUtil,
                 this.fenceService,
+                this.fenceBaseAssortGenerator,
                 this.iTraderConfig,
                 this.httpResponseUtil,
-                this.randomUtil
+                this.randomUtil,
+                this.timeutil
             );
         }
     }
