@@ -30,6 +30,7 @@ import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
+import { TraderController } from "@spt-aki/controllers/TraderController";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
@@ -63,6 +64,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private profileHelper: ProfileHelper;
     private httpResponseUtil: HttpResponseUtil;
     private fenceService: FenceService;
+    private traderController: TraderController;
     private fenceBaseAssortGenerator: FenceBaseAssortGenerator;
 
     private originalLooseLootMultipliers : LootMultiplier
@@ -127,17 +129,25 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 url: "/client/trading/api/getTraderAssort/",
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
-                    // Update Fence assort data
-                    const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
-                    if (modConfig.fence_assort_changes.enabled && (traderID == Traders.FENCE))
+                    if (!modConfig.fence_assort_changes.enabled)
                     {
-                        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-                        const assort = this.traderAssortGenerator.getFenceAssort(pmcProfile);
-                        this.traderAssortGenerator.updateAmmoStacks(traderID, assort, true);
-                        return this.httpResponseUtil.getBody(assort);
+                        return output;
                     }
 
-                    return output;
+                    // Update Fence assort data
+                    const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
+                    let deleteDepletedItems = false;
+                    if (traderID == Traders.FENCE)
+                    {
+                        deleteDepletedItems = true;
+                        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
+                        this.traderAssortGenerator.updateFenceAssort(pmcProfile);
+                    }
+
+                    const assort = this.traderController.getAssort(sessionId, traderID);
+                    this.traderAssortGenerator.updateTraderStock(traderID, assort, deleteDepletedItems);
+
+                    return this.httpResponseUtil.getBody(assort);
                 }
             }], "aki"
         );
@@ -222,6 +232,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.randomUtil = container.resolve<RandomUtil>("RandomUtil");
         this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
         this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
+        this.traderController = container.resolve<TraderController>("TraderController");
         this.fenceService = container.resolve<FenceService>("FenceService");
         this.fenceBaseAssortGenerator = container.resolve<FenceBaseAssortGenerator>("FenceBaseAssortGenerator");
 
@@ -276,7 +287,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
 
-        // Get the unmodified Fence assort data
+        // Initialize trader assort data
         if (modConfig.fence_assort_changes.enabled)
         {
             this.traderAssortGenerator = new TraderAssortGenerator(
