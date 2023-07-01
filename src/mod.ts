@@ -3,7 +3,7 @@ import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 import { BotConversionHelper } from "./BotConversionHelper";
 import { LootRankingGenerator } from "./LootRankingGenerator";
-import { FenceAssortGenerator } from "./FenceAssortGenerator";
+import { TraderAssortGenerator } from "./TraderAssortGenerator";
 
 import { DependencyContainer } from "tsyringe";
 import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
@@ -42,7 +42,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private commonUtils: CommonUtils
     private botConversionHelper: BotConversionHelper
     private lootRankingGenerator: LootRankingGenerator
-    private fenceAssortGenerator: FenceAssortGenerator
+    private traderAssortGenerator: TraderAssortGenerator
     
     private logger: ILogger;
     private locationConfig: ILocationConfig;
@@ -121,18 +121,20 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }], "aki"
         );
 
-        // Alters the items sold by Fence
+        // Update trader inventory
         dynamicRouterModService.registerDynamicRouter(`DynamicGetTraderAssort${modName}`,
             [{
                 url: "/client/trading/api/getTraderAssort/",
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
-                    // Only modify assort data for Fence
+                    // Update Fence assort data
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
                     if (modConfig.fence_assort_changes.enabled && (traderID == Traders.FENCE))
                     {
                         const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-                        return this.fenceAssortGenerator.getFenceAssort(pmcProfile);
+                        const assort = this.traderAssortGenerator.getFenceAssort(pmcProfile);
+                        this.traderAssortGenerator.updateAmmoStacks(traderID, assort, true);
+                        return this.httpResponseUtil.getBody(assort);
                     }
 
                     return output;
@@ -277,14 +279,13 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Get the unmodified Fence assort data
         if (modConfig.fence_assort_changes.enabled)
         {
-            this.fenceAssortGenerator = new FenceAssortGenerator(
+            this.traderAssortGenerator = new TraderAssortGenerator(
                 this.commonUtils,
                 this.databaseTables,
                 this.jsonUtil,
                 this.fenceService,
                 this.fenceBaseAssortGenerator,
                 this.iTraderConfig,
-                this.httpResponseUtil,
                 this.randomUtil,
                 this.timeutil
             );
