@@ -168,6 +168,7 @@
 		"assort_size_discount": 90,
 		"assort_restock_threshold": 70,
 		"maxPresetsPercent": 25,
+		"max_preset_cost": 150000,
 		"min_allowed_item_value": 20000,
 		"max_ammo_stack": 500,
 		"max_ammo_buy_rate": 10,

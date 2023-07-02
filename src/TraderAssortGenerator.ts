@@ -195,17 +195,26 @@ export class TraderAssortGenerator
         const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
         this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
     }
-
-    private removeIDfromTraderAssort(assort: ITraderAssort, id: string): void
+    
+    public removeExpensivePresets(assort: ITraderAssort, maxCost: number): void
     {
-        const index = assort.items.findIndex((i) => i._id == id);
-        if (index > -1)
+        for (let i = 0; i < assort.items.length; i++)
         {
-            this.removeIndexFromTraderAssort(assort, index);
-        }
-        else
-        {
-            this.commonUtils.logError(`Could not find index ${id} in trader assort items`);
+            if ((assort.items[i].upd === undefined) || (assort.items[i].upd.sptPresetId === undefined) || (assort.items[i].upd.sptPresetId.length == 0))
+            {
+                continue;
+            }
+
+            const id = assort.items[i]._id;
+            const cost = assort.barter_scheme[id][0][0].count;
+
+            if (cost > maxCost)
+            {
+                this.commonUtils.logInfo(`Removing preset for ${this.commonUtils.getItemName(assort.items[i]._tpl)}...`);
+
+                this.removeIndexFromTraderAssort(assort, i);
+                i--;
+            }
         }
     }
 
