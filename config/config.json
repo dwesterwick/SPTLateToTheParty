@@ -166,6 +166,8 @@
 		"always_regenerate": false,
 		"assort_size": 190,
 		"assort_size_discount": 90,
+		"assort_restock_threshold": 70,
+		"maxPresetsPercent": 25,
 		"min_allowed_item_value": 20000,
 		"max_ammo_stack": 500,
 		"max_ammo_buy_rate": 10,
@@ -183,7 +185,8 @@
 			"5a341c4686f77469e155819e": 5,
 			"5448e54d4bdc2dcc718b4568": 7,
 			"5448f39d4bdc2d0a728b4568": 9,
-			"5b3f15d486f77432d0509248": 1
+			"5b3f15d486f77432d0509248": 1,
+			"5485a8684bdc2da71d8b4567": 15
 		},
 		"blacklist_append": [
 			"543be5dd4bdc2deb348b4569",

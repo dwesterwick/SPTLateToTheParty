@@ -17,7 +17,6 @@ export class TraderAssortGenerator
     private lastAssortUpdate: Record<string, number> = {};
     private lastAssort: Record<string, ITraderAssort> = {};
     private originalFenceBaseAssortData: ITraderAssort;
-    private fenceAssortWarehouse: ITraderAssort;
 
     constructor
     (
@@ -140,7 +139,7 @@ export class TraderAssortGenerator
         return assort;
     } 
 
-    public updateFenceAssort(pmcProfile: IPmcData): void
+    public updateFenceAssort(): void
     {
         this.updateFenceAssortIDs();
         
@@ -148,20 +147,21 @@ export class TraderAssortGenerator
         if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.fence_assort_changes.always_regenerate)
         {
             this.fenceService.generateFenceAssorts();
+        }
+    }
 
-            this.fenceAssortWarehouse = {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                barter_scheme: {},
-                items: [],
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                loyal_level_items: {},
-                nextResupply: 0
-            };
+    public replenishFenceStockIfNeeded(currentAssort: ITraderAssort, maxLL: number): void
+    {
+        const ll1ItemIDs = TraderAssortGenerator.getTraderAssortIDsforLL(currentAssort, 1);
+        const ll2ItemIDs = TraderAssortGenerator.getTraderAssortIDsforLL(currentAssort, 2);
 
-            this.lastAssort[Traders.FENCE] = this.fenceService.getFenceAssorts(pmcProfile);
-            this.moveItemsToWarehouse(this.lastAssort[Traders.FENCE], 1, modConfig.fence_assort_changes.assort_size);
-            this.moveItemsToWarehouse(this.lastAssort[Traders.FENCE], 2, modConfig.fence_assort_changes.assort_size_discount);
-            this.lastAssortUpdate[Traders.FENCE] = this.timeUtil.getTimestamp();
+        if (
+            (ll1ItemIDs.length < modConfig.fence_assort_changes.assort_size * modConfig.fence_assort_changes.assort_restock_threshold / 100)
+            || ((maxLL > 1) && (ll2ItemIDs.length < modConfig.fence_assort_changes.assort_size_discount * modConfig.fence_assort_changes.assort_restock_threshold / 100))
+        )
+        {
+            this.commonUtils.logInfo(`Replenishing Fence's assorts. Current LL1 items: ${ll1ItemIDs.length}, LL2 items: ${ll2ItemIDs.length}`);
+            this.fenceService.generateFenceAssorts();
         }
     }
 
@@ -221,9 +221,9 @@ export class TraderAssortGenerator
     private modifyFenceConfig(): void
     {
         // Adjust assort size and variety
-        const assortGenFactor = 3;
-        this.iTraderConfig.fence.assortSize = modConfig.fence_assort_changes.assort_size * assortGenFactor;
-        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.fence_assort_changes.assort_size_discount * assortGenFactor;
+        this.iTraderConfig.fence.assortSize = modConfig.fence_assort_changes.assort_size;
+        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.fence_assort_changes.assort_size_discount;
+        this.iTraderConfig.fence.maxPresetsPercent = modConfig.fence_assort_changes.maxPresetsPercent;
         
         for (const itemID in modConfig.fence_assort_changes.itemTypeLimits_Override)
         {
@@ -291,27 +291,5 @@ export class TraderAssortGenerator
         }
 
         return ids;
-    }
-
-    private moveItemsToWarehouse(assort: ITraderAssort, ll: number, maxCount: number): void
-    {
-        const ids = TraderAssortGenerator.getTraderAssortIDsforLL(assort, ll);
-        let itemsMoved = 0;
-        while (ids.length > maxCount)
-        {
-            const randIDindex = this.randomUtil.getInt(0, ids.length - 1);
-            const item = assort.items.find((i) => i._id == ids[randIDindex]);
-
-            this.fenceAssortWarehouse.loyal_level_items[ids[randIDindex]] = assort.loyal_level_items[ids[randIDindex]];
-            this.fenceAssortWarehouse.barter_scheme[ids[randIDindex]] = assort.barter_scheme[ids[randIDindex]];
-            this.fenceAssortWarehouse.items.push(item);
-
-            this.removeIDfromTraderAssort(assort, ids[randIDindex]);
-
-            ids.splice(randIDindex, 1);
-
-            itemsMoved++;
-        }
-        this.commonUtils.logInfo(`Moved ${itemsMoved} items to the warehouse for LL${ll}.`);
     }
 }

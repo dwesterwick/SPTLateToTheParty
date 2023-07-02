@@ -35,6 +35,7 @@ import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
+import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 
 const modName = "LateToTheParty";
 
@@ -136,19 +137,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                         return output;
                     }
 
-                    // Update Fence assort data
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
-                    let deleteDepletedItems = false;
-                    if (traderID == Traders.FENCE)
-                    {
-                        deleteDepletedItems = true;
-                        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-                        this.traderAssortGenerator.updateFenceAssort(pmcProfile);
-                    }
-
-                    const assort = this.traderController.getAssort(sessionId, traderID);
-                    this.traderAssortGenerator.updateTraderStock(traderID, assort, deleteDepletedItems);
-
+                    const assort = this.getUpdatedTraderAssort(traderID, sessionId);
                     return this.httpResponseUtil.getBody(assort);
                 }
             }], "aki"
@@ -425,6 +415,29 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     {
         this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs, this.botWeaponGenerator, this.hashUtil);
         this.lootRankingGenerator.generateLootRankingData(sessionId);
+    }
+
+    private getUpdatedTraderAssort(traderID: string, sessionId: string): ITraderAssort
+    {
+        // Refresh Fence's assorts
+        if (traderID == Traders.FENCE)
+        {
+            this.traderAssortGenerator.updateFenceAssort();
+        }
+
+        // Update stock for trader
+        const assort = this.traderController.getAssort(sessionId, traderID);
+        this.traderAssortGenerator.updateTraderStock(traderID, assort, traderID == Traders.FENCE);
+
+        // Check if Fence's assorts need to be regenerated
+        if (traderID == Traders.FENCE)
+        {
+            const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
+            const maxLL = pmcProfile.TradersInfo[Traders.FENCE].loyaltyLevel;
+            this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL);
+        }
+
+        return assort;
     }
 }
 module.exports = {mod: new LateToTheParty()}
