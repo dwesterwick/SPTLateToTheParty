@@ -162,7 +162,7 @@ export class TraderAssortGenerator
         this.modifiedFenceItems = [];
     }
 
-    public replenishFenceStockIfNeeded(currentAssort: ITraderAssort, maxLL: number): void
+    public replenishFenceStockIfNeeded(currentAssort: ITraderAssort, maxLL: number): boolean
     {
         const ll1ItemIDs = TraderAssortGenerator.getTraderAssortIDsforLL(currentAssort, 1);
         const ll2ItemIDs = TraderAssortGenerator.getTraderAssortIDsforLL(currentAssort, 2);
@@ -174,7 +174,10 @@ export class TraderAssortGenerator
         {
             this.commonUtils.logInfo(`Replenishing Fence's assorts. Current LL1 items: ${ll1ItemIDs.length}, LL2 items: ${ll2ItemIDs.length}`);
             this.generateNewFenceAssorts();
+            return true;
         }
+
+        return false;
     }
 
     public updateFenceAssortIDs(): void
@@ -222,8 +225,7 @@ export class TraderAssortGenerator
 
             if (cost > maxCost)
             {
-                this.commonUtils.logInfo(`Removing preset for ${this.commonUtils.getItemName(assort.items[i]._tpl)}...`);
-
+                //this.commonUtils.logInfo(`Removing preset for ${this.commonUtils.getItemName(assort.items[i]._tpl)}...`);
                 this.removeIndexFromTraderAssort(assort, i);
                 i--;
             }
@@ -281,7 +283,7 @@ export class TraderAssortGenerator
 
         const costFactor = CommonUtils.interpolateForFirstCol(modConfig.item_cost_fraction_vs_durability, durabilityFraction);
 
-        this.commonUtils.logWarning(`Modifying value of  ${this.commonUtils.getItemName(item._tpl)} by ${costFactor}...`);
+        //this.commonUtils.logInfo(`Modifying value of  ${this.commonUtils.getItemName(item._tpl)} by ${costFactor}...`);
         assort.barter_scheme[id][0][0].count *= costFactor;
         this.modifiedFenceItems.push(id);
     }

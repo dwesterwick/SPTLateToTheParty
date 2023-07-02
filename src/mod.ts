@@ -437,7 +437,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
             const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
             const maxLL = pmcProfile.TradersInfo[Traders.FENCE].loyaltyLevel;
-            this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL);
+            
+            if (this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL))
+            {
+                return this.getUpdatedTraderAssort(traderID, sessionId);
+            }
         }
 
         return assort;
