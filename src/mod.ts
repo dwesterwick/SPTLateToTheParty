@@ -432,6 +432,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         // Remove fancy weapons and then check if Fence's assorts need to be regenerated
         if (traderID == Traders.FENCE)
         {
+            this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
             this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.fence_assort_changes.max_preset_cost);
 
             const pmcProfile = this.profileHelper.getPmcProfile(sessionId);

@@ -191,7 +191,10 @@
 		},
 		"blacklist_append": [
 			"543be5dd4bdc2deb348b4569",
-			"543be5cb4bdc2deb348b4568"
+			"543be5cb4bdc2deb348b4568",
+			"5d6e6911a4b9361bd5780d52",
+			"5d6e6806a4b936088465b17e",
+			"5c925fa22e221601da359b7b"
 		],
 		"blacklist_remove": [
 			"5661632d4bdc2d903d8b456b"
@@ -231,12 +234,17 @@
 		[0.75, 1],
 		[1, 1]
 	],
-	"fence_item_value_permitted_chance" : [
+	"fence_item_value_permitted_chance": [
 		[0, 100],
 		[20000, 70],
 		[50000, 15],
 		[80000, 7],
 		[150000, 4],
 		[999999, 1]
+	],
+	"item_cost_fraction_vs_durability": [
+		[0, 0.1],
+		[0.5, 0.6],
+		[1, 1]
 	]
 }

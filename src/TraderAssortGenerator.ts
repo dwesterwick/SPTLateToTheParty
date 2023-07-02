@@ -10,13 +10,14 @@ import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
-import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
+import { Item } from "@spt-aki/models/eft/common/tables/IItem";
 
 export class TraderAssortGenerator
 {
     private lastAssortUpdate: Record<string, number> = {};
     private lastAssort: Record<string, ITraderAssort> = {};
     private originalFenceBaseAssortData: ITraderAssort;
+    private modifiedFenceItems: string[];
 
     constructor
     (
@@ -38,6 +39,7 @@ export class TraderAssortGenerator
     {
         this.lastAssort = {};
         this.lastAssortUpdate = {};
+        this.modifiedFenceItems = [];
     }
 
     public updateTraderStock(traderID: string, assort: ITraderAssort, deleteDepletedItems: boolean): ITraderAssort
@@ -66,6 +68,20 @@ export class TraderAssortGenerator
                 continue;
             }
 
+            // Combine duplicate items if possible
+            if ((assort.items[i].upd.MedKit === undefined) && (assort.items[i].upd.Repairable === undefined) && (assort.items[i].upd.Resource === undefined))
+            {
+                for (let j = i + 1; j < assort.items.length; j++)
+                {
+                    if (assort.items[j]._tpl == assort.items[i]._tpl)
+                    {
+                        //this.commonUtils.logInfo(`Combining ${this.commonUtils.getItemName(assort.items[i]._tpl)} in assort...`);
+                        this.removeIndexFromTraderAssort(assort, j);
+                        assort.items[i].upd.StackObjectsCount += 1;
+                    }
+                }
+            }
+
             // Determine the rate at which the item stock can be reduced
             let maxBuyRate = modConfig.fence_assort_changes.max_item_buy_rate * ((traderID == Traders.FENCE) ? 0.01 : 1);
             if (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id)
@@ -77,18 +93,8 @@ export class TraderAssortGenerator
                 {
                     assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
                 }
-
-                // Remove duplicate ammo stacks
-                for (let j = i + 1; j < assort.items.length; j++)
-                {
-                    if (assort.items[j]._tpl == assort.items[i]._tpl)
-                    {
-                        //this.commonUtils.logInfo(`Removing duplicate of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from assort...`);
-                        this.removeIndexFromTraderAssort(assort, j);
-                    }
-                }
             }
-            
+
             // Update the stack size
             if ((this.lastAssort[traderID] !== undefined) && (this.lastAssort[traderID].nextResupply == assort.nextResupply))
             {
@@ -146,8 +152,14 @@ export class TraderAssortGenerator
         // Ensure the new assorts are generated at least once
         if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.fence_assort_changes.always_regenerate)
         {
-            this.fenceService.generateFenceAssorts();
+            this.generateNewFenceAssorts();
         }
+    }
+
+    public generateNewFenceAssorts(): void
+    {
+        this.fenceService.generateFenceAssorts();
+        this.modifiedFenceItems = [];
     }
 
     public replenishFenceStockIfNeeded(currentAssort: ITraderAssort, maxLL: number): void
@@ -161,7 +173,7 @@ export class TraderAssortGenerator
         )
         {
             this.commonUtils.logInfo(`Replenishing Fence's assorts. Current LL1 items: ${ll1ItemIDs.length}, LL2 items: ${ll2ItemIDs.length}`);
-            this.fenceService.generateFenceAssorts();
+            this.generateNewFenceAssorts();
         }
     }
 
@@ -216,6 +228,62 @@ export class TraderAssortGenerator
                 i--;
             }
         }
+    }
+
+    public adjustFenceAssortItemPrices(assort: ITraderAssort): void
+    {
+        for (const i in assort.items)
+        {
+            if (assort.items[i].upd === undefined)
+            {
+                continue;
+            }
+
+            // Find the corresponding item template
+            const itemTpl = this.databaseTables.templates.items[assort.items[i]._tpl];
+            if (itemTpl === undefined)
+            {
+                this.commonUtils.logWarning(`Could not find template for ID ${assort.items[i]._tpl}`);
+                continue;
+            }
+
+            if (assort.items[i].upd.MedKit !== undefined)
+            {
+                const durabilityFraction = assort.items[i].upd.MedKit.HpResource / itemTpl._props.MaxHpResource;
+                this.adjustFenceItemPrice(assort, assort.items[i], durabilityFraction);
+                continue;
+            }
+
+            if (assort.items[i].upd.Repairable !== undefined)
+            {
+                const durabilityFraction = assort.items[i].upd.Repairable.Durability / itemTpl._props.MaxDurability;
+                this.adjustFenceItemPrice(assort, assort.items[i], durabilityFraction);
+                continue;
+            }
+
+            if (assort.items[i].upd.Resource !== undefined)
+            {
+                const durabilityFraction = assort.items[i].upd.Resource.Value / itemTpl._props.MaxResource;
+                this.adjustFenceItemPrice(assort, assort.items[i], durabilityFraction);
+                continue;
+            }
+        }
+    }
+
+    private adjustFenceItemPrice(assort: ITraderAssort, item: Item, durabilityFraction: number): void
+    {
+        // Ensure the item hasn't already been modified
+        const id = item._id;
+        if (this.modifiedFenceItems.includes(id))
+        {
+            return;
+        }
+
+        const costFactor = CommonUtils.interpolateForFirstCol(modConfig.item_cost_fraction_vs_durability, durabilityFraction);
+
+        this.commonUtils.logWarning(`Modifying value of  ${this.commonUtils.getItemName(item._tpl)} by ${costFactor}...`);
+        assort.barter_scheme[id][0][0].count *= costFactor;
+        this.modifiedFenceItems.push(id);
     }
 
     private removeIndexFromTraderAssort(assort: ITraderAssort, index: number): void
