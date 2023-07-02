@@ -69,7 +69,7 @@ export class TraderAssortGenerator
             }
 
             // Combine duplicate items if possible
-            if ((assort.items[i].upd.MedKit === undefined) && (assort.items[i].upd.Repairable === undefined) && (assort.items[i].upd.Resource === undefined))
+            if (CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
             {
                 for (let j = i + 1; j < assort.items.length; j++)
                 {
@@ -234,7 +234,7 @@ export class TraderAssortGenerator
     {
         for (const i in assort.items)
         {
-            if (assort.items[i].upd === undefined)
+            if (!CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
             {
                 continue;
             }
@@ -243,7 +243,7 @@ export class TraderAssortGenerator
             const itemTpl = this.databaseTables.templates.items[assort.items[i]._tpl];
             if (itemTpl === undefined)
             {
-                this.commonUtils.logWarning(`Could not find template for ID ${assort.items[i]._tpl}`);
+                this.commonUtils.logError(`Could not find template for ID ${assort.items[i]._tpl}`);
                 continue;
             }
 
@@ -254,16 +254,16 @@ export class TraderAssortGenerator
                 continue;
             }
 
-            if (assort.items[i].upd.Repairable !== undefined)
+            if (assort.items[i].upd.Resource !== undefined)
             {
-                const durabilityFraction = assort.items[i].upd.Repairable.Durability / itemTpl._props.MaxDurability;
+                const durabilityFraction = assort.items[i].upd.Resource.Value / itemTpl._props.MaxResource;
                 this.adjustFenceItemPrice(assort, assort.items[i], durabilityFraction);
                 continue;
             }
 
-            if (assort.items[i].upd.Resource !== undefined)
+            if (assort.items[i].upd.Repairable !== undefined)
             {
-                const durabilityFraction = assort.items[i].upd.Resource.Value / itemTpl._props.MaxResource;
+                const durabilityFraction = assort.items[i].upd.Repairable.Durability / itemTpl._props.MaxDurability;
                 this.adjustFenceItemPrice(assort, assort.items[i], durabilityFraction);
                 continue;
             }

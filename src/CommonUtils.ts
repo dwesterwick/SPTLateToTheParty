@@ -3,6 +3,7 @@ import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import { LocaleService } from "@spt-aki/services/LocaleService";
+import { Item } from "@spt-aki/models/eft/common/tables/IItem";
 
 export class CommonUtils
 {
@@ -85,6 +86,28 @@ export class CommonUtils
         allParents.push(item._parent);
 		
         return allParents;
+    }
+
+    public static canItemDegrade(item: Item, databaseTables: IDatabaseTables): boolean
+    {
+        if (item.upd === undefined)
+        {
+            return false;
+        }
+
+        if ((item.upd.MedKit === undefined) && (item.upd.Repairable === undefined) && (item.upd.Resource === undefined))
+        {
+            return false;
+        }
+        
+        const itemTpl = databaseTables.templates.items[item._tpl];
+
+        if ((itemTpl._props.armorClass !== undefined) && (itemTpl._props.armorClass.toString() == "0"))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public static interpolateForFirstCol(array: number[][], value: number): number
