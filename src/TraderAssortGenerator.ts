@@ -69,7 +69,7 @@ export class TraderAssortGenerator
             }
 
             // Combine duplicate items if possible
-            if (CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
+            if (!CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
             {
                 for (let j = i + 1; j < assort.items.length; j++)
                 {
