@@ -82,17 +82,10 @@ export class TraderAssortGenerator
                 }
             }
 
-            // Determine the rate at which the item stock can be reduced
-            let maxBuyRate = modConfig.fence_assort_changes.max_item_buy_rate * ((traderID == Traders.FENCE) ? 0.01 : 1);
-            if (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id)
+            // Set max ammo stack size
+            if ((traderID == Traders.FENCE) && (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id))
             {
-                maxBuyRate = modConfig.fence_assort_changes.max_ammo_buy_rate;
-
-                // Set max ammo stack size
-                if (traderID == Traders.FENCE)
-                {
-                    assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
-                }
+                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
             }
 
             // Update the stack size
@@ -101,11 +94,10 @@ export class TraderAssortGenerator
                 const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
                 if (lastAssortItem !== undefined)
                 {
-                    const stackSizeReduction = this.randomUtil.randInt(0, maxBuyRate * (now - this.lastAssortUpdate[traderID]));
+                    const stackSizeReduction = this.getStackSizeReduction(assort.items[i], assort.nextResupply,assort.items[i].upd.StackObjectsCount, lastAssortItem.upd.StackObjectsCount, traderID);
                     if (stackSizeReduction > 0)
                     {
                         const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
-
                         if (newStackSize <= 0)
                         {
                             this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
@@ -270,6 +262,34 @@ export class TraderAssortGenerator
                 continue;
             }
         }
+    }
+
+    private getStackSizeReduction(item: Item, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
+    {
+        const now = this.timeUtil.getTimestamp();
+
+        // Find the corresponding item template
+        const itemTpl = this.databaseTables.templates.items[item._tpl];
+        if (itemTpl === undefined)
+        {
+            this.commonUtils.logError(`Could not find template for ID ${item._tpl}`);
+            return 0;
+        }
+
+        if (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id)
+        {
+            return Math.round(this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_buy_rate * (now - this.lastAssortUpdate[traderID])));
+        }
+
+        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
+        const maxItemsSold = modConfig.fence_assort_changes.item_sellout_chance / 100 * originalStock * refreshFractionElapsed;
+        const itemsSold = originalStock - currentStock;
+        const maxReduction = this.randomUtil.getFloat(0, 1) * modConfig.fence_assort_changes.max_item_buy_rate * (now - this.lastAssortUpdate[traderID]);
+        const itemsToSell = Math.round(Math.max(0, Math.min(maxItemsSold - itemsSold, maxReduction)));
+
+        //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
+
+        return itemsToSell;
     }
 
     private adjustFenceItemPrice(assort: ITraderAssort, item: Item, durabilityFraction: number): void
