@@ -46,10 +46,16 @@ export class TraderAssortGenerator
     {
         const now = this.timeUtil.getTimestamp();
 
-        // Initialize the timestamp for when the last update occurred
+        // Initialize data for when the last assort update occurred
         if (this.lastAssortUpdate[traderID] === undefined)
         {
-            this.lastAssortUpdate[traderID] = -99;
+            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds
+            const timeRemaining = assort.nextResupply - now;
+            this.lastAssortUpdate[traderID] = now - (resupplyTime - timeRemaining);
+        }
+        if (this.lastAssort[traderID] === undefined)
+        {
+            this.lastAssort[traderID] = assort;
         }
         
         for (let i = 0; i < assort.items.length; i++)
@@ -89,18 +95,27 @@ export class TraderAssortGenerator
             }
 
             // Update the stack size
-            if ((this.lastAssort[traderID] !== undefined) && (this.lastAssort[traderID].nextResupply == assort.nextResupply))
+            if (this.lastAssort[traderID].nextResupply == assort.nextResupply)
             {
                 const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
                 if (lastAssortItem !== undefined)
                 {
-                    const stackSizeReduction = this.getStackSizeReduction(assort.items[i], assort.nextResupply,assort.items[i].upd.StackObjectsCount, lastAssortItem.upd.StackObjectsCount, traderID);
+                    const isBarter = this.isBarterTrade(assort, assort.items[i]._id);
+                    const stackSizeReduction = this.getStackSizeReduction(
+                        assort.items[i],
+                        isBarter,
+                        assort.nextResupply,
+                        assort.items[i].upd.StackObjectsCount,
+                        lastAssortItem.upd.StackObjectsCount,
+                        traderID
+                    );
+
                     if (stackSizeReduction > 0)
                     {
                         const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
                         if (newStackSize <= 0)
                         {
-                            this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
+                            //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
                         }
 
                         assort.items[i].upd.StackObjectsCount = newStackSize;
@@ -142,7 +157,7 @@ export class TraderAssortGenerator
         this.updateFenceAssortIDs();
         
         // Ensure the new assorts are generated at least once
-        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.trader_stock_changes.always_regenerate)
+        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.trader_stock_changes.fence_stock_changes.always_regenerate)
         {
             this.generateNewFenceAssorts();
         }
@@ -264,7 +279,7 @@ export class TraderAssortGenerator
         }
     }
 
-    private getStackSizeReduction(item: Item, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
+    private getStackSizeReduction(item: Item, isbarter: boolean, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
     {
         const now = this.timeUtil.getTimestamp();
 
@@ -277,13 +292,13 @@ export class TraderAssortGenerator
         }
 
         const fenceMult = (traderID == Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
-        let selloutMult = 1;
+        let selloutMult = isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
         if (itemTpl._id in modConfig.trader_stock_changes.hot_item_sell_chance_multipliers)
         {
             selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_multipliers[itemTpl._id];
             selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
         }
-
+        
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
             return Math.round(this.randomUtil.randInt(0, modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID])));
@@ -298,6 +313,30 @@ export class TraderAssortGenerator
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
 
         return itemsToSell;
+    }
+    
+    private isBarterTrade(assort: ITraderAssort, itemID: string): boolean
+    {
+        for (const i in assort.barter_scheme[itemID][0])
+        {
+            const barterItemTpl = assort.barter_scheme[itemID][0][i]._tpl;
+
+            // Find the corresponding item template
+            const itemTpl = this.databaseTables.templates.items[barterItemTpl];
+            if (itemTpl === undefined)
+            {
+                this.commonUtils.logError(`Could not find template for ID ${barterItemTpl}`);
+                return false;
+            }
+            
+            if (CommonUtils.hasParent(itemTpl, modConfig.trader_stock_changes.money_parent_id, this.databaseTables))
+            {
+                return false;
+            }
+        }
+
+        //this.commonUtils.logInfo(`Item ${this.commonUtils.getItemName(assort.items.find((i) => i._id == itemID)._tpl)} is a barter trade.`);
+        return true;
     }
 
     private adjustFenceItemPrice(assort: ITraderAssort, item: Item, durabilityFraction: number): void

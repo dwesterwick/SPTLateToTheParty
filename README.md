@@ -102,7 +102,9 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **trader_stock_changes.max_ammo_buy_rate**: The maximum rate at which a trader's ammo supply (for each type) can be reduced in rounds/second.
 * **trader_stock_changes.max_item_buy_rate**: The maximum rate at which a trader's item supply (for each type) can be reduced in items/second.
 * **trader_stock_changes.item_sellout_chance**: The chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
+* **trader_stock_changes.barter_trade_sellout_factor**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for barter items. 
 * **trader_stock_changes.ammo_parent_id**: The parent ID of loose ammo, which is needed to determine what items are ammo. **This should NOT be changed, or the mod may not work properly.** 
+* **trader_stock_changes.money_parent_id**: The parent ID of money, which is needed to determine what items are barter trades. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.fence_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
 * **trader_stock_changes.fence_stock_changes.assort_size**: The number of items sold by Fence at LL1. The is **190** by default compared to the base game's **120**.
 * **trader_stock_changes.fence_stock_changes.assort_size_discount**: The number of items sold by Fence at LL2. The is **90** by default compared to the base game's **50**.
