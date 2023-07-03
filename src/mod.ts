@@ -132,7 +132,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 url: "/client/trading/api/getTraderAssort/",
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
-                    if (!modConfig.fence_assort_changes.enabled)
+                    if (!modConfig.trader_stock_changes.enabled)
                     {
                         return output;
                     }
@@ -267,9 +267,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             //this.iAirdropConfig.airdropChancePercent.reserve = 100;
             //this.iAirdropConfig.airdropChancePercent.tarkovStreets = 100;
 
+            // Modify trader restock times
             for (const t in this.iTraderConfig.updateTime)
             {
-                this.iTraderConfig.updateTime[t].seconds = 300;
+                this.iTraderConfig.updateTime[t].seconds *= modConfig.debug.trader_resupply_time_factor;
                 const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds;
                 if (this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply > maxResupplyTime)
                 {
@@ -290,7 +291,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.getLootMultipliers();
 
         // Initialize trader assort data
-        if (modConfig.fence_assort_changes.enabled)
+        if (modConfig.trader_stock_changes.enabled)
         {
             this.traderAssortGenerator = new TraderAssortGenerator(
                 this.commonUtils,
@@ -445,7 +446,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         if (traderID == Traders.FENCE)
         {
             this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
-            this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.fence_assort_changes.max_preset_cost);
+            this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
 
             const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
             const maxLL = pmcProfile.TradersInfo[Traders.FENCE].loyaltyLevel;

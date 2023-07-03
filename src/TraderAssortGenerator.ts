@@ -83,9 +83,9 @@ export class TraderAssortGenerator
             }
 
             // Set max ammo stack size
-            if ((traderID == Traders.FENCE) && (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id))
+            if ((traderID == Traders.FENCE) && (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id))
             {
-                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_stack);
+                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
             }
 
             // Update the stack size
@@ -142,7 +142,7 @@ export class TraderAssortGenerator
         this.updateFenceAssortIDs();
         
         // Ensure the new assorts are generated at least once
-        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.fence_assort_changes.always_regenerate)
+        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.trader_stock_changes.always_regenerate)
         {
             this.generateNewFenceAssorts();
         }
@@ -160,8 +160,8 @@ export class TraderAssortGenerator
         const ll2ItemIDs = TraderAssortGenerator.getTraderAssortIDsforLL(currentAssort, 2);
 
         if (
-            (ll1ItemIDs.length < modConfig.fence_assort_changes.assort_size * modConfig.fence_assort_changes.assort_restock_threshold / 100)
-            || ((maxLL > 1) && (ll2ItemIDs.length < modConfig.fence_assort_changes.assort_size_discount * modConfig.fence_assort_changes.assort_restock_threshold / 100))
+            (ll1ItemIDs.length < modConfig.trader_stock_changes.fence_stock_changes.assort_size * modConfig.trader_stock_changes.fence_stock_changes.assort_restock_threshold / 100)
+            || ((maxLL > 1) && (ll2ItemIDs.length < modConfig.trader_stock_changes.fence_stock_changes.assort_size_discount * modConfig.trader_stock_changes.fence_stock_changes.assort_restock_threshold / 100))
         )
         {
             this.commonUtils.logInfo(`Replenishing Fence's assorts. Current LL1 items: ${ll1ItemIDs.length}, LL2 items: ${ll2ItemIDs.length}`);
@@ -182,7 +182,7 @@ export class TraderAssortGenerator
             const randNum = this.randomUtil.getFloat(0, 100);
 
             // Determine if the item should be allowed in Fence's assorts
-            if ((itemPrice >= modConfig.fence_assort_changes.min_allowed_item_value) && (permittedChance <= randNum))
+            if ((itemPrice >= modConfig.trader_stock_changes.fence_stock_changes.min_allowed_item_value) && (permittedChance <= randNum))
             {
                 // Ensure the index is valid
                 const itemIndex = assort.items.findIndex((i) => i._id == itemID);
@@ -276,23 +276,23 @@ export class TraderAssortGenerator
             return 0;
         }
 
-        const fenceMult = (traderID == Traders.FENCE ? modConfig.fence_assort_changes.fence_sell_chance_multiplier : 1);
+        const fenceMult = (traderID == Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
         let selloutMult = 1;
-        if (itemTpl._id in modConfig.fence_assort_changes.hot_item_sell_chance_multipliers)
+        if (itemTpl._id in modConfig.trader_stock_changes.hot_item_sell_chance_multipliers)
         {
-            selloutMult *= modConfig.fence_assort_changes.hot_item_sell_chance_multipliers[itemTpl._id];
-            selloutMult *= modConfig.fence_assort_changes.hot_item_sell_chance_global_multiplier;
+            selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_multipliers[itemTpl._id];
+            selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
         }
 
-        if (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id)
+        if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
-            return Math.round(this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID])));
+            return Math.round(this.randomUtil.randInt(0, modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID])));
         }
 
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
-        const maxItemsSold = modConfig.fence_assort_changes.item_sellout_chance / 100 * originalStock * refreshFractionElapsed * selloutMult * fenceMult;
+        const maxItemsSold = modConfig.trader_stock_changes.item_sellout_chance / 100 * originalStock * refreshFractionElapsed * selloutMult * fenceMult;
         const itemsSold = originalStock - currentStock;
-        const maxReduction = this.randomUtil.getFloat(0, 1) * modConfig.fence_assort_changes.max_item_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID]);
+        const maxReduction = this.randomUtil.getFloat(0, 1) * modConfig.trader_stock_changes.max_item_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID]);
         const itemsToSell = Math.round(Math.max(0, Math.min(maxItemsSold - itemsSold, maxReduction)));
 
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
@@ -328,18 +328,18 @@ export class TraderAssortGenerator
     private modifyFenceConfig(): void
     {
         // Adjust assort size and variety
-        this.iTraderConfig.fence.assortSize = modConfig.fence_assort_changes.assort_size;
-        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.fence_assort_changes.assort_size_discount;
-        this.iTraderConfig.fence.maxPresetsPercent = modConfig.fence_assort_changes.maxPresetsPercent;
+        this.iTraderConfig.fence.assortSize = modConfig.trader_stock_changes.fence_stock_changes.assort_size;
+        this.iTraderConfig.fence.discountOptions.assortSize = modConfig.trader_stock_changes.fence_stock_changes.assort_size_discount;
+        this.iTraderConfig.fence.maxPresetsPercent = modConfig.trader_stock_changes.fence_stock_changes.maxPresetsPercent;
         
-        for (const itemID in modConfig.fence_assort_changes.itemTypeLimits_Override)
+        for (const itemID in modConfig.trader_stock_changes.fence_stock_changes.itemTypeLimits_Override)
         {
-            this.iTraderConfig.fence.itemTypeLimits[itemID] = modConfig.fence_assort_changes.itemTypeLimits_Override[itemID];
+            this.iTraderConfig.fence.itemTypeLimits[itemID] = modConfig.trader_stock_changes.fence_stock_changes.itemTypeLimits_Override[itemID];
         }
 
         // Add or remove ID's from the blacklist
-        this.iTraderConfig.fence.blacklist = this.iTraderConfig.fence.blacklist.concat(modConfig.fence_assort_changes.blacklist_append);
-        const removeID = modConfig.fence_assort_changes.blacklist_remove;
+        this.iTraderConfig.fence.blacklist = this.iTraderConfig.fence.blacklist.concat(modConfig.trader_stock_changes.fence_stock_changes.blacklist_append);
+        const removeID = modConfig.trader_stock_changes.fence_stock_changes.blacklist_remove;
         for (const i in removeID)
         {
             if (this.iTraderConfig.fence.blacklist.includes(removeID[i]))
@@ -352,7 +352,7 @@ export class TraderAssortGenerator
         const allItems = this.databaseTables.templates.items;
         for (const itemID in allItems)
         {
-            if (allItems[itemID]._parent != modConfig.fence_assort_changes.ammo_parent_id)
+            if (allItems[itemID]._parent != modConfig.trader_stock_changes.ammo_parent_id)
             {
                 continue;
             }
@@ -362,13 +362,13 @@ export class TraderAssortGenerator
                 continue;
             }
 
-            if (allItems[itemID]._props.PenetrationPower > modConfig.fence_assort_changes.blacklist_ammo_penetration_limit)
+            if (allItems[itemID]._props.PenetrationPower > modConfig.trader_stock_changes.fence_stock_changes.blacklist_ammo_penetration_limit)
             {
                 this.iTraderConfig.fence.blacklist.push(itemID);
                 continue;
             }
 
-            if (allItems[itemID]._props.Damage > modConfig.fence_assort_changes.blacklist_ammo_damage_limit)
+            if (allItems[itemID]._props.Damage > modConfig.trader_stock_changes.fence_stock_changes.blacklist_ammo_damage_limit)
             {
                 this.iTraderConfig.fence.blacklist.push(itemID);
                 continue;

@@ -21,6 +21,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("min_level_for_flea")]
         public byte MinLevelForFlea { get; set; } = 15;
 
+        [JsonProperty("trader_resupply_time_factor")]
+        public double TraderResupplyTimeFactor { get; set; } = 1;
+
         [JsonProperty("loot_path_visualization")]
         public LootPathVisualizationConfig LootPathVisualization { get; set; } = new LootPathVisualizationConfig();
 

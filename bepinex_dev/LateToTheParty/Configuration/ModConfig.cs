@@ -28,7 +28,7 @@ namespace LateToTheParty.Configuration
         public AdjustBotSpawnChancesConfig AdjustBotSpawnChances { get; set; } = new AdjustBotSpawnChancesConfig();
 
         [JsonProperty("fence_assort_changes")]
-        public FenceAssortChangesConfig FenceAssortChanges { get; set; } = new FenceAssortChangesConfig();
+        public TraderStockChangesConfig FenceAssortChanges { get; set; } = new TraderStockChangesConfig();
 
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
