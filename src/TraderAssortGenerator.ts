@@ -100,7 +100,16 @@ export class TraderAssortGenerator
                 const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
                 if (lastAssortItem !== undefined)
                 {
-                    const stackSizeReduction = this.getStackSizeReduction(assort.items[i], assort.nextResupply,assort.items[i].upd.StackObjectsCount, lastAssortItem.upd.StackObjectsCount, traderID);
+                    const isBarter = this.isBarterTrade(assort, assort.items[i]._id);
+                    const stackSizeReduction = this.getStackSizeReduction(
+                        assort.items[i],
+                        isBarter,
+                        assort.nextResupply,
+                        assort.items[i].upd.StackObjectsCount,
+                        lastAssortItem.upd.StackObjectsCount,
+                        traderID
+                    );
+
                     if (stackSizeReduction > 0)
                     {
                         const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
@@ -270,7 +279,7 @@ export class TraderAssortGenerator
         }
     }
 
-    private getStackSizeReduction(item: Item, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
+    private getStackSizeReduction(item: Item, isbarter: boolean, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
     {
         const now = this.timeUtil.getTimestamp();
 
@@ -283,13 +292,13 @@ export class TraderAssortGenerator
         }
 
         const fenceMult = (traderID == Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
-        let selloutMult = 1;
+        let selloutMult = isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
         if (itemTpl._id in modConfig.trader_stock_changes.hot_item_sell_chance_multipliers)
         {
             selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_multipliers[itemTpl._id];
             selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
         }
-
+        
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
             return Math.round(this.randomUtil.randInt(0, modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID])));
@@ -304,6 +313,30 @@ export class TraderAssortGenerator
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
 
         return itemsToSell;
+    }
+    
+    private isBarterTrade(assort: ITraderAssort, itemID: string): boolean
+    {
+        for (const i in assort.barter_scheme[itemID][0])
+        {
+            const barterItemTpl = assort.barter_scheme[itemID][0][i]._tpl;
+
+            // Find the corresponding item template
+            const itemTpl = this.databaseTables.templates.items[barterItemTpl];
+            if (itemTpl === undefined)
+            {
+                this.commonUtils.logError(`Could not find template for ID ${barterItemTpl}`);
+                return false;
+            }
+            
+            if (CommonUtils.hasParent(itemTpl, modConfig.trader_stock_changes.money_parent_id, this.databaseTables))
+            {
+                return false;
+            }
+        }
+
+        //this.commonUtils.logInfo(`Item ${this.commonUtils.getItemName(assort.items.find((i) => i._id == itemID)._tpl)} is a barter trade.`);
+        return true;
     }
 
     private adjustFenceItemPrice(assort: ITraderAssort, item: Item, durabilityFraction: number): void

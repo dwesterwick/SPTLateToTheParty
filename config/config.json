@@ -165,9 +165,11 @@
 	"trader_stock_changes": {
 		"enabled": true,
 		"max_ammo_buy_rate": 10,
-		"max_item_buy_rate": 100,
+		"max_item_buy_rate": 200,
 		"item_sellout_chance": 50,
+		"barter_trade_sellout_factor": 0.2,
 		"ammo_parent_id": "5485a8684bdc2da71d8b4567",
+		"money_parent_id": "543be5dd4bdc2deb348b4569",
 		"fence_stock_changes": {
 			"always_regenerate": false,
 			"assort_size": 190,
@@ -209,11 +211,13 @@
 		},
 		"hot_item_sell_chance_global_multiplier": 0.4,
 		"hot_item_sell_chance_multipliers": {
-			"54491c4f4bdc2db1078b4568": 20,
+			"54491c4f4bdc2db1078b4568": 50,
 			"56083a334bdc2dc8488b4571": 20,
-			"5af04b6486f774195a3ebb49": 12,
-			"5fc3e272f8b6a877a729eac5": 10,
+			"5af04b6486f774195a3ebb49": 25,
+			"5fc3e272f8b6a877a729eac5": 40,
 			"5d5d646386f7742797261fd9": 20,
+			"5c0e3eb886f7742015526062": 15,
+			"5c0e446786f7742013381639": 15,
 			"591c4efa86f7741030027726": 10,
 			"5947db3f86f77447880cf76f": 10,
 			"5c82342f2e221644f31c060e": 10,
@@ -246,8 +250,19 @@
 			"5448ff904bdc2d6f028b456e": 2,
 			"574eb85c245977648157eec3": 2,
 			"587df583245977373c4f1129": 5,
-			"5c3df7d588a4501f290594e5": 50,
-			"5c94bbff86f7747ee735c08f": 5
+			"5c94bbff86f7747ee735c08f": 5,
+			"59ccfdba86f7747f2109a587": 5,
+			"544a5cde4bdc2d39388b456b": 5,
+			"5ca20d5986f774331e7c9602": 4,
+			"56dee2bdd2720bc8328b4567": 3,
+			"5a7828548dc32e5a9c28b516": 3,
+			"5e870397991fd70db46995c8": 3,
+			"5648ac824bdc2ded0b8b457d": 3,
+			"57dc2fa62459775949412633": 5,
+			"583990e32459771419544dd2": 5,
+			"5839a40f24597726f856b511": 5,
+			"57d14d2524597714373db789": 3,
+			"57f3c6bd24597738e730fa2f": 3
 		}
 	},
 	"loot_multipliers": [
