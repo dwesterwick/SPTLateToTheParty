@@ -99,11 +99,11 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
 * **trader_stock_changes.enabled**: If the mod should allow trader stock to deplete as well as change the number and variety of items sold by Fence.
-* **trader_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
 * **trader_stock_changes.max_ammo_buy_rate**: The maximum rate at which a trader's ammo supply (for each type) can be reduced in rounds/second.
 * **trader_stock_changes.max_item_buy_rate**: The maximum rate at which a trader's item supply (for each type) can be reduced in items/second.
 * **trader_stock_changes.item_sellout_chance**: The chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
 * **trader_stock_changes.ammo_parent_id**: The parent ID of loose ammo, which is needed to determine what items are ammo. **This should NOT be changed, or the mod may not work properly.** 
+* **trader_stock_changes.fence_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
 * **trader_stock_changes.fence_stock_changes.assort_size**: The number of items sold by Fence at LL1. The is **190** by default compared to the base game's **120**.
 * **trader_stock_changes.fence_stock_changes.assort_size_discount**: The number of items sold by Fence at LL2. The is **90** by default compared to the base game's **50**.
 * **trader_stock_changes.fence_stock_changes.assort_restock_threshold**: If Fence's stock drops below this percentage of **trader_stock_changes.fence_stock_changes.assort_size** or **trader_stock_changes.fence_stock_changes.assort_size_discount**, his inventory will be forced to regenerate. 

@@ -46,10 +46,16 @@ export class TraderAssortGenerator
     {
         const now = this.timeUtil.getTimestamp();
 
-        // Initialize the timestamp for when the last update occurred
+        // Initialize data for when the last assort update occurred
         if (this.lastAssortUpdate[traderID] === undefined)
         {
-            this.lastAssortUpdate[traderID] = -99;
+            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds
+            const timeRemaining = assort.nextResupply - now;
+            this.lastAssortUpdate[traderID] = now - (resupplyTime - timeRemaining);
+        }
+        if (this.lastAssort[traderID] === undefined)
+        {
+            this.lastAssort[traderID] = assort;
         }
         
         for (let i = 0; i < assort.items.length; i++)
@@ -89,7 +95,7 @@ export class TraderAssortGenerator
             }
 
             // Update the stack size
-            if ((this.lastAssort[traderID] !== undefined) && (this.lastAssort[traderID].nextResupply == assort.nextResupply))
+            if (this.lastAssort[traderID].nextResupply == assort.nextResupply)
             {
                 const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
                 if (lastAssortItem !== undefined)
@@ -100,7 +106,7 @@ export class TraderAssortGenerator
                         const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
                         if (newStackSize <= 0)
                         {
-                            this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
+                            //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
                         }
 
                         assort.items[i].upd.StackObjectsCount = newStackSize;
@@ -142,7 +148,7 @@ export class TraderAssortGenerator
         this.updateFenceAssortIDs();
         
         // Ensure the new assorts are generated at least once
-        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.trader_stock_changes.always_regenerate)
+        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.trader_stock_changes.fence_stock_changes.always_regenerate)
         {
             this.generateNewFenceAssorts();
         }

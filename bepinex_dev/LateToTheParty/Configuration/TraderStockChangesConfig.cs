@@ -12,9 +12,6 @@ namespace LateToTheParty.Configuration
         [JsonProperty("enabled")]
         public bool Enabled { get; set; } = true;
 
-        [JsonProperty("always_regenerate")]
-        public bool AlwaysRegenerate { get; set; } = false;
-
         [JsonProperty("max_ammo_buy_rate")]
         public double MaxAmmoBuyRate { get; set; } = 10;
 
