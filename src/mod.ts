@@ -266,6 +266,16 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             //this.iAirdropConfig.airdropChancePercent.interchange = 100;
             //this.iAirdropConfig.airdropChancePercent.reserve = 100;
             //this.iAirdropConfig.airdropChancePercent.tarkovStreets = 100;
+
+            for (const t in this.iTraderConfig.updateTime)
+            {
+                this.iTraderConfig.updateTime[t].seconds = 300;
+                const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds;
+                if (this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply > maxResupplyTime)
+                {
+                    this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply = maxResupplyTime;
+                }
+            }
         }
     }
 
@@ -293,6 +303,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 this.timeutil
             );
         }
+
+        
     }
 
     private updateScavTimer(sessionId: string): void

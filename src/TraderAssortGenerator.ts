@@ -276,15 +276,23 @@ export class TraderAssortGenerator
             return 0;
         }
 
+        const fenceMult = (traderID == Traders.FENCE ? modConfig.fence_assort_changes.fence_sell_chance_multiplier : 1);
+        let selloutMult = 1;
+        if (itemTpl._id in modConfig.fence_assort_changes.hot_item_sell_chance_multipliers)
+        {
+            selloutMult *= modConfig.fence_assort_changes.hot_item_sell_chance_multipliers[itemTpl._id];
+            selloutMult *= modConfig.fence_assort_changes.hot_item_sell_chance_global_multiplier;
+        }
+
         if (itemTpl._parent == modConfig.fence_assort_changes.ammo_parent_id)
         {
-            return Math.round(this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_buy_rate * (now - this.lastAssortUpdate[traderID])));
+            return Math.round(this.randomUtil.randInt(0, modConfig.fence_assort_changes.max_ammo_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID])));
         }
 
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
-        const maxItemsSold = modConfig.fence_assort_changes.item_sellout_chance / 100 * originalStock * refreshFractionElapsed;
+        const maxItemsSold = modConfig.fence_assort_changes.item_sellout_chance / 100 * originalStock * refreshFractionElapsed * selloutMult * fenceMult;
         const itemsSold = originalStock - currentStock;
-        const maxReduction = this.randomUtil.getFloat(0, 1) * modConfig.fence_assort_changes.max_item_buy_rate * (now - this.lastAssortUpdate[traderID]);
+        const maxReduction = this.randomUtil.getFloat(0, 1) * modConfig.fence_assort_changes.max_item_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID]);
         const itemsToSell = Math.round(Math.max(0, Math.min(maxItemsSold - itemsSold, maxReduction)));
 
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
