@@ -211,10 +211,10 @@
 		},
 		"hot_item_sell_chance_global_multiplier": 0.4,
 		"hot_item_sell_chance_multipliers": {
-			"54491c4f4bdc2db1078b4568": 50,
+			"54491c4f4bdc2db1078b4568": 28,
 			"56083a334bdc2dc8488b4571": 20,
 			"5af04b6486f774195a3ebb49": 25,
-			"5fc3e272f8b6a877a729eac5": 40,
+			"5fc3e272f8b6a877a729eac5": 28,
 			"5d5d646386f7742797261fd9": 20,
 			"5c0e3eb886f7742015526062": 15,
 			"5c0e446786f7742013381639": 15,
