@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using EFT.UI;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -16,38 +17,38 @@ namespace LateToTheParty.Controllers
 
         public static IEnumerable<Item> FindAllItemsInContainer(this Item container, bool includeSelf = false)
         {
-            IEnumerable<Item> containedItems = container.GetAllItems();
-
+            List<Item> allContainedItems = container.GetAllItems().ToList();
+            
             if (!includeSelf)
             {
-                containedItems = containedItems.Where(i => i.Id != container.Id);
+                allContainedItems.Remove(container);
             }
 
-            foreach (Item item in containedItems)
+            foreach (Item item in allContainedItems.ToArray())
             {
-                containedItems.Concat(item.FindAllItemsInContainer(false));
+                allContainedItems.AddRange(item.FindAllItemsInContainer(false));
             }
 
-            return containedItems.Distinct();
+            return allContainedItems.Distinct();
         }
 
         public static IEnumerable<Item> FindAllItemsInContainers(this IEnumerable<Item> containers, bool includeSelf = false)
         {
-            IEnumerable<Item> allItems = Enumerable.Empty<Item>();
+            List<Item> allItems = new List<Item>();
             foreach (Item container in containers)
             {
-                allItems = allItems.Concat(container.FindAllItemsInContainer(includeSelf));
+                allItems.AddRange(container.FindAllItemsInContainer(includeSelf));
             }
             return allItems.Distinct();
         }
 
         public static IEnumerable<Item> FindAllRelatedItems(this IEnumerable<Item> items)
         {
-            IEnumerable<Item> allItems = Enumerable.Empty<Item>();
+            List<Item> allItems = new List<Item>();
             foreach (Item item in items)
             {
                 Item parentItem = item.GetAllParentItemsAndSelf().Last();
-                allItems = allItems.Concat(parentItem.GetAllItems().Reverse());
+                allItems.AddRange(parentItem.GetAllItems().Reverse());
             }
             return allItems.Distinct();
         }
