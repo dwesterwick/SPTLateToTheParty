@@ -79,7 +79,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **destroy_loot_during_raid.loot_ranking.weighting.max_dim**: How much the calculated loot-ranking value of each item should be affected by its maximum dimension (either *length* or *width*).
 * **destroy_loot_during_raid.loot_ranking.weighting.armor_class**: How much the calculated loot-ranking value of each item should be affected by its armor class (which is 0 if not applicable). 
 * **destroy_loot_during_raid.loot_ranking.weighting.parents.xxx.name**: If **xxx** is a parent of the item, its calculated loot-ranking value has an additional value applied to it. For each entry in the **parents** dictionary, **name** simply exists for readability. You can make this whatever you want to help you remember what the ID (key) for the dictionary is.
-* **destroy_loot_during_raid.loot_ranking.weighting.parents.xxx.weighting**: If **xxx** is a parent of the item, its calculated loot-ranking value is adjusted by this value.
+* **destroy_loot_during_raid.loot_ranking.weighting.parents.xxx.value**: If **xxx** is a parent of the item, its calculated loot-ranking value is adjusted by this value.
 
 * **open_doors_during_raid.enabled**: If the mod can open/close doors throughout the raid. This is **true** by default. 
 * **open_doors_during_raid.can_open_locked_doors**: If the mod is allowed to open locked doors. This is **true** by default. 
