@@ -86,8 +86,8 @@ export class TraderAssortGenerator
                 continue;
             }
 
-            // Combine duplicate items if possible
-            if (!CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
+            // For Fence, combine duplicate items if possible
+            if ((traderID == Traders.FENCE) && !CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
             {
                 for (let j = i + 1; j < assort.items.length; j++)
                 {
