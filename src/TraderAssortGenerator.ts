@@ -1,4 +1,5 @@
 import modConfig from "../config/config.json";
+import hotItems from "../config/hotItems.json";
 import { CommonUtils } from "./CommonUtils";
 
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
@@ -305,15 +306,14 @@ export class TraderAssortGenerator
 
         const fenceMult = (traderID == Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
         let selloutMult = isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
-        if (itemTpl._id in modConfig.trader_stock_changes.hot_item_sell_chance_multipliers)
+        if (itemTpl._id in hotItems)
         {
-            selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_multipliers[itemTpl._id];
-            selloutMult *= modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
+            selloutMult *= hotItems[itemTpl._id].value * modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
         }
         
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
-            return Math.round(this.randomUtil.randInt(0, modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult / fenceMult * (now - this.lastAssortUpdate[traderID])));
+            return Math.round(this.randomUtil.getFloat(0, 1) * modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult / fenceMult * (now - this.lastAssortUpdate[traderID]));
         }
 
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);

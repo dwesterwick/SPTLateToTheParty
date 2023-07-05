@@ -32,7 +32,7 @@ export interface LootRankingContainer
 export interface LootRankingForParent
 {
     name: string,
-    weighting: number
+    value: number
 }
 
 // Object for each item
@@ -193,7 +193,7 @@ export class LootRankingGenerator
         {
             if (CommonUtils.hasParent(item, parentID, this.databaseTables))
             {
-                parentWeighting += modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents[parentID].weighting;
+                parentWeighting += modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents[parentID].value;
             }
         }
         value += parentWeighting;
@@ -597,7 +597,7 @@ export class LootRankingGenerator
                 break;
             }
 
-            if (rankingData.parentWeighting[parentID].weighting != modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents[parentID].weighting)
+            if (rankingData.parentWeighting[parentID].value != modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents[parentID].value)
             {
                 parentParametersMatch = false;
                 break;

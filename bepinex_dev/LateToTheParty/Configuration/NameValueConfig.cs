@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace LateToTheParty.Configuration
 {
-    public class LootRankingForParentConfig
+    public class NameValueConfig
     {
         [JsonProperty("name")]
         public string Name { get; set; } = "";
 
-        [JsonProperty("weighting")]
-        public double Weighting { get; set; }
+        [JsonProperty("value")]
+        public double Value { get; set; }
 
-        public LootRankingForParentConfig()
+        public NameValueConfig()
         {
 
         }

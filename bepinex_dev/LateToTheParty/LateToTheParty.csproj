@@ -102,7 +102,7 @@
     <Compile Include="Configuration\LootRankingConfig.cs" />
     <Compile Include="Configuration\LootRankingWeightingConfig.cs" />
     <Compile Include="Configuration\LootRankingItemDataConfig.cs" />
-    <Compile Include="Configuration\LootRankingForParentConfig.cs" />
+    <Compile Include="Configuration\NameValueConfig.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\OpenDoorsDuringRaidConfig.cs" />
     <Compile Include="Controllers\BotConversionController.cs" />

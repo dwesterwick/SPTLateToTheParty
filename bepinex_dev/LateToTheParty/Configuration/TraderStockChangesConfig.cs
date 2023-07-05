@@ -24,6 +24,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("barter_trade_sellout_factor")]
         public double BarterTradeSelloutFactor { get; set; } = 0.2;
 
+        [JsonProperty("hot_item_sell_chance_global_multiplier")]
+        public double HotItemSellChanceGlobalMultiplier { get; set; } = 0.5;
+
         [JsonProperty("ammo_parent_id")]
         public string AmmoParentId { get; set; } = "5485a8684bdc2da71d8b4567";
 
@@ -32,12 +35,6 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("fence_stock_changes")]
         public FenceStockChangesConfig FenceStockChanges { get; set; } = new FenceStockChangesConfig();
-
-        [JsonProperty("hot_item_sell_chance_global_multiplier")]
-        public double HotItemSellChanceGlobalMultiplier { get; set; } = 0.5;
-
-        [JsonProperty("hot_item_sell_chance_multipliers")]
-        public Dictionary<string, double> HotItemSellChanceMultipliers { get; set; } = new Dictionary<string, double>();
 
         public TraderStockChangesConfig()
         {

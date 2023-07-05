@@ -31,7 +31,7 @@ namespace LateToTheParty.Configuration
         public double ArmorClass { get; set; }
 
         [JsonProperty("parents")]
-        public Dictionary<string, LootRankingForParentConfig> Parents { get; set; } = new Dictionary<string, LootRankingForParentConfig>();
+        public Dictionary<string, NameValueConfig> Parents { get; set; } = new Dictionary<string, NameValueConfig>();
 
         [JsonProperty("items")]
         public Dictionary<string, LootRankingItemDataConfig> Items { get; set; } = new Dictionary<string, LootRankingItemDataConfig>();
