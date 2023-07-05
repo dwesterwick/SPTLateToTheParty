@@ -313,7 +313,7 @@ export class TraderAssortGenerator
         
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
-            return Math.round(this.randomUtil.randInt(0, modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID])));
+            return Math.round(this.randomUtil.randInt(0, modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult / fenceMult * (now - this.lastAssortUpdate[traderID])));
         }
 
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
