@@ -438,9 +438,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             this.traderAssortGenerator.updateFenceAssort();
         }
 
+        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
+        const maxLL = pmcProfile.TradersInfo[traderID].loyaltyLevel;
+
         // Update stock for trader
         const assort = this.traderController.getAssort(sessionId, traderID);
-        this.traderAssortGenerator.updateTraderStock(traderID, assort, traderID == Traders.FENCE);
+        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID == Traders.FENCE);
 
         // Remove fancy weapons and then check if Fence's assorts need to be regenerated
         if (traderID == Traders.FENCE)
@@ -448,9 +451,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
             this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
 
-            const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-            const maxLL = pmcProfile.TradersInfo[Traders.FENCE].loyaltyLevel;
-            
             if (this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL))
             {
                 return this.getUpdatedTraderAssort(traderID, sessionId);
