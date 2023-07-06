@@ -111,12 +111,14 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 url: "/client/game/start",
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
+                    // Clear any cached trader inventory data if the game is restarted
                     if (modConfig.trader_stock_changes.enabled)
                     {
                         this.traderAssortGenerator.clearLastAssortData();
                     }
 
                     this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
+
                     this.generateLootRankingData(sessionId);
 
                     if (modConfig.debug.enabled)
@@ -433,7 +435,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.lootRankingGenerator.generateLootRankingData(sessionId);
     }
 
-    private getUpdatedTraderAssort(traderID: string, sessionId: string): ITraderAssort
+    private getUpdatedTraderAssort(traderID: string, sessionId: string, canRegenerate = true): ITraderAssort
     {
         // Refresh Fence's assorts
         if (traderID == Traders.FENCE)
@@ -454,9 +456,9 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
             this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
 
-            if (this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL))
+            if (this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL) && canRegenerate)
             {
-                return this.getUpdatedTraderAssort(traderID, sessionId);
+                return this.getUpdatedTraderAssort(traderID, sessionId, false);
             }
         }
 

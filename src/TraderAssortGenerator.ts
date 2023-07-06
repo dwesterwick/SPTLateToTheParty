@@ -375,7 +375,7 @@ export class TraderAssortGenerator
 
         const costFactor = CommonUtils.interpolateForFirstCol(modConfig.item_cost_fraction_vs_durability, durabilityFraction);
 
-        //this.commonUtils.logInfo(`Modifying value of  ${this.commonUtils.getItemName(item._tpl)} by ${costFactor}...`);
+        //this.commonUtils.logInfo(`Modifying value of ${this.commonUtils.getItemName(item._tpl)} by ${costFactor} for durability fraction of ${durabilityFraction}...`);
         assort.barter_scheme[id][0][0].count *= costFactor;
         this.modifiedFenceItems.push(id);
     }
