@@ -156,9 +156,16 @@ namespace LateToTheParty.Controllers
                     yield break;
                 }
 
+                // After loot has initially been destroyed, limit the destruction rate
+                double maxItemsToDestroy = 99999;
+                if (LootInfo.Any(l => l.Value.IsDestroyed))
+                {
+                    maxItemsToDestroy = Math.Floor(ConfigController.Config.DestroyLootDuringRaid.MaxDestroyRate * lastLootDestroyedTimer.ElapsedMilliseconds / 1000.0);
+                }
+
                 // Find amount of loot to destroy
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
-                int lootItemsToDestroy = GetNumberOfLootItemsToDestroy(targetLootRemainingFraction);
+                int lootItemsToDestroy = (int)Math.Min(GetNumberOfLootItemsToDestroy(targetLootRemainingFraction), maxItemsToDestroy);
                 if ((lootItemsToDestroy == 0) && (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0))
                 {
                     LoggingController.LogInfo("Max time of " + ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot + "s elapsed since destroying loot. Forcing at least 1 item to be removed...");
@@ -428,6 +435,22 @@ namespace LateToTheParty.Controllers
 
             // Make everything accessible if the accessibility-checking system is disabled
             if (!ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.Enabled)
+            {
+                LootInfo[item].PathData.IsAccessible = true;
+
+                if (LootInfo[item].PathData.LootOutlineData != null)
+                {
+                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.green;
+                }
+
+                LootInfo[item].PathData.Clear(true);
+                LootInfo[item].PathData.Update();
+
+                return;
+            }
+
+            // If the item appeared after the start of the raid, assume it must be accessible (it's likely on a dead bot)
+            if (LootInfo[item].RaidETWhenFound > 0)
             {
                 LootInfo[item].PathData.IsAccessible = true;
 

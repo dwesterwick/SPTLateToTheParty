@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("min_loot_age")]
         public double MinLootAge { get; set; } = 60;
 
+        [JsonProperty("max_destroy_rate")]
+        public double MaxDestroyRate { get; set; } = 10;
+
         [JsonProperty("map_traversal_speed_mps")]
         public double MapTraversalSpeed { get; set; } = 2;
 

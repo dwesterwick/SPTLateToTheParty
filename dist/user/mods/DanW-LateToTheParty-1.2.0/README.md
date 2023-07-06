@@ -42,6 +42,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **destroy_loot_during_raid.enabled**: If the mod is allowed to remove loot throughout the raid. If you spawn into the raid late, loot will be immediately removed from the map until it reaches the target amount for the fraction of time remaining in the raid. This is **true** by default. 
 * **destroy_loot_during_raid.exclusion_radius**: The radius (in meters) from you within which loot is not allowed to be despawned. By default, this is set to 40 meters. 
 * **destroy_loot_during_raid.min_loot_age**: Loot must be on the map (either loose or in a container) for at least this long (in seconds) before it's allowed to be despawned. This does not apply to loot initially generated on the map. This prevents loot on bots from being destroyed too quickly after they're killed, and it prevents items you drop from being despawned to quickly (if the mod settings allow this to happen). 
+* **destroy_loot_during_raid.max_destroy_rate**: The maximum rate at which items are allowed to be despawned (in items/s). This is ignored when initially despawning loot at the beginning of Scav raids. 
 * **destroy_loot_during_raid.map_traversal_speed_mps**: The rate at which a typical player traverses the map (in m/s). This should not be the maximum speed a player can run in an open area because not all players are rushing Resort, Dorms, etc. at the beginning of every raid. Increase this value to despawn loot in map hot-spots (i.e. Resort) earlier in the raid. With the default setting, you have 2-3 min to get to Resort before loot can despawn there. 
 * **destroy_loot_during_raid.min_distance_traveled_for_update**: The distance you need to travel (in meters) before the mod decides if loot should be despawned (from the last time loot was despawned). This shouldn't be changed in most cases.
 * **destroy_loot_during_raid.min_time_before_update_ms**: The minimum time that must elapse (in milliseconds) after loot was despawned before the mod is allowed to despawn loot again. If you're having performance issues, try increasing this. 
@@ -133,16 +134,17 @@ The mod uses the following process to determine which loot is accessible:
 1. If the loot was previously determined to be accessible, it will always be considered accessible for the rest of the raid. 
 2. If the loot is in a locked container, it's considered inaccessible.
 3. If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, all other loot is considered accessible, and none of the other conditions below are checked. 
-4. If the loot is more than **destroy_loot_during_raid.check_loot_accessibility.exclusion_radius** meters from any locked/inaccessible doors, it's considered accessible.
-5. If the accessibility of the loot is still unknown, the mod finds the nearest location on the map from the following:
+4. If the loot appeared on the map after the raid started, assume it's accessible. That means it was dropped by the player, is on a dead bot, or is in an airdrop.
+5. If the loot is more than **destroy_loot_during_raid.check_loot_accessibility.exclusion_radius** meters from any locked/inaccessible doors, it's considered accessible.
+6. If the accessibility of the loot is still unknown, the mod finds the nearest location on the map from the following:
     * Spawn points (both Scav and PMC)
     * You
     * Alive bots
-6. If the loot is within **destroy_loot_during_raid.check_loot_accessibility.max_path_search_distance** meters of any of the locations above, the mod checks if the one nearest to the loot item is within **destroy_loot_during_raid.check_loot_accessibility.navmesh_search_max_distance_player** meters from the NavMesh. If either check fails, the mod assumes the loot is inaccessible. 
-7. The mod checks if the loot is within **destroy_loot_during_raid.check_loot_accessibility.navmesh_search_max_distance_loot** meters from the NavMesh. If not, the mod assumes the loot is inaccessible. 
-8. The mod tries finding a path via the NavMesh from the selected location in the list above to the loot. If it fails to find a complete path, the mod assumes the loot is inaccessible. 
-9. If a complete path is found, the mod checks if obstacles exist between the end of the path and the loot item via raytracing. Obstacles that have a height below **destroy_loot_during_raid.check_loot_accessibility.navmesh_obstacle_min_height** meters or have an overall (bounds) volume below **destroy_loot_during_raid.check_loot_accessibility.navmesh_obstacle_min_volume** cubic meters are ignored. Foliage and bots are also ignored. If there are any remaining obstacles detected via raytracing that aren't ignored, the mod assumes the loot is inaccessible. 
-10. If all checks above pass, the loot is considered accessible.
+7. If the loot is within **destroy_loot_during_raid.check_loot_accessibility.max_path_search_distance** meters of any of the locations above, the mod checks if the one nearest to the loot item is within **destroy_loot_during_raid.check_loot_accessibility.navmesh_search_max_distance_player** meters from the NavMesh. If either check fails, the mod assumes the loot is inaccessible. 
+8. The mod checks if the loot is within **destroy_loot_during_raid.check_loot_accessibility.navmesh_search_max_distance_loot** meters from the NavMesh. If not, the mod assumes the loot is inaccessible. 
+9. The mod tries finding a path via the NavMesh from the selected location in the list above to the loot. If it fails to find a complete path, the mod assumes the loot is inaccessible. 
+10. If a complete path is found, the mod checks if obstacles exist between the end of the path and the loot item via raytracing. Obstacles that have a height below **destroy_loot_during_raid.check_loot_accessibility.navmesh_obstacle_min_height** meters or have an overall (bounds) volume below **destroy_loot_during_raid.check_loot_accessibility.navmesh_obstacle_min_volume** cubic meters are ignored. Foliage and bots are also ignored. If there are any remaining obstacles detected via raytracing that aren't ignored, the mod assumes the loot is inaccessible. 
+11. If all checks above pass, the loot is considered accessible.
 
 The loot-ranking system uses the following logic to determine the "value" of each item:
 * Quest items and items of type "Node" are excluded from the loot-ranking data because the mod will never despawn them. 
