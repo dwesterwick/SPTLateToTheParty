@@ -102,12 +102,6 @@ export class TraderAssortGenerator
                 }
             }
 
-            // Set max ammo stack size
-            if ((traderID == Traders.FENCE) && (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id))
-            {
-                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
-            }
-
             // Update the stack size
             if (this.lastAssort[traderID].nextResupply == assort.nextResupply)
             {
@@ -129,7 +123,7 @@ export class TraderAssortGenerator
                     {
                         //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
                     }
-
+                    
                     assort.items[i].upd.StackObjectsCount = newStackSize;
                 }
                 else
@@ -138,6 +132,13 @@ export class TraderAssortGenerator
                     //this.commonUtils.logInfo(`Stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} is depleted.`);
                     assort.items[i].upd.StackObjectsCount = 0;
                 }
+            }
+
+            // Set the initial stack size for Fence's ammo offers
+            const isAmmo = itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id;
+            if ((traderID == Traders.FENCE) && isAmmo && (assort.items[i].upd.StackObjectsCount == 1))
+            {
+                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
             }
 
             // Check if the stock has been depleted
