@@ -42,7 +42,7 @@
 		"enabled": true,
 		"exclusion_radius": 40,
 		"min_loot_age": 120,
-		"max_destroy_rate": 2,
+		"max_destroy_rate": 1,
 		"map_traversal_speed_mps": 2,
 		"min_distance_traveled_for_update": 1,
 		"min_time_before_update_ms": 30,
@@ -199,7 +199,7 @@
 				"5448e54d4bdc2dcc718b4568": 7,
 				"5448f39d4bdc2d0a728b4568": 9,
 				"5b3f15d486f77432d0509248": 1,
-				"5485a8684bdc2da71d8b4567": 15
+				"5485a8684bdc2da71d8b4567": 20
 			},
 			"blacklist_append": [
 				"543be5dd4bdc2deb348b4569",

@@ -201,7 +201,7 @@ namespace LateToTheParty.Controllers
                 if (itemsToDestroy.Count > 0)
                 {
                     double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
-                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible.");
+                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. Destroying " + itemsToDestroy.Count + "/" + maxItemsToDestroy + " items.");
                 }
 
                 // Destroy items
