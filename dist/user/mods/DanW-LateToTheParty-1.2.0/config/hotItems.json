@@ -241,11 +241,11 @@
     },
     "56dfef82d2720bbd668b4567": {
         "name": "5.45x39mm BP gs",
-        "value": 75
+        "value": 30
     },
 	"56dff2ced2720bb4668b4567": {
         "name": "5.45x39mm PP gs",
-        "value": 125
+        "value": 100
     },
     "56dff026d2720bb8668b4567": {
         "name": "5.45x39mm BS gs",

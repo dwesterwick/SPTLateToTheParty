@@ -20,12 +20,20 @@ namespace LateToTheParty.Patches
         [PatchPrefix]
         private static void PatchPrefix(QuestClass __instance, EQuestStatus status)
         {
-            if ((status != EQuestStatus.Success) || (__instance.QuestStatus == EQuestStatus.Success))
+            // Ignore quests that already have this status
+            if (__instance.QuestStatus == status)
             {
                 return;
             }
 
-            LoggingController.LogInfo("Quest " + __instance.Id + " was completed. Current status: " + __instance.QuestStatus.ToString());
+            // Ignore status changes that won't result in trader assort unlocks
+            if ((status != EQuestStatus.Success) && (status != EQuestStatus.Started))
+            {
+                return;
+            }
+
+            LoggingController.LogInfo("Quest status for " + __instance.Id + " changed from " + __instance.QuestStatus.ToString() + " to " + status.ToString());
+            ConfigController.ShareQuestStatusChange(__instance.Id, status.ToString());
         }
     }
 }

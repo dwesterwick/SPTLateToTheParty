@@ -163,5 +163,4 @@ Known issues:
 * Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors or in locked containers. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.
 * The "hot items" sold by traders are always the same, regardless of your player level or account age. This makes the trader stock changes always seem like it's early wipe. 
-* Traders may sell out of junk ammo that nobody actually buys. 
-* Traders will be sold out of items that have just been unlocked by completing quests until the next trader reset or server restart. 
+* Traders may sell out of junk ammo that nobody actually buys.

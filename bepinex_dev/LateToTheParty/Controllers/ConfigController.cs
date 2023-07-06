@@ -50,5 +50,10 @@ namespace LateToTheParty.Controllers
         {
             RequestHandler.GetJson("/LateToTheParty/EscapeTime/" + escapeTime + "/" + timeRemaining);
         }
+
+        public static void ShareQuestStatusChange(string questID, string newStatus)
+        {
+            RequestHandler.GetJson("/LateToTheParty/QuestStatusChange/" + questID + "/" + newStatus);
+        }
     }
 }

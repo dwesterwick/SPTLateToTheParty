@@ -19,7 +19,8 @@ export class TraderAssortGenerator
     private lastAssortUpdate: Record<string, number> = {};
     private lastAssort: Record<string, ITraderAssort> = {};
     private originalFenceBaseAssortData: ITraderAssort;
-    private modifiedFenceItems: string[];
+    private modifiedFenceItems: string[] = [];
+    private recentlyChangedQuests: string[] = [];
 
     constructor
     (
@@ -43,6 +44,15 @@ export class TraderAssortGenerator
         this.lastAssortUpdate = {};
         this.lastLL = {};
         this.modifiedFenceItems = [];
+        this.recentlyChangedQuests = [];
+    }
+
+    public addRecentlyChangedQuest(questID: string): void
+    {
+        if (!this.recentlyChangedQuests.includes(questID))
+        {
+            this.recentlyChangedQuests.push(questID);
+        }
     }
 
     public updateTraderStock(traderID: string, assort: ITraderAssort, ll: number, deleteDepletedItems: boolean): ITraderAssort
@@ -130,12 +140,22 @@ export class TraderAssortGenerator
                 }
                 else
                 {
-                    // If the item wasn't in the previous assort, the stock was depleted
-                    //this.commonUtils.logInfo(`Stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} is depleted.`);
-                    assort.items[i].upd.StackObjectsCount = 0;
+                    // Check if the assort was just unlocked due to a recent quest status change
+                    const questID = this.getIDofRecentlyChangedQuestForItem(assort.items[i], traderID);
+                    if (questID !== undefined)
+                    {
+                        this.commonUtils.logInfo(`Resetting stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} due to recently completed quest ${questID}`);
+                        this.recentlyChangedQuests.splice(this.recentlyChangedQuests.indexOf(questID), 1);
+                    }
+                    else
+                    {
+                        // If the item wasn't in the previous assort, the stock was depleted
+                        //this.commonUtils.logInfo(`Stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} is depleted.`);
+                        assort.items[i].upd.StackObjectsCount = 0;
+                    }
                 }
             }
-
+            
             // Set the initial stack size for Fence's ammo offers
             const isAmmo = itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id;
             if ((traderID == Traders.FENCE) && isAmmo && (assort.items[i].upd.StackObjectsCount == 1))
@@ -466,5 +486,33 @@ export class TraderAssortGenerator
         }
 
         return ids;
+    }
+
+    private getIDofRecentlyChangedQuestForItem(item: Item, traderID: string): string
+    {
+        const questassort = this.databaseTables.traders[traderID].questassort;
+        if (questassort === undefined)
+        {
+            return undefined;
+        }
+
+        // Search each quest status (success, started, fail)
+        for (const questStatus in questassort)
+        {
+            // Check if the assort is quest-locked
+            if (!(item._id in questassort[questStatus]))
+            {
+                continue;
+            }
+
+            // Check if the quest that unlocks the assort recently had a status change reported by the client
+            const questID = questassort[questStatus][item._id];
+            if (this.recentlyChangedQuests.includes(questID))
+            {
+                return questID;
+            }
+        }
+
+        return undefined;
     }
 }

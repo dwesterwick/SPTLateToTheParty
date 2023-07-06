@@ -214,6 +214,26 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 }
             }], "SetEscapeTime"
         );
+
+        // Needed so trader assorts just unlocked by a quest aren't sold out immediately
+        dynamicRouterModService.registerDynamicRouter(`DynamicAddRecentlyChangedQuest${modName}`,
+            [{
+                url: "/LateToTheParty/QuestStatusChange/",
+                action: (url: string) => 
+                {
+                    const urlParts = url.split("/");
+                    const questID = urlParts[urlParts.length - 2];
+                    //const newStatus = urlParts[urlParts.length - 1];
+
+                    if (modConfig.trader_stock_changes.enabled)
+                    {
+                        this.traderAssortGenerator.addRecentlyChangedQuest(questID);
+                    }
+                    
+                    return JSON.stringify({ resp: "OK" });
+                }
+            }], "AddRecentlyChangedQuest"
+        );
     }
 
     public postDBLoad(container: DependencyContainer): void
@@ -442,7 +462,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         {
             this.traderAssortGenerator.updateFenceAssort();
         }
-
+        
         const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
         const maxLL = pmcProfile.TradersInfo[traderID].loyaltyLevel;
 
