@@ -16,7 +16,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **debug.scav_cooldown_time**: Cooldown timer (in seconds) after a Scav raid ends before you're allowed to start another one. This is **1500** by default, which is the same as the base game.
 * **debug.free_labs_access**: If **true**, Labs cards are no longer required to enter Labs. 
 * **debug.min_level_for_flea**: The minimum player level to be able to access the flea market. 
-* **debug.trader_resupply_time_factor**: A multiplier for trader reset times. For example, if this is 0.5, trader resets occur every 30 min instead of 60 min. 
+* **debug.trader_resupply_time_factor**: A multiplier for trader reset times. For example, if this is 0.5, trader resets occur every 30 min instead of 60 min. **trader_stock_changes.max_ammo_buy_rate** and **trader_stock_changes.max_item_buy_rate** are divided by this value for testing purposes. 
 * **debug.loot_path_visualization.enabled**: Enable visualization of loot items and NavMesh pathing to them to view which ones the mod thinks are accessible. Most visuals require **destroy_loot_during_raid.check_loot_accessibility.enabled=true**.
 * **debug.loot_path_visualization.points_per_circle**: The number of points to use for drawing a circle. This is **10** by default. Considering this is only used for debugging, higher values might result in rounder-looking circles, but there isn't much benefit.
 * **debug.loot_path_visualization.outline_loot**: Draw a spherical outline around loot items and loot containers that are not empty. The center of the sphere should be in the center of loose loot, but it will be somewhere around the perimeter of loot containers (and varies by the type of container). The color of the outline will change based on the loot's accessibility as determined by the mod. Green = accessible, Red = inaccessible, White = undetermined (cannot find a valid NavMesh path to the loot). 
@@ -101,8 +101,10 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **trader_stock_changes.enabled**: If the mod should allow trader stock to deplete as well as change the number and variety of items sold by Fence.
 * **trader_stock_changes.max_ammo_buy_rate**: The maximum rate at which a trader's ammo supply (for each type) can be reduced in rounds/second.
 * **trader_stock_changes.max_item_buy_rate**: The maximum rate at which a trader's item supply (for each type) can be reduced in items/second.
-* **trader_stock_changes.item_sellout_chance**: The chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
+* **trader_stock_changes.item_sellout_chance.min**: The minimum chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
+* **trader_stock_changes.item_sellout_chance.max**: The maximum chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
 * **trader_stock_changes.barter_trade_sellout_factor**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for barter items. 
+* **trader_stock_changes.hot_item_sell_chance_global_multiplier**: A multiplier applied to all values in *hotITems.json*.
 * **trader_stock_changes.ammo_parent_id**: The parent ID of loose ammo, which is needed to determine what items are ammo. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.money_parent_id**: The parent ID of money, which is needed to determine what items are barter trades. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.fence_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
@@ -118,9 +120,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **trader_stock_changes.fence_stock_changes.blacklist_append**: The ID's that should be added to Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
 * **trader_stock_changes.fence_stock_changes.blacklist_remove**:The ID's that should be removed from Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
 * **trader_stock_changes.fence_stock_changes.blacklist_ammo_penetration_limit**: Any ammo that has a penetration value above this will be removed from Fence's inventory. 
-* **trader_stock_changes.fence_stock_changes.blacklist_ammo_damage_limit**: Any ammo that has a damage value above this will be removed from Fence's inventory. 
-* **trader_stock_changes.hot_item_sell_chance_global_multiplier**: A global multiplier to apply to all values in **trader_stock_changes.hot_item_sell_chance_multipliers**.
-* **trader_stock_changes.hot_item_sell_chance_multipliers**: A dictionary describing a multiplier applied to **trader_stock_changes.item_sellout_chance**, **trader_stock_changes.max_ammo_buy_rate**, and **trader_stock_changes.max_item_buy_rate** for specific ID's to make them more likely to be sold by traders (and more likely to sell out).
+* **trader_stock_changes.fence_stock_changes.blacklist_ammo_damage_limit**: Any ammo that has a damage value above this will be removed from Fence's inventory.
 
 * **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid. A value of "1" means match the original loot amount. 
 * **vex_chance_reduction**: [time_remaining_factor, reduction_factor] pairs describing how the chance that a vehicle extract is available changes based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
