@@ -310,15 +310,17 @@ export class TraderAssortGenerator
             selloutMult *= hotItems[itemTpl._id].value * modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
         }
         
+        let maxBuyRate = modConfig.trader_stock_changes.max_ammo_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
-            return Math.round(selloutMult * modConfig.trader_stock_changes.max_ammo_buy_rate / fenceMult * (now - this.lastAssortUpdate[traderID]));
+            return Math.round(selloutMult * maxBuyRate / fenceMult * (now - this.lastAssortUpdate[traderID]));
         }
 
+        maxBuyRate = modConfig.trader_stock_changes.max_item_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
         const maxItemsSold = selloutMult * originalStock * refreshFractionElapsed * fenceMult;
         const itemsSold = originalStock - currentStock;
-        const maxReduction = selloutMult * modConfig.trader_stock_changes.max_item_buy_rate * (now - this.lastAssortUpdate[traderID]);
+        const maxReduction = selloutMult * maxBuyRate * (now - this.lastAssortUpdate[traderID]);
         const itemsToSell = Math.round(Math.max(0, Math.min(maxItemsSold - itemsSold, maxReduction)));
 
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
