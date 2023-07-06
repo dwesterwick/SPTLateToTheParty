@@ -19,7 +19,7 @@ namespace LateToTheParty.Configuration
         public double MaxItemBuyRate { get; set; } = 100;
 
         [JsonProperty("item_sellout_chance")]
-        public double ItemSelloutChance { get; set; } = 50;
+        public MinMaxConfig ItemSelloutChance { get; set; } = new MinMaxConfig();
 
         [JsonProperty("barter_trade_sellout_factor")]
         public double BarterTradeSelloutFactor { get; set; } = 0.2;

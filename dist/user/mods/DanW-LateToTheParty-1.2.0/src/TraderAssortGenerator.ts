@@ -62,6 +62,7 @@ export class TraderAssortGenerator
         }
         if ((this.lastLL[traderID] != ll) || (this.lastAssort[traderID] === undefined) || (this.lastAssort[traderID].items.length == 0))
         {
+            this.commonUtils.logInfo(`Resetting last-assort cache for trader ${traderID}`);
             this.lastAssort[traderID] = this.jsonUtil.clone(assort);
         }
 
@@ -114,25 +115,22 @@ export class TraderAssortGenerator
                 if (lastAssortItem !== undefined)
                 {
                     const isBarter = this.isBarterTrade(assort, assort.items[i]._id);
-                    const stackSizeReduction = this.getStackSizeReduction(
+                    const stackSizeReduction = Math.max(0, this.getStackSizeReduction(
                         assort.items[i],
                         isBarter,
                         assort.nextResupply,
                         assort.items[i].upd.StackObjectsCount,
                         lastAssortItem.upd.StackObjectsCount,
                         traderID
-                    );
+                    ));
 
-                    if (stackSizeReduction > 0)
+                    const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
+                    if (newStackSize <= 0)
                     {
-                        const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
-                        if (newStackSize <= 0)
-                        {
-                            //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
-                        }
-
-                        assort.items[i].upd.StackObjectsCount = newStackSize;
+                        //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
                     }
+
+                    assort.items[i].upd.StackObjectsCount = newStackSize;
                 }
                 else
                 {
@@ -305,7 +303,8 @@ export class TraderAssortGenerator
         }
 
         const fenceMult = (traderID == Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
-        let selloutMult = isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
+        let selloutMult = this.randomUtil.getInt(modConfig.trader_stock_changes.item_sellout_chance.min, modConfig.trader_stock_changes.item_sellout_chance.max) / 100;
+        selloutMult *= isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
         if (itemTpl._id in hotItems)
         {
             selloutMult *= hotItems[itemTpl._id].value * modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
@@ -313,13 +312,13 @@ export class TraderAssortGenerator
         
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
-            return Math.round(this.randomUtil.getFloat(0, 1) * modConfig.trader_stock_changes.max_ammo_buy_rate * selloutMult / fenceMult * (now - this.lastAssortUpdate[traderID]));
+            return Math.round(selloutMult * modConfig.trader_stock_changes.max_ammo_buy_rate / fenceMult * (now - this.lastAssortUpdate[traderID]));
         }
 
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
-        const maxItemsSold = modConfig.trader_stock_changes.item_sellout_chance / 100 * originalStock * refreshFractionElapsed * selloutMult * fenceMult;
+        const maxItemsSold = selloutMult * originalStock * refreshFractionElapsed * fenceMult;
         const itemsSold = originalStock - currentStock;
-        const maxReduction = this.randomUtil.getFloat(0, 1) * modConfig.trader_stock_changes.max_item_buy_rate * selloutMult * (now - this.lastAssortUpdate[traderID]);
+        const maxReduction = selloutMult * modConfig.trader_stock_changes.max_item_buy_rate * (now - this.lastAssortUpdate[traderID]);
         const itemsToSell = Math.round(Math.max(0, Math.min(maxItemsSold - itemsSold, maxReduction)));
 
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);

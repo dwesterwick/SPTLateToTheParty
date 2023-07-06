@@ -166,7 +166,10 @@
 		"enabled": true,
 		"max_ammo_buy_rate": 100,
 		"max_item_buy_rate": 200,
-		"item_sellout_chance": 50,
+		"item_sellout_chance": {
+			"min": 50,
+			"max": 100
+		},
 		"barter_trade_sellout_factor": 0.2,
 		"hot_item_sell_chance_global_multiplier": 0.4,
 		"ammo_parent_id": "5485a8684bdc2da71d8b4567",

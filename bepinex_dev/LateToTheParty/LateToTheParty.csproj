@@ -93,6 +93,7 @@
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\FenceStockChangesConfig.cs" />
+    <Compile Include="Configuration\MinMaxConfig.cs" />
     <Compile Include="Configuration\TraderStockChangesConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
