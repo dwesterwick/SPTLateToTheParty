@@ -164,11 +164,11 @@
 	},
 	"trader_stock_changes": {
 		"enabled": true,
-		"max_ammo_buy_rate": 100,
-		"max_item_buy_rate": 200,
+		"max_ammo_buy_rate": 30,
+		"max_item_buy_rate": 30,
 		"item_sellout_chance": {
-			"min": 50,
-			"max": 100
+			"min": 10,
+			"max": 101
 		},
 		"barter_trade_sellout_factor": 0.2,
 		"hot_item_sell_chance_global_multiplier": 0.4,
@@ -178,11 +178,11 @@
 			"always_regenerate": false,
 			"assort_size": 190,
 			"assort_size_discount": 70,
-			"assort_restock_threshold": 90,
+			"assort_restock_threshold": 60,
 			"maxPresetsPercent": 25,
 			"max_preset_cost": 150000,
 			"min_allowed_item_value": 20000,
-			"max_ammo_stack": 50000,
+			"max_ammo_stack": 10000,
 			"sell_chance_multiplier": 3,
 			"itemTypeLimits_Override": {
 				"5448bc234bdc2d3c308b4569": 20,
