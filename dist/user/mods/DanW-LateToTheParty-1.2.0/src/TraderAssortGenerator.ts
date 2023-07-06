@@ -102,12 +102,14 @@ export class TraderAssortGenerator
                 }
             }
 
-            // Update the stack size
+            // Update the stack size unless there was just a trader reset
             if (this.lastAssort[traderID].nextResupply == assort.nextResupply)
             {
+                // Find the matching item from the previous trader inventory update
                 const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
                 if (lastAssortItem !== undefined)
                 {
+                    // Determine how much to reduce the stack size
                     const isBarter = this.isBarterTrade(assort, assort.items[i]._id);
                     const stackSizeReduction = Math.max(0, this.getStackSizeReduction(
                         assort.items[i],
@@ -118,12 +120,12 @@ export class TraderAssortGenerator
                         traderID
                     ));
 
+                    // Update the stack size
                     const newStackSize = lastAssortItem.upd.StackObjectsCount - stackSizeReduction;
                     if (newStackSize <= 0)
                     {
                         //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
-                    }
-                    
+                    }                    
                     assort.items[i].upd.StackObjectsCount = newStackSize;
                 }
                 else
@@ -225,9 +227,9 @@ export class TraderAssortGenerator
 
         this.databaseTables.traders[Traders.FENCE].assort = assort;
 
-        const originalAssortCount = Object.keys(this.originalFenceBaseAssortData.loyal_level_items).length;
-        const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
-        this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
+        //const originalAssortCount = Object.keys(this.originalFenceBaseAssortData.loyal_level_items).length;
+        //const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
+        //this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
     }
     
     public removeExpensivePresets(assort: ITraderAssort, maxCost: number): void
@@ -333,6 +335,7 @@ export class TraderAssortGenerator
     {
         if (assort.barter_scheme[itemID] === undefined)
         {
+            // Ensure the item isn't an attachment for another item
             if (assort.items.find((i) => i._id == itemID).parentId != "hideout")
             {
                 return false;
@@ -354,6 +357,7 @@ export class TraderAssortGenerator
                 return false;
             }
             
+            // Check if currency is used to purchase the item
             if (CommonUtils.hasParent(itemTpl, modConfig.trader_stock_changes.money_parent_id, this.databaseTables))
             {
                 return false;
@@ -440,13 +444,13 @@ export class TraderAssortGenerator
         }
 
         // Update Fence's base assorts
-        this.commonUtils.logInfo(`Original Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
+        //this.commonUtils.logInfo(`Original Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
         this.databaseTables.traders[Traders.FENCE].assort.barter_scheme = {};
         this.databaseTables.traders[Traders.FENCE].assort.items = [];
         this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items = {};
         this.databaseTables.traders[Traders.FENCE].assort.nextResupply = this.fenceService.getNextFenceUpdateTimestamp();
         this.fenceBaseAssortGenerator.generateFenceBaseAssorts();
-        this.commonUtils.logInfo(`Updated Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
+        //this.commonUtils.logInfo(`Updated Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
     }
 
     private static getTraderAssortIDsforLL(assort: ITraderAssort, ll: number): string[]
