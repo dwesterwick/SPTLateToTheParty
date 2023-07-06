@@ -161,6 +161,7 @@ Known issues:
 * If **debug.enabled=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug.enabled=false**, the script is called twice unless you press "Ready" early. 
 * Any locked door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
-* If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors or in locked containers. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned. 
-* You'll sometimes get an error in the server console if you examine an item that disappears after you refresh Fence's inventory. 
+* If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors or in locked containers. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.
 * The "hot items" sold by traders are always the same, regardless of your player level or account age. This makes the trader stock changes always seem like it's early wipe. 
+* Traders may sell out of junk ammo that nobody actually buys. 
+* Traders will be sold out of items that have just been unlocked by completing quests until the next trader reset or server restart. 

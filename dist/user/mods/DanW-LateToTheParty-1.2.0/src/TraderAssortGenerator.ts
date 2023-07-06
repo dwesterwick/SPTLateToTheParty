@@ -102,12 +102,6 @@ export class TraderAssortGenerator
                 }
             }
 
-            // Set max ammo stack size
-            if ((traderID == Traders.FENCE) && (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id))
-            {
-                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
-            }
-
             // Update the stack size
             if (this.lastAssort[traderID].nextResupply == assort.nextResupply)
             {
@@ -129,7 +123,7 @@ export class TraderAssortGenerator
                     {
                         //this.commonUtils.logInfo(`Reducing stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} from ${lastAssortItem.upd.StackObjectsCount} to ${newStackSize}...`);
                     }
-
+                    
                     assort.items[i].upd.StackObjectsCount = newStackSize;
                 }
                 else
@@ -138,6 +132,13 @@ export class TraderAssortGenerator
                     //this.commonUtils.logInfo(`Stock of ${this.commonUtils.getItemName(assort.items[i]._tpl)} is depleted.`);
                     assort.items[i].upd.StackObjectsCount = 0;
                 }
+            }
+
+            // Set the initial stack size for Fence's ammo offers
+            const isAmmo = itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id;
+            if ((traderID == Traders.FENCE) && isAmmo && (assort.items[i].upd.StackObjectsCount == 1))
+            {
+                assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
             }
 
             // Check if the stock has been depleted
@@ -310,15 +311,17 @@ export class TraderAssortGenerator
             selloutMult *= hotItems[itemTpl._id].value * modConfig.trader_stock_changes.hot_item_sell_chance_global_multiplier;
         }
         
+        let maxBuyRate = modConfig.trader_stock_changes.max_ammo_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
         if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
         {
-            return Math.round(selloutMult * modConfig.trader_stock_changes.max_ammo_buy_rate / fenceMult * (now - this.lastAssortUpdate[traderID]));
+            return Math.round(selloutMult * maxBuyRate / fenceMult * (now - this.lastAssortUpdate[traderID]));
         }
 
+        maxBuyRate = modConfig.trader_stock_changes.max_item_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
         const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
         const maxItemsSold = selloutMult * originalStock * refreshFractionElapsed * fenceMult;
         const itemsSold = originalStock - currentStock;
-        const maxReduction = selloutMult * modConfig.trader_stock_changes.max_item_buy_rate * (now - this.lastAssortUpdate[traderID]);
+        const maxReduction = selloutMult * maxBuyRate * (now - this.lastAssortUpdate[traderID]);
         const itemsToSell = Math.round(Math.max(0, Math.min(maxItemsSold - itemsSold, maxReduction)));
 
         //this.commonUtils.logInfo(`Refresh fraction: ${refreshFractionElapsed}, Max items sold: ${maxItemsSold}, Items to sell; ${itemsToSell}`);
@@ -372,7 +375,7 @@ export class TraderAssortGenerator
 
         const costFactor = CommonUtils.interpolateForFirstCol(modConfig.item_cost_fraction_vs_durability, durabilityFraction);
 
-        //this.commonUtils.logInfo(`Modifying value of  ${this.commonUtils.getItemName(item._tpl)} by ${costFactor}...`);
+        //this.commonUtils.logInfo(`Modifying value of ${this.commonUtils.getItemName(item._tpl)} by ${costFactor} for durability fraction of ${durabilityFraction}...`);
         assort.barter_scheme[id][0][0].count *= costFactor;
         this.modifiedFenceItems.push(id);
     }
