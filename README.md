@@ -105,7 +105,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **trader_stock_changes.item_sellout_chance.min**: The minimum chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
 * **trader_stock_changes.item_sellout_chance.max**: The maximum chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
 * **trader_stock_changes.barter_trade_sellout_factor**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for barter items. 
-* **trader_stock_changes.hot_item_sell_chance_global_multiplier**: A multiplier applied to all values in *hotITems.json*.
+* **trader_stock_changes.hot_item_sell_chance_global_multiplier**: A multiplier applied to all values in *hotItems.json*.
 * **trader_stock_changes.ammo_parent_id**: The parent ID of loose ammo, which is needed to determine what items are ammo. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.money_parent_id**: The parent ID of money, which is needed to determine what items are barter trades. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.fence_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
@@ -119,7 +119,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **trader_stock_changes.fence_stock_changes.sell_chance_multiplier**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for determining how likely an item in Fence's inventory is to be sold. 
 * **trader_stock_changes.fence_stock_changes.itemTypeLimits_Override**: A dictionary describing the maximum number of items of a given type that Fence is allowed to sell per reset. If an entry for the type already exists in **fence.itemTypeLimits** in the SPT-AKI *trader.json* config file, its value will be overriden with this one. Otherwise, it will be added to that dictionary. 
 * **trader_stock_changes.fence_stock_changes.blacklist_append**: The ID's that should be added to Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
-* **trader_stock_changes.fence_stock_changes.blacklist_remove**:The ID's that should be removed from Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
+* **trader_stock_changes.fence_stock_changes.blacklist_remove**: The ID's that should be removed from Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
 * **trader_stock_changes.fence_stock_changes.blacklist_ammo_penetration_limit**: Any ammo that has a penetration value above this will be removed from Fence's inventory. 
 * **trader_stock_changes.fence_stock_changes.blacklist_ammo_damage_limit**: Any ammo that has a damage value above this will be removed from Fence's inventory.
 
