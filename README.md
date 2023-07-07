@@ -109,15 +109,15 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **trader_stock_changes.ammo_parent_id**: The parent ID of loose ammo, which is needed to determine what items are ammo. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.money_parent_id**: The parent ID of money, which is needed to determine what items are barter trades. **This should NOT be changed, or the mod may not work properly.** 
 * **trader_stock_changes.fence_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
-* **trader_stock_changes.fence_stock_changes.assort_size**: The number of items sold by Fence at LL1. The is **190** by default compared to the base game's **120**.
-* **trader_stock_changes.fence_stock_changes.assort_size_discount**: The number of items sold by Fence at LL2. The is **90** by default compared to the base game's **50**.
+* **trader_stock_changes.fence_stock_changes.assort_size**: The number of items sold by Fence at LL1. This is **190** by default compared to the base game's **120**.
+* **trader_stock_changes.fence_stock_changes.assort_size_discount**: The number of items sold by Fence at LL2. This is **90** by default compared to the base game's **50**.
 * **trader_stock_changes.fence_stock_changes.assort_restock_threshold**: If Fence's stock drops below this percentage of **trader_stock_changes.fence_stock_changes.assort_size** or **trader_stock_changes.fence_stock_changes.assort_size_discount**, his inventory will be forced to regenerate. 
 * **trader_stock_changes.fence_stock_changes.maxPresetsPercent**: The maximum percentage of **trader_stock_changes.fence_stock_changes.assort_size** that can be filled with weapons. This overrides **fence.maxPresetsPercent** in the SPT-AKI *trader.json* config file.
-* **trader_stock_changes.fence_stock_changes.max_preset_cost**: Any weapons that exceed this cost after adjusting for **item_cost_fraction_vs_durability** will be removed from Fence's inventory. 
+* **trader_stock_changes.fence_stock_changes.max_preset_cost**: Any weapons that exceeds this cost after adjusting for **item_cost_fraction_vs_durability** will be removed from Fence's inventory. 
 * **trader_stock_changes.fence_stock_changes.min_allowed_item_value**: Fence will always be able to sell any item below this price (using the maximum found in *handbook.json* and *prices.json*) regardless of the chance of selling it as determined by the **fence_item_value_permitted_chance** array.
 * **trader_stock_changes.fence_stock_changes.max_ammo_stack**: The largest stack of any type of ammo allowed in Fence's inventory.
 * **trader_stock_changes.fence_stock_changes.sell_chance_multiplier**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for determining how likely an item in Fence's inventory is to be sold. 
-* **trader_stock_changes.fence_stock_changes.itemTypeLimits_Override**: A dictionary describing the maximum number of items of a given type that Fence is allowed to sell per reset. If an entry for the type already exists in **fence.itemTypeLimits** in the SPT-AKI *trader.json* config file, its value will be overriden with this one. 
+* **trader_stock_changes.fence_stock_changes.itemTypeLimits_Override**: A dictionary describing the maximum number of items of a given type that Fence is allowed to sell per reset. If an entry for the type already exists in **fence.itemTypeLimits** in the SPT-AKI *trader.json* config file, its value will be overriden with this one. Otherwise, it will be added to that dictionary. 
 * **trader_stock_changes.fence_stock_changes.blacklist_append**: The ID's that should be added to Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
 * **trader_stock_changes.fence_stock_changes.blacklist_remove**:The ID's that should be removed from Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
 * **trader_stock_changes.fence_stock_changes.blacklist_ammo_penetration_limit**: Any ammo that has a penetration value above this will be removed from Fence's inventory. 
@@ -128,7 +128,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **fence_item_value_permitted_chance**: [item_value, sell_chance_percent] pairs describing how likely Fence is to sell an item with a certain value. 
-* **item_cost_fraction_vs_durability**: [item_durability, price_multiplier] pairs describing how much cheaper Fence will sell degraded items. This applies to anything with durability (namely weapons and armor) and items with limited uses like medkits.
+* **item_cost_fraction_vs_durability**: [item_durability_fraction, price_multiplier] pairs describing how much cheaper Fence will sell degraded items. This applies to anything with durability (namely weapons and armor) and items with limited uses like medkits.
 
 The mod uses the following process to determine which loot is accessible:
 1. If the loot was previously determined to be accessible, it will always be considered accessible for the rest of the raid. 
