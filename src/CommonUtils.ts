@@ -56,6 +56,11 @@ export class CommonUtils
         if (matchingHandbookItems.length == 1)
         {
             handbookPrice = matchingHandbookItems[0].Price;
+            if (handbookPrice == null)
+            {
+                this.logWarning(`Invalid handbook price for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
+                handbookPrice = 0;
+            }
         }
 
         // Get the prices.json price, if any exists
@@ -63,6 +68,11 @@ export class CommonUtils
         if (itemID in this.databaseTables.templates.prices)
         {
             price = this.databaseTables.templates.prices[itemID];
+            if (price == null)
+            {
+                this.logWarning(`Invalid price for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
+                price = 0;
+            }
         }
         
         return Math.max(handbookPrice, price);

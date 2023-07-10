@@ -29,8 +29,12 @@ namespace LateToTheParty.Controllers
 
         public static Configuration.LootRankingWeightingConfig GetLootRankingData()
         {
+            string errorMessage = "Cannot read loot ranking data from the server. Falling back to using random loot ranking.";
             string json = RequestHandler.GetJson("/LateToTheParty/GetLootRankingData");
-            LootRanking = JsonConvert.DeserializeObject<Configuration.LootRankingWeightingConfig>(json);
+
+            TryDeserializeObject(json, errorMessage, out Configuration.LootRankingWeightingConfig _lootRanking);
+            LootRanking = _lootRanking;
+
             return LootRanking;
         }
 
@@ -54,6 +58,35 @@ namespace LateToTheParty.Controllers
         public static void ShareQuestStatusChange(string questID, string newStatus)
         {
             RequestHandler.GetJson("/LateToTheParty/QuestStatusChange/" + questID + "/" + newStatus);
+        }
+
+        public static void ReportError(string errorMessage)
+        {
+            RequestHandler.GetJson("/LateToTheParty/ReportError/" + errorMessage);
+        }
+
+        public static bool TryDeserializeObject<T>(string json, string errorMessage, out T obj)
+        {
+            try
+            {
+                if (json.Length == 0)
+                {
+                    throw new InvalidCastException("Could deserialize an empty string to an object of type " + typeof(T).FullName);
+                }
+
+                obj = JsonConvert.DeserializeObject<T>(json);
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                LoggingController.LogError(e.Message);
+                LoggingController.LogError(e.StackTrace);
+                LoggingController.LogErrorToServerConsole(errorMessage);
+                obj = default(T);
+            }
+
+            return false;
         }
     }
 }

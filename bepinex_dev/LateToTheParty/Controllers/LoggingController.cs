@@ -54,6 +54,12 @@ namespace LateToTheParty.Controllers
             loggingBuffer.AddMessage(GetMessagePrefix('E') + message);
         }
 
+        public static void LogErrorToServerConsole(string message)
+        {
+            LogError(message);
+            ConfigController.ReportError(message);
+        }
+
         public static void WriteMessagesToLogFile()
         {
             loggingBuffer.WriteMessagesToLogFile();

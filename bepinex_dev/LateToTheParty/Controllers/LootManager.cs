@@ -324,13 +324,14 @@ namespace LateToTheParty.Controllers
             {
                 ConfigController.GetLootRankingData();
             }
-            if (ConfigController.LootRanking == null)
-            {
-                LoggingController.LogError("Cannot read loot ranking data from the server.");
-            }
 
-            // If loot ranking is disabled, simply sort the loot randomly
-            if ((!ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled) || (ConfigController.LootRanking == null))
+            // If loot ranking is disabled or invalid, simply sort the loot randomly
+            if
+            (
+                !ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled
+                || (ConfigController.LootRanking == null)
+                || (ConfigController.LootRanking.Items.Count == 0)
+            )
             {
                 return loot.OrderBy(i => randomGen.NextDouble());
             }

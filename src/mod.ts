@@ -99,6 +99,23 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }], "GetLoggingPath"
         );
 
+        // Report error messages to the SPT-AKI server console in case the user hasn't enabled the bepinex console
+        dynamicRouterModService.registerDynamicRouter(`DynamicReportError${modName}`,
+            [{
+                url: "/LateToTheParty/ReportError/",
+                action: (url: string) => 
+                {
+                    const urlParts = url.split("/");
+                    const errorMessage = urlParts[urlParts.length - 1];
+
+                    const regex = /%20/g;
+                    this.commonUtils.logError(errorMessage.replace(regex, " "));
+
+                    return JSON.stringify({ resp: "OK" });
+                }
+            }], "ReportError"
+        );
+
         if (!modConfig.enabled)
         {
             return;

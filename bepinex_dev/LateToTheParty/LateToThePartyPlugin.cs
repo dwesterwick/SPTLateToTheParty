@@ -6,7 +6,7 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.2.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.2.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private void Awake()
