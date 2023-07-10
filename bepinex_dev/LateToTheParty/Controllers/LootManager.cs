@@ -218,6 +218,12 @@ namespace LateToTheParty.Controllers
 
         private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
         {
+            // Ensure you're still in the raid to avoid NRE's when it ends
+            if ((Camera.main == null) || (lootItem.transform == null))
+            {
+                return;
+            }
+
             // Ignore quest items like the bronze pocket watch for "Checking"
             if (lootItem.Item.QuestItem)
             {
@@ -253,6 +259,12 @@ namespace LateToTheParty.Controllers
         private static void ProcessStaticLootContainer(LootableContainer lootableContainer, double raidET)
         {
             if (lootableContainer.ItemOwner == null)
+            {
+                return;
+            }
+
+            // Ensure you're still in the raid to avoid NRE's when it ends
+            if ((Camera.main == null) || (lootableContainer.transform == null))
             {
                 return;
             }
