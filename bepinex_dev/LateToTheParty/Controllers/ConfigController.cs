@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Aki.Common.Http;
@@ -15,16 +16,26 @@ namespace LateToTheParty.Controllers
 
         public static Configuration.ModConfig GetConfig()
         {
+            string errorMessage = "!!!!! Cannot retrieve config.json data from the server. The mod will not work properly! !!!!!";
             string json = RequestHandler.GetJson("/LateToTheParty/GetConfig");
-            Config = JsonConvert.DeserializeObject<Configuration.ModConfig>(json);
+
+            TryDeserializeObject(json, errorMessage, out Configuration.ModConfig _config);
+            Config = _config;
+
             return Config;
         }
 
         public static string GetLoggingPath()
         {
+            string errorMessage = "Cannot retrieve logging path from the server. Falling back to using the current directory.";
             string json = RequestHandler.GetJson("/LateToTheParty/GetLoggingPath");
-            Configuration.LoggingPath path = JsonConvert.DeserializeObject<Configuration.LoggingPath>(json);
-            return path.Path;
+
+            if (TryDeserializeObject(json, errorMessage, out Configuration.LoggingPath _path))
+            {
+                return _path.Path;
+            }
+
+            return Assembly.GetExecutingAssembly().Location;
         }
 
         public static Configuration.LootRankingWeightingConfig GetLootRankingData()
@@ -45,9 +56,11 @@ namespace LateToTheParty.Controllers
 
         public static string[] GetCarExtractNames()
         {
+            string errorMessage = "Cannot read car-extract names from the server. VEX extract chances will not be modified.";
             string json = RequestHandler.GetJson("/LateToTheParty/GetCarExtractNames");
-            string[] names = JsonConvert.DeserializeObject<string[]>(json);
-            return names;
+
+            TryDeserializeObject(json, errorMessage, out string[] _names);
+            return _names;
         }
 
         public static void ShareEscapeTime(int escapeTime, double timeRemaining)
