@@ -275,6 +275,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
         this.iTraderConfig = this.configServer.getConfig(ConfigTypes.TRADER);
+
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
         
