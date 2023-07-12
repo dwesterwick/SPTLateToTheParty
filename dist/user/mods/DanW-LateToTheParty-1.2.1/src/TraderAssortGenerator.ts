@@ -230,8 +230,14 @@ export class TraderAssortGenerator
             const permittedChance = CommonUtils.interpolateForFirstCol(modConfig.fence_item_value_permitted_chance, itemPrice);
             const randNum = this.randomUtil.getFloat(0, 100);
 
+            // Allow the item in Fence's inventory if it's valid and below the minimum price threshold
+            if ((itemPrice > 0) && (itemPrice <= modConfig.trader_stock_changes.fence_stock_changes.min_allowed_item_value))
+            {
+                continue;
+            }
+
             // Determine if the item should be allowed in Fence's assorts
-            if ((itemPrice >= modConfig.trader_stock_changes.fence_stock_changes.min_allowed_item_value) && (permittedChance <= randNum))
+            if ((itemPrice == 0) || (permittedChance <= randNum))
             {
                 // Ensure the index is valid
                 const itemIndex = assort.items.findIndex((i) => i._id == itemID);

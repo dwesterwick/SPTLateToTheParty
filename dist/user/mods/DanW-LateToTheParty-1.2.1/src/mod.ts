@@ -315,6 +315,13 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             {
                 this.iTraderConfig.updateTime[t].seconds *= modConfig.debug.trader_resupply_time_factor;
                 const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds;
+
+                // This is undefined for some trader mods
+                if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
+                {
+                    continue;
+                }
+
                 if (this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply > maxResupplyTime)
                 {
                     this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply = maxResupplyTime;
