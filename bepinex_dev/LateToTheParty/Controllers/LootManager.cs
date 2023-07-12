@@ -349,7 +349,9 @@ namespace LateToTheParty.Controllers
             }
 
             // Determine how much randomness to apply to loot sorting
-            double lootValueRange = ConfigController.LootRanking.Items.Max(i => i.Value.Value) - ConfigController.LootRanking.Items.Min(i => i.Value.Value);
+            double maxValue = ConfigController.LootRanking.Items.Max(i => i.Value.Value.HasValue ? i.Value.Value.Value : 0);
+            double minValue = ConfigController.LootRanking.Items.Min(i => i.Value.Value.HasValue ? i.Value.Value.Value : 0);
+            double lootValueRange = maxValue - minValue;
             double lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
 
             // Return loot sorted by value but with randomness applied

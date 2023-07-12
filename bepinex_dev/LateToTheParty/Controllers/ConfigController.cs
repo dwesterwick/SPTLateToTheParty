@@ -46,6 +46,11 @@ namespace LateToTheParty.Controllers
             TryDeserializeObject(json, errorMessage, out Configuration.LootRankingWeightingConfig _lootRanking);
             LootRanking = _lootRanking;
 
+            if (LootRanking.Items.Any(i => !i.Value.Value.HasValue))
+            {
+                LoggingController.LogErrorToServerConsole("The loot ranking data is invalid. Loot ranking may not work correctly!");
+            }
+
             return LootRanking;
         }
 

@@ -16,7 +16,7 @@ namespace LateToTheParty.Configuration
         public string Name { get; set; } = "";
 
         [JsonProperty("value")]
-        public double Value { get; set; }
+        public double? Value { get; set; }
 
         [JsonProperty("costPerSlot")]
         public double CostPerSlot { get; set; }

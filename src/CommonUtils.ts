@@ -56,9 +56,11 @@ export class CommonUtils
         if (matchingHandbookItems.length == 1)
         {
             handbookPrice = matchingHandbookItems[0].Price;
-            if (handbookPrice == null)
+
+            // Some mods add a record with a junk value
+            if ((handbookPrice == null) || isNaN(handbookPrice))
             {
-                this.logWarning(`Invalid handbook price for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
+                this.logWarning(`Invalid handbook price (${handbookPrice}) for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
                 handbookPrice = 0;
             }
         }
@@ -68,9 +70,11 @@ export class CommonUtils
         if (itemID in this.databaseTables.templates.prices)
         {
             price = this.databaseTables.templates.prices[itemID];
-            if (price == null)
+
+            // Some mods add a record with a junk value
+            if ((price == null) || isNaN(price))
             {
-                this.logWarning(`Invalid price for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
+                this.logWarning(`Invalid price (${price}) for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
                 price = 0;
             }
         }
