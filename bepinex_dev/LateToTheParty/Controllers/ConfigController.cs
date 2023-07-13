@@ -101,7 +101,12 @@ namespace LateToTheParty.Controllers
                 LoggingController.LogError(e.Message);
                 LoggingController.LogError(e.StackTrace);
                 LoggingController.LogErrorToServerConsole(errorMessage);
-                obj = default(T);
+            }
+
+            obj = default(T);
+            if (obj == null)
+            {
+                obj = (T)Activator.CreateInstance(typeof(T));
             }
 
             return false;

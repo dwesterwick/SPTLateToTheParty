@@ -74,7 +74,12 @@ export class CommonUtils
             // Some mods add a record with a junk value
             if ((price == null) || isNaN(price))
             {
-                this.logWarning(`Invalid price (${price}) for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
+                // Only show a warning if the method will return 0
+                if (handbookPrice == 0)
+                {
+                    this.logWarning(`Invalid price (${price}) for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
+                }
+
                 price = 0;
             }
         }
