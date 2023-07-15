@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -36,6 +37,7 @@ namespace LTTPConfigEditor
                     }
 
                     modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
+                    configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType()));
 
                     saveToolStripButton.Enabled = true;
                     openToolStripButton.Enabled = false;
@@ -92,6 +94,31 @@ namespace LTTPConfigEditor
             }
 
             return true;
+        }
+
+        private TreeNode[] CreateTreeNodesForType(Type type)
+        {
+            List<TreeNode> nodes = new List<TreeNode>();
+
+            PropertyInfo[] props = type.GetProperties();
+            foreach (PropertyInfo prop in props)
+            {
+                TreeNode node = new TreeNode(prop.Name);
+
+                Type propType = prop.PropertyType;
+                if (
+                    !propType.IsArray
+                    && (propType != typeof(string))
+                    && !(propType.IsGenericType && (propType.GetGenericTypeDefinition() == typeof(Dictionary<,>)))
+                )
+                {
+                    node.Nodes.AddRange(CreateTreeNodesForType(propType));
+                }
+
+                nodes.Add(node);
+            }
+
+            return nodes.ToArray();
         }
     }
 }
