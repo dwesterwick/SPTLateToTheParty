@@ -37,6 +37,7 @@
             this.configTreeView = new System.Windows.Forms.TreeView();
             this.commonChangesGroupBox = new System.Windows.Forms.GroupBox();
             this.commonChangesFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.nodePropsTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.mainToolStrip.SuspendLayout();
             this.mainTableLayoutPanel.SuspendLayout();
             this.commonChangesGroupBox.SuspendLayout();
@@ -81,6 +82,7 @@
             this.mainTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.mainTableLayoutPanel.Controls.Add(this.configTreeView, 0, 1);
             this.mainTableLayoutPanel.Controls.Add(this.commonChangesGroupBox, 0, 0);
+            this.mainTableLayoutPanel.Controls.Add(this.nodePropsTableLayoutPanel, 1, 1);
             this.mainTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainTableLayoutPanel.Location = new System.Drawing.Point(0, 25);
             this.mainTableLayoutPanel.Name = "mainTableLayoutPanel";
@@ -125,6 +127,21 @@
             this.commonChangesFlowLayoutPanel.Size = new System.Drawing.Size(872, 55);
             this.commonChangesFlowLayoutPanel.TabIndex = 0;
             // 
+            // nodePropsTableLayoutPanel
+            // 
+            this.nodePropsTableLayoutPanel.ColumnCount = 1;
+            this.nodePropsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.nodePropsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.nodePropsTableLayoutPanel.Location = new System.Drawing.Point(353, 83);
+            this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
+            this.nodePropsTableLayoutPanel.RowCount = 4;
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(528, 350);
+            this.nodePropsTableLayoutPanel.TabIndex = 2;
+            // 
             // LTTPConfigEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -154,6 +171,7 @@
         private System.Windows.Forms.TreeView configTreeView;
         private System.Windows.Forms.GroupBox commonChangesGroupBox;
         private System.Windows.Forms.FlowLayoutPanel commonChangesFlowLayoutPanel;
+        private System.Windows.Forms.TableLayoutPanel nodePropsTableLayoutPanel;
     }
 }
 

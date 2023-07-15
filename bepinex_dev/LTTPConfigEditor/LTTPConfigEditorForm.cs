@@ -17,9 +17,21 @@ namespace LTTPConfigEditor
         private LateToTheParty.Configuration.ModConfig modConfig;
         private ModPackageConfig modPackage;
 
+        private BreadCrumbControl breadCrumbControl;
+
         public LTTPConfigEditorForm()
         {
             InitializeComponent();
+
+            breadCrumbControl = new BreadCrumbControl();
+            breadCrumbControl.Dock = DockStyle.Fill;
+            nodePropsTableLayoutPanel.Controls.Add(breadCrumbControl, 0, 0);
+            breadCrumbControl.AddBreadCrumb("root", null);
+            breadCrumbControl.AddBreadCrumb("child", null);
+
+            breadCrumbControl.RemoveAllBreadCrumbs();
+            breadCrumbControl.AddBreadCrumb("root", null);
+            breadCrumbControl.AddBreadCrumb("child", null);
         }
 
         private void openToolStripButton_Click(object sender, EventArgs e)
