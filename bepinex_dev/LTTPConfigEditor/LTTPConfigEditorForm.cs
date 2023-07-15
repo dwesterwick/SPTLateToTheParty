@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -45,7 +46,7 @@ namespace LTTPConfigEditor
 
                     modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
                     configTypes.Clear();
-                    configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType()));
+                    configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType(), modConfig));
 
                     saveToolStripButton.Enabled = true;
                     openToolStripButton.Enabled = false;
@@ -119,7 +120,7 @@ namespace LTTPConfigEditor
             return true;
         }
 
-        private TreeNode[] CreateTreeNodesForType(Type type)
+        private TreeNode[] CreateTreeNodesForType(Type type, object obj)
         {
             List<TreeNode> nodes = new List<TreeNode>();
 
@@ -127,15 +128,28 @@ namespace LTTPConfigEditor
             foreach (PropertyInfo prop in props)
             {
                 TreeNode node = new TreeNode(prop.Name);
-
                 Type propType = prop.PropertyType;
-                if (
+
+                if
+                (
                     !propType.IsArray
                     && (propType != typeof(string))
                     && !(propType.IsGenericType && (propType.GetGenericTypeDefinition() == typeof(Dictionary<,>)))
                 )
                 {
-                    node.Nodes.AddRange(CreateTreeNodesForType(propType));
+                    node.Nodes.AddRange(CreateTreeNodesForType(propType, prop.GetValue(obj, null)));
+                }
+
+                if (propType.IsGenericType && (propType.GetGenericTypeDefinition() == typeof(Dictionary<,>)))
+                {
+                    IDictionary dict = prop.GetValue(obj, null) as IDictionary;
+                    Type valueType = propType.GetGenericArguments()[1];
+                    foreach(DictionaryEntry entry in dict)
+                    {
+                        TreeNode entryNode = new TreeNode(entry.Key.ToString());
+                        node.Nodes.Add(entryNode);
+                        entryNode.Nodes.AddRange(CreateTreeNodesForType(entry.Value.GetType(), entry.Value));
+                    }
                 }
 
                 nodes.Add(node);

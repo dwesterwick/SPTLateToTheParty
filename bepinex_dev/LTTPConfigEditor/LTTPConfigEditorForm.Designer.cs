@@ -114,8 +114,8 @@
             this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
             this.nodePropsTableLayoutPanel.RowCount = 4;
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 128F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 96F));
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(528, 394);
             this.nodePropsTableLayoutPanel.TabIndex = 2;
