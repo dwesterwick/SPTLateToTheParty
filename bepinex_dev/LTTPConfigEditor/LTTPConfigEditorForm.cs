@@ -13,7 +13,8 @@ namespace LTTPConfigEditor
 {
     public partial class LTTPConfigEditorForm : Form
     {
-        private LateToTheParty.Configuration.ModConfig Config;
+        private LateToTheParty.Configuration.ModConfig modConfig;
+        private ModPackageConfig modPackage;
 
         public LTTPConfigEditorForm()
         {
@@ -26,9 +27,15 @@ namespace LTTPConfigEditor
             {
                 try
                 {
-                    string json = File.ReadAllText(openConfigDialog.FileName);
-                    LateToTheParty.Configuration.ModConfig _config = Newtonsoft.Json.JsonConvert.DeserializeObject<LateToTheParty.Configuration.ModConfig>(json);
-                    Config = _config;
+                    string packagePath = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\..\\package.json";
+                    modPackage = LoadConfig<ModPackageConfig>(packagePath);
+
+                    if (!IsModVersionCompatible(new Version(modPackage.Version)))
+                    {
+                        throw new InvalidOperationException("The selected configuration file is for a version of the LTTP mod that is incompatible with this version of the editor.");
+                    }
+
+                    modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
 
                     saveToolStripButton.Enabled = true;
                     openToolStripButton.Enabled = false;
@@ -42,7 +49,14 @@ namespace LTTPConfigEditor
 
         private void saveToolStripButton_Click(object sender, EventArgs e)
         {
-
+            try
+            {
+                SaveConfig(openConfigDialog.FileName, modConfig);
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error when Saving Configuration", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LTTPConfigEditorFormClosing(object sender, FormClosingEventArgs e)
@@ -51,6 +65,33 @@ namespace LTTPConfigEditor
             {
                 e.Cancel = true;
             }
+        }
+
+        private T LoadConfig<T>(string filename)
+        {
+            string json = File.ReadAllText(filename);
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+        }
+
+        private void SaveConfig<T>(string filename, T obj)
+        {
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
+            File.WriteAllText(filename, json);
+        }
+
+        private bool IsModVersionCompatible(Version modVersion)
+        {
+            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MinVersion) < 0)
+            {
+                return false;
+            }
+
+            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MaxVersion) < 0)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

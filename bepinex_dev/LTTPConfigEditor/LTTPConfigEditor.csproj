@@ -55,6 +55,7 @@
     <Compile Include="LTTPConfigEditorForm.Designer.cs">
       <DependentUpon>LTTPConfigEditorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ModPackageConfig.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="LTTPConfigEditorForm.resx">
