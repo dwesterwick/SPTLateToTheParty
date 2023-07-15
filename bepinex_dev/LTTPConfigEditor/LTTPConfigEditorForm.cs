@@ -18,6 +18,7 @@ namespace LTTPConfigEditor
         private ModPackageConfig modPackage;
 
         private BreadCrumbControl breadCrumbControl;
+        private Dictionary<TreeNode, Type> configTypes = new Dictionary<TreeNode, Type>();
 
         public LTTPConfigEditorForm()
         {
@@ -26,12 +27,6 @@ namespace LTTPConfigEditor
             breadCrumbControl = new BreadCrumbControl();
             breadCrumbControl.Dock = DockStyle.Fill;
             nodePropsTableLayoutPanel.Controls.Add(breadCrumbControl, 0, 0);
-            breadCrumbControl.AddBreadCrumb("root", null);
-            breadCrumbControl.AddBreadCrumb("child", null);
-
-            breadCrumbControl.RemoveAllBreadCrumbs();
-            breadCrumbControl.AddBreadCrumb("root", null);
-            breadCrumbControl.AddBreadCrumb("child", null);
         }
 
         private void openToolStripButton_Click(object sender, EventArgs e)
@@ -49,10 +44,12 @@ namespace LTTPConfigEditor
                     }
 
                     modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
+                    configTypes.Clear();
                     configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType()));
 
                     saveToolStripButton.Enabled = true;
                     openToolStripButton.Enabled = false;
+                    loadTemplateButton.Enabled = true;
                 }
                 catch (Exception ex)
                 {
@@ -73,12 +70,26 @@ namespace LTTPConfigEditor
             }
         }
 
+        private void loadTemplateButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
         private void LTTPConfigEditorFormClosing(object sender, FormClosingEventArgs e)
         {
             if (MessageBox.Show("You have unsaved changes. Are you sure you want to quit?", "Unsaved Changes", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)
             {
                 e.Cancel = true;
             }
+        }
+
+        private void ConfigNodeSelected(object sender, TreeViewEventArgs e)
+        {
+            Action callbackAction = new Action(() => {
+                ConfigNodeSelected(configTreeView, new TreeViewEventArgs(configTreeView.SelectedNode));
+            });
+
+            BreadCrumbControl.UpdateBreadCrumbControlForTreeView(breadCrumbControl, configTreeView, e.Node, callbackAction);
         }
 
         private T LoadConfig<T>(string filename)
@@ -128,6 +139,7 @@ namespace LTTPConfigEditor
                 }
 
                 nodes.Add(node);
+                configTypes.Add(node, propType);
             }
 
             return nodes.ToArray();

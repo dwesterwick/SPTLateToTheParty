@@ -11,42 +11,65 @@ namespace LTTPConfigEditor
 {
     public class BreadCrumbControl: FlowLayoutPanel
     {
-        private Dictionary<string, EventHandler> linkEvents = new Dictionary<string, EventHandler>();
+        private static Dictionary<LinkLabel, Action> linkLabelActions = new Dictionary<LinkLabel, Action>();
 
         public BreadCrumbControl()
         {
 
         }
 
-        public BreadCrumbControl(Dictionary<string, EventHandler> linksAndEvents) : this()
-        {
-            linkEvents = linksAndEvents;
-            RebuildAllBreadCrumbs();
-        }
-
         public void RemoveAllBreadCrumbs()
         {
             UnlinkAllBreadCrumbs();
-            linkEvents.Clear();
+            linkLabelActions.Clear();
+            this.Controls.Clear();
         }
 
-        public void AddBreadCrumb(string text, EventHandler action)
+        public void AddBreadCrumb(string text, Action action)
         {
-            if (linkEvents.ContainsKey(text))
+            LinkLabel breadCrumb = CreateBreadCrumb(text, action);
+
+            if (linkLabelActions.ContainsKey(breadCrumb))
             {
-                throw new InvalidOperationException("There is already a bread crumb with that name.");
+                throw new InvalidOperationException("Duplicate bread crumb already exists.");
             }
 
-            linkEvents.Add(text, action);
+            linkLabelActions.Add(breadCrumb, action);
 
-            if (linkEvents.Count > 1)
+            if (linkLabelActions.Count > 1)
             {
                 this.Controls.Add(GetSeparator());
             }
-            this.Controls.Add(CreateBreadCrumb(text, action));
+            this.Controls.Add(breadCrumb);
         }
 
-        private static Control CreateBreadCrumb(string text, EventHandler action)
+        public static void UpdateBreadCrumbControlForTreeView(BreadCrumbControl breadCrumbControl, TreeView treeView, TreeNode selectedNode, Action callbackAction)
+        {
+            breadCrumbControl.RemoveAllBreadCrumbs();
+
+            List<TreeNode> nodes = new List<TreeNode>();
+
+            TreeNode currentNode = selectedNode;
+            while (currentNode != null)
+            {
+                nodes.Add(currentNode);
+                currentNode = currentNode.Parent;
+            }
+
+            nodes.Reverse();
+            foreach (TreeNode node in nodes)
+            {
+                Action clickAction = new Action(() =>
+                {
+                    treeView.SelectedNode = node;
+                    callbackAction();
+                });
+
+                breadCrumbControl.AddBreadCrumb(node.Text, clickAction);
+            }
+        }
+
+        private static LinkLabel CreateBreadCrumb(string text, Action action)
         {
             LinkLabel label = new LinkLabel();
             label.Name = text;
@@ -56,13 +79,13 @@ namespace LTTPConfigEditor
 
             if (action != null)
             {
-                label.Click += action;
+                label.Click += PerformAction;
             }
 
             return label;
         }
 
-        private static Control GetSeparator()
+        private static Label GetSeparator()
         {
             Label separator = new Label();
             separator.Text = ">";
@@ -72,22 +95,16 @@ namespace LTTPConfigEditor
             return separator;
         }
 
-        private void RebuildAllBreadCrumbs()
+        private static void PerformAction(object sender, EventArgs args)
         {
-            UnlinkAllBreadCrumbs();
-
-            string[] keys = linkEvents.Keys.ToArray();
-            if (keys.Length == 0)
+            LinkLabel linkLabel = sender as LinkLabel;
+            
+            if (!linkLabelActions.ContainsKey(linkLabel))
             {
                 return;
             }
 
-            this.Controls.Add(CreateBreadCrumb(keys[0], linkEvents[keys[0]]));
-            for (int key = 1; key < keys.Length; key++)
-            {
-                this.Controls.Add(GetSeparator());
-                this.Controls.Add(CreateBreadCrumb(keys[key], linkEvents[keys[key]]));
-            }
+            linkLabelActions[linkLabel]();
         }
 
         private void UnlinkAllBreadCrumbs()
@@ -96,7 +113,6 @@ namespace LTTPConfigEditor
             {
                 UnlinkBreadCrumb(control.Name);
             }
-            this.Controls.Clear();
         }
 
         private void UnlinkBreadCrumb(string text)
@@ -106,7 +122,7 @@ namespace LTTPConfigEditor
                 return;
             }
 
-            this.Controls[text].Click -= linkEvents[text];
+            this.Controls[text].Click -= PerformAction;
         }
     }
 }

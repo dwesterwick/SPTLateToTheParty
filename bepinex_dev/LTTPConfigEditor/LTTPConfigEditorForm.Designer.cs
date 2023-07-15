@@ -33,14 +33,16 @@
             this.openToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.saveToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.mainTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            this.openConfigDialog = new System.Windows.Forms.OpenFileDialog();
             this.configTreeView = new System.Windows.Forms.TreeView();
-            this.commonChangesGroupBox = new System.Windows.Forms.GroupBox();
-            this.commonChangesFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.nodePropsTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
+            this.openConfigDialog = new System.Windows.Forms.OpenFileDialog();
+            this.topBannerFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.tempalatesLabel = new System.Windows.Forms.Label();
+            this.templatesComboBox = new System.Windows.Forms.ComboBox();
+            this.loadTemplateButton = new System.Windows.Forms.Button();
             this.mainToolStrip.SuspendLayout();
             this.mainTableLayoutPanel.SuspendLayout();
-            this.commonChangesGroupBox.SuspendLayout();
+            this.topBannerFlowLayoutPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // mainToolStrip
@@ -81,16 +83,42 @@
             this.mainTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 350F));
             this.mainTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.mainTableLayoutPanel.Controls.Add(this.configTreeView, 0, 1);
-            this.mainTableLayoutPanel.Controls.Add(this.commonChangesGroupBox, 0, 0);
             this.mainTableLayoutPanel.Controls.Add(this.nodePropsTableLayoutPanel, 1, 1);
+            this.mainTableLayoutPanel.Controls.Add(this.topBannerFlowLayoutPanel, 0, 0);
             this.mainTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainTableLayoutPanel.Location = new System.Drawing.Point(0, 25);
             this.mainTableLayoutPanel.Name = "mainTableLayoutPanel";
             this.mainTableLayoutPanel.RowCount = 2;
-            this.mainTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.mainTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
             this.mainTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.mainTableLayoutPanel.Size = new System.Drawing.Size(884, 436);
             this.mainTableLayoutPanel.TabIndex = 1;
+            // 
+            // configTreeView
+            // 
+            this.configTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.configTreeView.HideSelection = false;
+            this.configTreeView.HotTracking = true;
+            this.configTreeView.Location = new System.Drawing.Point(3, 39);
+            this.configTreeView.Name = "configTreeView";
+            this.configTreeView.Size = new System.Drawing.Size(344, 394);
+            this.configTreeView.TabIndex = 0;
+            this.configTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ConfigNodeSelected);
+            // 
+            // nodePropsTableLayoutPanel
+            // 
+            this.nodePropsTableLayoutPanel.ColumnCount = 1;
+            this.nodePropsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.nodePropsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.nodePropsTableLayoutPanel.Location = new System.Drawing.Point(353, 39);
+            this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
+            this.nodePropsTableLayoutPanel.RowCount = 4;
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(528, 394);
+            this.nodePropsTableLayoutPanel.TabIndex = 2;
             // 
             // openConfigDialog
             // 
@@ -99,48 +127,46 @@
             this.openConfigDialog.Filter = "Late to the Party Configuration|config.json|All Files|*.*";
             this.openConfigDialog.Title = "Open Late to the Party Configuration";
             // 
-            // configTreeView
+            // topBannerFlowLayoutPanel
             // 
-            this.configTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.configTreeView.Location = new System.Drawing.Point(3, 83);
-            this.configTreeView.Name = "configTreeView";
-            this.configTreeView.Size = new System.Drawing.Size(344, 350);
-            this.configTreeView.TabIndex = 0;
+            this.mainTableLayoutPanel.SetColumnSpan(this.topBannerFlowLayoutPanel, 2);
+            this.topBannerFlowLayoutPanel.Controls.Add(this.tempalatesLabel);
+            this.topBannerFlowLayoutPanel.Controls.Add(this.templatesComboBox);
+            this.topBannerFlowLayoutPanel.Controls.Add(this.loadTemplateButton);
+            this.topBannerFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.topBannerFlowLayoutPanel.Location = new System.Drawing.Point(3, 3);
+            this.topBannerFlowLayoutPanel.Name = "topBannerFlowLayoutPanel";
+            this.topBannerFlowLayoutPanel.Size = new System.Drawing.Size(878, 30);
+            this.topBannerFlowLayoutPanel.TabIndex = 3;
             // 
-            // commonChangesGroupBox
+            // tempalatesLabel
             // 
-            this.mainTableLayoutPanel.SetColumnSpan(this.commonChangesGroupBox, 2);
-            this.commonChangesGroupBox.Controls.Add(this.commonChangesFlowLayoutPanel);
-            this.commonChangesGroupBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.commonChangesGroupBox.Location = new System.Drawing.Point(3, 3);
-            this.commonChangesGroupBox.Name = "commonChangesGroupBox";
-            this.commonChangesGroupBox.Size = new System.Drawing.Size(878, 74);
-            this.commonChangesGroupBox.TabIndex = 1;
-            this.commonChangesGroupBox.TabStop = false;
-            this.commonChangesGroupBox.Text = "Common Changes";
+            this.tempalatesLabel.AutoSize = true;
+            this.tempalatesLabel.Location = new System.Drawing.Point(3, 0);
+            this.tempalatesLabel.Name = "tempalatesLabel";
+            this.tempalatesLabel.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.tempalatesLabel.Size = new System.Drawing.Size(219, 19);
+            this.tempalatesLabel.TabIndex = 0;
+            this.tempalatesLabel.Text = "Apply configuration changes from a template:";
             // 
-            // commonChangesFlowLayoutPanel
+            // templatesComboBox
             // 
-            this.commonChangesFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.commonChangesFlowLayoutPanel.Location = new System.Drawing.Point(3, 16);
-            this.commonChangesFlowLayoutPanel.Name = "commonChangesFlowLayoutPanel";
-            this.commonChangesFlowLayoutPanel.Size = new System.Drawing.Size(872, 55);
-            this.commonChangesFlowLayoutPanel.TabIndex = 0;
+            this.templatesComboBox.FormattingEnabled = true;
+            this.templatesComboBox.Location = new System.Drawing.Point(228, 3);
+            this.templatesComboBox.Name = "templatesComboBox";
+            this.templatesComboBox.Size = new System.Drawing.Size(250, 21);
+            this.templatesComboBox.TabIndex = 1;
             // 
-            // nodePropsTableLayoutPanel
+            // loadTemplateButton
             // 
-            this.nodePropsTableLayoutPanel.ColumnCount = 1;
-            this.nodePropsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.nodePropsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.nodePropsTableLayoutPanel.Location = new System.Drawing.Point(353, 83);
-            this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
-            this.nodePropsTableLayoutPanel.RowCount = 4;
-            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
-            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(528, 350);
-            this.nodePropsTableLayoutPanel.TabIndex = 2;
+            this.loadTemplateButton.Enabled = false;
+            this.loadTemplateButton.Location = new System.Drawing.Point(484, 3);
+            this.loadTemplateButton.Name = "loadTemplateButton";
+            this.loadTemplateButton.Size = new System.Drawing.Size(75, 23);
+            this.loadTemplateButton.TabIndex = 2;
+            this.loadTemplateButton.Text = "Load";
+            this.loadTemplateButton.UseVisualStyleBackColor = true;
+            this.loadTemplateButton.Click += new System.EventHandler(this.loadTemplateButton_Click);
             // 
             // LTTPConfigEditorForm
             // 
@@ -155,7 +181,8 @@
             this.mainToolStrip.ResumeLayout(false);
             this.mainToolStrip.PerformLayout();
             this.mainTableLayoutPanel.ResumeLayout(false);
-            this.commonChangesGroupBox.ResumeLayout(false);
+            this.topBannerFlowLayoutPanel.ResumeLayout(false);
+            this.topBannerFlowLayoutPanel.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -169,9 +196,11 @@
         private System.Windows.Forms.TableLayoutPanel mainTableLayoutPanel;
         private System.Windows.Forms.OpenFileDialog openConfigDialog;
         private System.Windows.Forms.TreeView configTreeView;
-        private System.Windows.Forms.GroupBox commonChangesGroupBox;
-        private System.Windows.Forms.FlowLayoutPanel commonChangesFlowLayoutPanel;
         private System.Windows.Forms.TableLayoutPanel nodePropsTableLayoutPanel;
+        private System.Windows.Forms.FlowLayoutPanel topBannerFlowLayoutPanel;
+        private System.Windows.Forms.Label tempalatesLabel;
+        private System.Windows.Forms.ComboBox templatesComboBox;
+        private System.Windows.Forms.Button loadTemplateButton;
     }
 }
 
