@@ -303,6 +303,12 @@ namespace LTTPConfigEditor
 
             System.Windows.Forms.Label unitLabel = new System.Windows.Forms.Label();
             unitLabel.Text = valueProperties.Unit;
+
+            if ((valueProperties.Max < double.MaxValue) || (valueProperties.Min > double.MinValue))
+            {
+                unitLabel.Text += " (" + valueProperties.Min + "..." + valueProperties.Max + ")";
+            }
+
             Size unitLabelSize = TextRenderer.MeasureText(unitLabel.Text, unitLabel.Font);
             unitLabel.Width = unitLabelSize.Width;
             unitLabel.Padding = new Padding(0, 6, 0, 0);
