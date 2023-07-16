@@ -12,6 +12,18 @@ namespace LTTPConfigEditor.Configuration
         [JsonProperty("description")]
         public string Description { get; set; } = "";
 
+        [JsonProperty("unit")]
+        public string Unit { get; set; } = "";
+
+        [JsonProperty("max")]
+        public double Max { get; set; } = double.MaxValue;
+
+        [JsonProperty("min")]
+        public double Min { get; set; } = double.MinValue;
+
+        [JsonProperty("default")]
+        public double Default { get; set; } = double.NaN;
+
         public ConfigEditorInfoConfig()
         {
 

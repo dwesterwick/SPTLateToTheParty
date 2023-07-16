@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,9 +9,11 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace LTTPConfigEditor
 {
@@ -97,8 +100,12 @@ namespace LTTPConfigEditor
 
             BreadCrumbControl.UpdateBreadCrumbControlForTreeView(breadCrumbControl, configTreeView, e.Node, callbackAction);
 
-            Configuration.ConfigEditorInfoConfig nodeConfigInfo = GetConfigInfoForTreeNode(e.Node);
+            string configPath = GetConfigPathForTreeNode(e.Node);
+            Configuration.ConfigEditorInfoConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
             descriptionTextBox.Text = nodeConfigInfo.Description;
+
+            object obj = GetObjectForConfigPath(modConfig, configPath);
+            CreateValueControls(valueFlowLayoutPanel, obj, configTypes[e.Node], nodeConfigInfo);
         }
 
         private T LoadConfig<T>(string filename)
@@ -115,12 +122,12 @@ namespace LTTPConfigEditor
 
         private bool IsModVersionCompatible(Version modVersion)
         {
-            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MinVersion) < 0)
+            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MinCompatibleModVersion) < 0)
             {
                 return false;
             }
 
-            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MaxVersion) < 0)
+            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MaxCompatibleModVersion) < 0)
             {
                 return false;
             }
@@ -158,6 +165,8 @@ namespace LTTPConfigEditor
                     {
                         TreeNode entryNode = new TreeNode(entry.Key.ToString());
                         node.Nodes.Add(entryNode);
+                        configTypes.Add(entryNode, propType.GetGenericArguments()[0]);
+
                         entryNode.Nodes.AddRange(CreateTreeNodesForType(entry.Value.GetType(), entry.Value));
                     }
                 }
@@ -169,7 +178,22 @@ namespace LTTPConfigEditor
             return nodes.ToArray();
         }
 
+        private Configuration.ConfigEditorInfoConfig GetConfigInfoForPath(string configPath)
+        {
+            if (configEditorInfo.ContainsKey(configPath))
+            {
+                return configEditorInfo[configPath];
+            }
+
+            return new Configuration.ConfigEditorInfoConfig();
+        }
+
         private Configuration.ConfigEditorInfoConfig GetConfigInfoForTreeNode(TreeNode node)
+        {
+            return GetConfigInfoForPath(GetConfigPathForTreeNode(node));
+        }
+
+        private static string GetConfigPathForTreeNode(TreeNode node)
         {
             List<string> nodeNames = new List<string>();
             TreeNode currentNode = node;
@@ -180,14 +204,112 @@ namespace LTTPConfigEditor
             }
             nodeNames.Reverse();
 
-            string desiredKey = string.Join(".", nodeNames);
+            return string.Join(".", nodeNames);
+        }
 
-            if (configEditorInfo.ContainsKey(desiredKey))
+        private object GetObjectForConfigPath(object obj, string configPath)
+        {
+            string[] pathElements = configPath.Split('.');
+
+            PropertyInfo[] props = obj.GetType().GetProperties();
+            foreach (PropertyInfo prop in props)
             {
-                return configEditorInfo[desiredKey];
+                Type propType = prop.PropertyType;
+                JsonPropertyAttribute jsonPropertyAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();
+                string nodeName = jsonPropertyAttribute == null ? prop.Name : jsonPropertyAttribute.PropertyName;
+                object propObj = prop.GetValue(obj, null);
+
+                if 
+                (
+                    (pathElements.Length > 1)
+                    && (nodeName == pathElements[0])
+                    && propType.IsGenericType
+                    && (propType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                )
+                {
+                    IDictionary dict = prop.GetValue(obj, null) as IDictionary;
+                    Type valueType = propType.GetGenericArguments()[1];
+                    foreach (DictionaryEntry entry in dict)
+                    {
+                        if (entry.Key.ToString() == pathElements[1])
+                        {
+                            return GetObjectForConfigPath(entry.Value, string.Join(".", pathElements, 2, pathElements.Length - 2));
+                        }
+                    }
+                }
+
+                if (nodeName != pathElements[0])
+                {
+                    continue;
+                }
+
+                if (pathElements.Length > 1)
+                {
+                    return GetObjectForConfigPath(propObj, string.Join(".", pathElements, 1, pathElements.Length - 1));
+                }
+
+                return propObj;
             }
 
-            return new Configuration.ConfigEditorInfoConfig();
+            return obj;
+        }
+
+        private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigEditorInfoConfig valueProperties)
+        {
+            panel.Controls.Clear();
+
+            if (!valueType.Namespace.StartsWith("System"))
+            {
+                return;
+            }
+
+            Control valueDisplayControl = CreateValueDisplayControl(value, valueType);
+            if (valueDisplayControl == null)
+            {
+                return;
+            }
+
+            System.Windows.Forms.Label valueLabel = new System.Windows.Forms.Label();
+            valueLabel.Text = "Value:";
+            Size valueLabelSize = TextRenderer.MeasureText(valueLabel.Text, valueLabel.Font);
+            valueLabel.Width = valueLabelSize.Width;
+            valueLabel.Padding = new Padding(0, 6, 0, 0);
+            panel.Controls.Add(valueLabel);
+
+            panel.Controls.Add(valueDisplayControl);
+
+            if (valueProperties.Unit == "")
+            {
+                return;
+            }
+
+            System.Windows.Forms.Label unitLabel = new System.Windows.Forms.Label();
+            unitLabel.Text = valueProperties.Unit;
+            Size unitLabelSize = TextRenderer.MeasureText(unitLabel.Text, unitLabel.Font);
+            unitLabel.Width = unitLabelSize.Width;
+            unitLabel.Padding = new Padding(0, 6, 0, 0);
+            panel.Controls.Add(unitLabel);
+        }
+
+        private Control CreateValueDisplayControl(object value, Type valueType)
+        {
+            if (valueType == typeof(bool))
+            {
+                CheckBox valueCheckBox = new CheckBox();
+                valueCheckBox.Text = "";
+                valueCheckBox.Width = 32;
+
+                valueCheckBox.Checked = (bool)value;
+
+                return valueCheckBox;
+            }
+
+            TextBox valueTextBox = new TextBox();
+            valueTextBox.Width = 150;
+
+            valueTextBox.Text = value.ToString();
+
+            return valueTextBox;
         }
     }
 }

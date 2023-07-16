@@ -41,6 +41,7 @@
             this.loadTemplateButton = new System.Windows.Forms.Button();
             this.openConfigDialog = new System.Windows.Forms.OpenFileDialog();
             this.descriptionTextBox = new System.Windows.Forms.TextBox();
+            this.valueFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.mainToolStrip.SuspendLayout();
             this.mainTableLayoutPanel.SuspendLayout();
             this.nodePropsTableLayoutPanel.SuspendLayout();
@@ -112,6 +113,7 @@
             this.nodePropsTableLayoutPanel.ColumnCount = 1;
             this.nodePropsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.nodePropsTableLayoutPanel.Controls.Add(this.descriptionTextBox, 0, 1);
+            this.nodePropsTableLayoutPanel.Controls.Add(this.valueFlowLayoutPanel, 0, 2);
             this.nodePropsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.nodePropsTableLayoutPanel.Location = new System.Drawing.Point(353, 39);
             this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
@@ -181,6 +183,14 @@
             this.descriptionTextBox.Size = new System.Drawing.Size(522, 122);
             this.descriptionTextBox.TabIndex = 0;
             // 
+            // valueFlowLayoutPanel
+            // 
+            this.valueFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.valueFlowLayoutPanel.Location = new System.Drawing.Point(3, 159);
+            this.valueFlowLayoutPanel.Name = "valueFlowLayoutPanel";
+            this.valueFlowLayoutPanel.Size = new System.Drawing.Size(522, 90);
+            this.valueFlowLayoutPanel.TabIndex = 1;
+            // 
             // LTTPConfigEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -217,6 +227,7 @@
         private System.Windows.Forms.ComboBox templatesComboBox;
         private System.Windows.Forms.Button loadTemplateButton;
         private System.Windows.Forms.TextBox descriptionTextBox;
+        private System.Windows.Forms.FlowLayoutPanel valueFlowLayoutPanel;
     }
 }
 

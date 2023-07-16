@@ -4,5 +4,12 @@
     },
     "debug.enabled": {
         "description": "Enables debug mode for the mod."
+    },
+    "debug.scav_cooldown_time": {
+        "description": "Cooldown timer after a Scav raid ends before you're allowed to start another one. This is 1500 by default, which is the same as the base game.",
+        "unit": "s",
+        "max": 2147483647,
+        "min": 1,
+        "default": 1500
     }
 }
