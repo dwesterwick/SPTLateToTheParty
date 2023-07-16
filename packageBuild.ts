@@ -49,7 +49,8 @@ const ignoreList = [
     "package-lock.json",
     "tsconfig.json",
     "db/",
-    csharpDevFolder + "/"
+    csharpDevFolder + "/",
+    "config/configEditorInfo.json"
 ];
 const exclude = glob.sync(`{${ignoreList.join(",")}}`, { realpath: true, dot: true });
 

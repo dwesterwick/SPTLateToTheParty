@@ -52,13 +52,14 @@
     <Compile Include="BreadCrumbControl.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Configuration\ConfigEditorInfoConfig.cs" />
     <Compile Include="LTTPConfigEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="LTTPConfigEditorForm.Designer.cs">
       <DependentUpon>LTTPConfigEditorForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="ModPackageConfig.cs" />
+    <Compile Include="Configuration\ModPackageConfig.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="LTTPConfigEditorForm.resx">
@@ -94,6 +95,7 @@
       <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy /Y "$(SolutionDir)$(OutDir)$(SolutionName).dll" "$(TargetDir)$(SolutionName).dll"</PostBuildEvent>

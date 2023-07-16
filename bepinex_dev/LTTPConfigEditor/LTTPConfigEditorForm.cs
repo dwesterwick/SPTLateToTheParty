@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,7 +17,8 @@ namespace LTTPConfigEditor
     public partial class LTTPConfigEditorForm : Form
     {
         private LateToTheParty.Configuration.ModConfig modConfig;
-        private ModPackageConfig modPackage;
+        private Configuration.ModPackageConfig modPackage;
+        private Dictionary<string, Configuration.ConfigEditorInfoConfig> configEditorInfo;
 
         private BreadCrumbControl breadCrumbControl;
         private Dictionary<TreeNode, Type> configTypes = new Dictionary<TreeNode, Type>();
@@ -37,7 +39,7 @@ namespace LTTPConfigEditor
                 try
                 {
                     string packagePath = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\..\\package.json";
-                    modPackage = LoadConfig<ModPackageConfig>(packagePath);
+                    modPackage = LoadConfig<Configuration.ModPackageConfig>(packagePath);
 
                     if (!IsModVersionCompatible(new Version(modPackage.Version)))
                     {
@@ -47,6 +49,9 @@ namespace LTTPConfigEditor
                     modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
                     configTypes.Clear();
                     configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType(), modConfig));
+
+                    string configEditorInfoFilename = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\configEditorInfo.json";
+                    configEditorInfo = LoadConfig<Dictionary<string, Configuration.ConfigEditorInfoConfig>>(configEditorInfoFilename);
 
                     saveToolStripButton.Enabled = true;
                     openToolStripButton.Enabled = false;
@@ -91,6 +96,9 @@ namespace LTTPConfigEditor
             });
 
             BreadCrumbControl.UpdateBreadCrumbControlForTreeView(breadCrumbControl, configTreeView, e.Node, callbackAction);
+
+            Configuration.ConfigEditorInfoConfig nodeConfigInfo = GetConfigInfoForTreeNode(e.Node);
+            descriptionTextBox.Text = nodeConfigInfo.Description;
         }
 
         private T LoadConfig<T>(string filename)
@@ -127,7 +135,9 @@ namespace LTTPConfigEditor
             PropertyInfo[] props = type.GetProperties();
             foreach (PropertyInfo prop in props)
             {
-                TreeNode node = new TreeNode(prop.Name);
+                JsonPropertyAttribute jsonPropertyAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();
+                string nodeName = jsonPropertyAttribute == null ? prop.Name : jsonPropertyAttribute.PropertyName;
+                TreeNode node = new TreeNode(nodeName);
                 Type propType = prop.PropertyType;
 
                 if
@@ -157,6 +167,27 @@ namespace LTTPConfigEditor
             }
 
             return nodes.ToArray();
+        }
+
+        private Configuration.ConfigEditorInfoConfig GetConfigInfoForTreeNode(TreeNode node)
+        {
+            List<string> nodeNames = new List<string>();
+            TreeNode currentNode = node;
+            while (currentNode != null)
+            {
+                nodeNames.Add(currentNode.Text);
+                currentNode = currentNode.Parent;
+            }
+            nodeNames.Reverse();
+
+            string desiredKey = string.Join(".", nodeNames);
+
+            if (configEditorInfo.ContainsKey(desiredKey))
+            {
+                return configEditorInfo[desiredKey];
+            }
+
+            return new Configuration.ConfigEditorInfoConfig();
         }
     }
 }

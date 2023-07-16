@@ -35,13 +35,15 @@
             this.mainTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.configTreeView = new System.Windows.Forms.TreeView();
             this.nodePropsTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            this.openConfigDialog = new System.Windows.Forms.OpenFileDialog();
             this.topBannerFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tempalatesLabel = new System.Windows.Forms.Label();
             this.templatesComboBox = new System.Windows.Forms.ComboBox();
             this.loadTemplateButton = new System.Windows.Forms.Button();
+            this.openConfigDialog = new System.Windows.Forms.OpenFileDialog();
+            this.descriptionTextBox = new System.Windows.Forms.TextBox();
             this.mainToolStrip.SuspendLayout();
             this.mainTableLayoutPanel.SuspendLayout();
+            this.nodePropsTableLayoutPanel.SuspendLayout();
             this.topBannerFlowLayoutPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -109,6 +111,7 @@
             // 
             this.nodePropsTableLayoutPanel.ColumnCount = 1;
             this.nodePropsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.nodePropsTableLayoutPanel.Controls.Add(this.descriptionTextBox, 0, 1);
             this.nodePropsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.nodePropsTableLayoutPanel.Location = new System.Drawing.Point(353, 39);
             this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
@@ -119,13 +122,6 @@
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(528, 394);
             this.nodePropsTableLayoutPanel.TabIndex = 2;
-            // 
-            // openConfigDialog
-            // 
-            this.openConfigDialog.DefaultExt = "json";
-            this.openConfigDialog.FileName = "config.json";
-            this.openConfigDialog.Filter = "Late to the Party Configuration|config.json|All Files|*.*";
-            this.openConfigDialog.Title = "Open Late to the Party Configuration";
             // 
             // topBannerFlowLayoutPanel
             // 
@@ -168,6 +164,23 @@
             this.loadTemplateButton.UseVisualStyleBackColor = true;
             this.loadTemplateButton.Click += new System.EventHandler(this.loadTemplateButton_Click);
             // 
+            // openConfigDialog
+            // 
+            this.openConfigDialog.DefaultExt = "json";
+            this.openConfigDialog.FileName = "config.json";
+            this.openConfigDialog.Filter = "Late to the Party Configuration|config.json|All Files|*.*";
+            this.openConfigDialog.Title = "Open Late to the Party Configuration";
+            // 
+            // descriptionTextBox
+            // 
+            this.descriptionTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.descriptionTextBox.Location = new System.Drawing.Point(3, 31);
+            this.descriptionTextBox.Multiline = true;
+            this.descriptionTextBox.Name = "descriptionTextBox";
+            this.descriptionTextBox.ReadOnly = true;
+            this.descriptionTextBox.Size = new System.Drawing.Size(522, 122);
+            this.descriptionTextBox.TabIndex = 0;
+            // 
             // LTTPConfigEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -181,6 +194,8 @@
             this.mainToolStrip.ResumeLayout(false);
             this.mainToolStrip.PerformLayout();
             this.mainTableLayoutPanel.ResumeLayout(false);
+            this.nodePropsTableLayoutPanel.ResumeLayout(false);
+            this.nodePropsTableLayoutPanel.PerformLayout();
             this.topBannerFlowLayoutPanel.ResumeLayout(false);
             this.topBannerFlowLayoutPanel.PerformLayout();
             this.ResumeLayout(false);
@@ -201,6 +216,7 @@
         private System.Windows.Forms.Label tempalatesLabel;
         private System.Windows.Forms.ComboBox templatesComboBox;
         private System.Windows.Forms.Button loadTemplateButton;
+        private System.Windows.Forms.TextBox descriptionTextBox;
     }
 }
 

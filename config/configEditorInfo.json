@@ -1,0 +1,8 @@
+{
+    "enabled": {
+        "description": "Changes if the mod should be entirely enabled or disabled."
+    },
+    "debug.enabled": {
+        "description": "Enables debug mode for the mod."
+    }
+}
