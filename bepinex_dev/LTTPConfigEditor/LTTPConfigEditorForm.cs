@@ -37,33 +37,35 @@ namespace LTTPConfigEditor
 
         private void openToolStripButton_Click(object sender, EventArgs e)
         {
-            if (openConfigDialog.ShowDialog() == DialogResult.OK)
+            if (openConfigDialog.ShowDialog() != DialogResult.OK)
             {
-                try
+                return;
+            }
+
+            try
+            {
+                string packagePath = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\..\\package.json";
+                modPackage = LoadConfig<Configuration.ModPackageConfig>(packagePath);
+
+                if (!IsModVersionCompatible(new Version(modPackage.Version)))
                 {
-                    string packagePath = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\..\\package.json";
-                    modPackage = LoadConfig<Configuration.ModPackageConfig>(packagePath);
-
-                    if (!IsModVersionCompatible(new Version(modPackage.Version)))
-                    {
-                        throw new InvalidOperationException("The selected configuration file is for a version of the LTTP mod that is incompatible with this version of the editor.");
-                    }
-
-                    modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
-                    configTypes.Clear();
-                    configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType(), modConfig));
-
-                    string configEditorInfoFilename = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\configEditorInfo.json";
-                    configEditorInfo = LoadConfig<Dictionary<string, Configuration.ConfigEditorInfoConfig>>(configEditorInfoFilename);
-
-                    saveToolStripButton.Enabled = true;
-                    openToolStripButton.Enabled = false;
-                    loadTemplateButton.Enabled = true;
+                    throw new InvalidOperationException("The selected configuration file is for a version of the LTTP mod that is incompatible with this version of the editor.");
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Error when Reading Configuration", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
+                modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
+                configTypes.Clear();
+                configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType(), modConfig));
+
+                string configEditorInfoFilename = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\configEditorInfo.json";
+                configEditorInfo = LoadConfig<Dictionary<string, Configuration.ConfigEditorInfoConfig>>(configEditorInfoFilename);
+
+                saveToolStripButton.Enabled = true;
+                openToolStripButton.Enabled = false;
+                loadTemplateButton.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error when Reading Configuration", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -254,9 +256,25 @@ namespace LTTPConfigEditor
             return obj;
         }
 
+        private void RemoveValueControls(Panel panel)
+        {
+            foreach(Control control in panel.Controls)
+            {
+                TextBox textBox = control as TextBox;
+                if (textBox == null)
+                {
+                    continue;
+                }
+
+                textBox.Validating -= ValueTextBoxValidating;
+            }
+
+            panel.Controls.Clear();
+        }
+
         private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigEditorInfoConfig valueProperties)
         {
-            panel.Controls.Clear();
+            RemoveValueControls(panel);
 
             if (!valueType.Namespace.StartsWith("System"))
             {
@@ -306,10 +324,42 @@ namespace LTTPConfigEditor
 
             TextBox valueTextBox = new TextBox();
             valueTextBox.Width = 150;
+            valueTextBox.Validating += ValueTextBoxValidating;
 
             valueTextBox.Text = value.ToString();
 
             return valueTextBox;
+        }
+
+        private void ValueTextBoxValidating(object sender, CancelEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            string configPath = GetConfigPathForTreeNode(configTreeView.SelectedNode);
+            Configuration.ConfigEditorInfoConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
+            Type configType = configTypes[configTreeView.SelectedNode];
+
+            try
+            {
+                object newValueObj = Convert.ChangeType(textBox.Text, configType);
+
+                if (double.TryParse(newValueObj.ToString(), out double newValue))
+                {
+                    if (newValue > nodeConfigInfo.Max)
+                    {
+                        throw new InvalidOperationException("New value must be less than or equal to " + nodeConfigInfo.Max);
+                    }
+                    if (newValue < nodeConfigInfo.Min)
+                    {
+                        throw new InvalidOperationException("New value must be greather than or equal to " + nodeConfigInfo.Min);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                e.Cancel = true;
+                MessageBox.Show(ex.Message, "Invalid Config Change", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

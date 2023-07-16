@@ -55,7 +55,7 @@
             this.saveToolStripButton});
             this.mainToolStrip.Location = new System.Drawing.Point(0, 0);
             this.mainToolStrip.Name = "mainToolStrip";
-            this.mainToolStrip.Size = new System.Drawing.Size(884, 25);
+            this.mainToolStrip.Size = new System.Drawing.Size(984, 25);
             this.mainToolStrip.TabIndex = 0;
             this.mainToolStrip.Text = "toolStrip1";
             // 
@@ -94,7 +94,7 @@
             this.mainTableLayoutPanel.RowCount = 2;
             this.mainTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
             this.mainTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.mainTableLayoutPanel.Size = new System.Drawing.Size(884, 436);
+            this.mainTableLayoutPanel.Size = new System.Drawing.Size(984, 436);
             this.mainTableLayoutPanel.TabIndex = 1;
             // 
             // configTreeView
@@ -122,7 +122,7 @@
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 128F));
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 96F));
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(528, 394);
+            this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(628, 394);
             this.nodePropsTableLayoutPanel.TabIndex = 2;
             // 
             // topBannerFlowLayoutPanel
@@ -134,7 +134,7 @@
             this.topBannerFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.topBannerFlowLayoutPanel.Location = new System.Drawing.Point(3, 3);
             this.topBannerFlowLayoutPanel.Name = "topBannerFlowLayoutPanel";
-            this.topBannerFlowLayoutPanel.Size = new System.Drawing.Size(878, 30);
+            this.topBannerFlowLayoutPanel.Size = new System.Drawing.Size(978, 30);
             this.topBannerFlowLayoutPanel.TabIndex = 3;
             // 
             // tempalatesLabel
@@ -180,7 +180,7 @@
             this.descriptionTextBox.Multiline = true;
             this.descriptionTextBox.Name = "descriptionTextBox";
             this.descriptionTextBox.ReadOnly = true;
-            this.descriptionTextBox.Size = new System.Drawing.Size(522, 122);
+            this.descriptionTextBox.Size = new System.Drawing.Size(622, 122);
             this.descriptionTextBox.TabIndex = 0;
             // 
             // valueFlowLayoutPanel
@@ -188,14 +188,14 @@
             this.valueFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.valueFlowLayoutPanel.Location = new System.Drawing.Point(3, 159);
             this.valueFlowLayoutPanel.Name = "valueFlowLayoutPanel";
-            this.valueFlowLayoutPanel.Size = new System.Drawing.Size(522, 90);
+            this.valueFlowLayoutPanel.Size = new System.Drawing.Size(622, 90);
             this.valueFlowLayoutPanel.TabIndex = 1;
             // 
             // LTTPConfigEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(884, 461);
+            this.ClientSize = new System.Drawing.Size(984, 461);
             this.Controls.Add(this.mainTableLayoutPanel);
             this.Controls.Add(this.mainToolStrip);
             this.Name = "LTTPConfigEditorForm";
