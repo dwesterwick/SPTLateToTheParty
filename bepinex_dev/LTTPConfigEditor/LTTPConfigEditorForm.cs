@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LTTPConfigEditor
 {
@@ -25,6 +26,9 @@ namespace LTTPConfigEditor
 
         private BreadCrumbControl breadCrumbControl;
         private Dictionary<TreeNode, Type> configTypes = new Dictionary<TreeNode, Type>();
+        private Dictionary<string, Action> valueButtonActions = new Dictionary<string, Action>();
+
+        private bool isClosing = false;
 
         public LTTPConfigEditorForm()
         {
@@ -92,6 +96,8 @@ namespace LTTPConfigEditor
             {
                 e.Cancel = true;
             }
+
+            isClosing = true;
         }
 
         private void ConfigNodeSelected(object sender, TreeViewEventArgs e)
@@ -167,7 +173,10 @@ namespace LTTPConfigEditor
                     {
                         TreeNode entryNode = new TreeNode(entry.Key.ToString());
                         node.Nodes.Add(entryNode);
-                        configTypes.Add(entryNode, propType.GetGenericArguments()[0]);
+
+                        Type keyType = propType.GetGenericArguments()[0];
+                        var dictKey = typeof(ConfigDictionaryEntry<,>).MakeGenericType(keyType, valueType);
+                        configTypes.Add(entryNode, dictKey);
 
                         entryNode.Nodes.AddRange(CreateTreeNodesForType(entry.Value.GetType(), entry.Value));
                     }
@@ -265,20 +274,58 @@ namespace LTTPConfigEditor
                 {
                     continue;
                 }
+                else
+                {
+                    textBox.Validating -= ValueTextBoxValidating;
+                }
 
-                textBox.Validating -= ValueTextBoxValidating;
+                Button button = control as Button;
+                if (button == null)
+                {
+                    continue;
+                }
+                else
+                {
+                    button.Click -= ValueButtonClickAction;
+                }
             }
 
             panel.Controls.Clear();
+            valueButtonActions.Clear();
         }
 
         private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigEditorInfoConfig valueProperties)
         {
             RemoveValueControls(panel);
 
-            if (!valueType.Namespace.StartsWith("System"))
+            if (valueType.IsArray)
+            {
+                Button editArrayButton = CreateValueButton("Edit Array...", () => { return; });
+                panel.Controls.Add(editArrayButton);
+                return;
+            }
+
+            if (valueType.Namespace.StartsWith("System") && valueType.Name.Contains(typeof(Dictionary<,>).Name))
+            {
+                Button editArrayButton = CreateValueButton("Add Entry...", () => { return; });
+                panel.Controls.Add(editArrayButton);
+                return;
+            }
+
+            if (!valueType.Namespace.StartsWith("System") && !valueType.Name.Contains(typeof(ConfigDictionaryEntry<,>).Name))
             {
                 return;
+            }
+
+            if (valueType.Name.Contains(typeof(ConfigDictionaryEntry<,>).Name))
+            {
+                Button editArrayButton = CreateValueButton("Remove Entry", () => { return; });
+                panel.Controls.Add(editArrayButton);
+
+                if (!valueType.GetGenericArguments()[1].Namespace.StartsWith("System"))
+                {
+                    return;
+                }
             }
 
             Control valueDisplayControl = CreateValueDisplayControl(value, valueType);
@@ -337,8 +384,43 @@ namespace LTTPConfigEditor
             return valueTextBox;
         }
 
+        private Button CreateValueButton(string text, Action onClickAction)
+        {
+            if (valueButtonActions.ContainsKey(text))
+            {
+                throw new InvalidOperationException("A button with that text was already added.");
+            }
+
+            Button button = new Button();
+            button.Text = text;
+            Size buttonSize = TextRenderer.MeasureText(text, button.Font);
+            button.Width = buttonSize.Width + 32;
+
+            button.Click += ValueButtonClickAction;
+            valueButtonActions.Add(text, onClickAction);
+
+            return button;
+        }
+
+        private void ValueButtonClickAction(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+
+            if (!valueButtonActions.ContainsKey(button.Text))
+            {
+                throw new InvalidOperationException("A button with that text does not have an action assigned to it.");
+            }
+
+            valueButtonActions[button.Text]();
+        }
+
         private void ValueTextBoxValidating(object sender, CancelEventArgs e)
         {
+            if (isClosing)
+            {
+                return;
+            }
+
             TextBox textBox = sender as TextBox;
 
             string configPath = GetConfigPathForTreeNode(configTreeView.SelectedNode);
@@ -360,6 +442,11 @@ namespace LTTPConfigEditor
                         throw new InvalidOperationException("New value must be greather than or equal to " + nodeConfigInfo.Min);
                     }
                 }
+            }
+            catch (FormatException)
+            {
+                e.Cancel = true;
+                MessageBox.Show("Invalid entry. The value must be a " + configType.Name + ".", "Invalid Config Change", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch(Exception ex)
             {

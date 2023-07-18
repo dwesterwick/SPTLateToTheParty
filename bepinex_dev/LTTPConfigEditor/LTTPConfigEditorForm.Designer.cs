@@ -35,13 +35,14 @@
             this.mainTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.configTreeView = new System.Windows.Forms.TreeView();
             this.nodePropsTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
+            this.descriptionTextBox = new System.Windows.Forms.TextBox();
+            this.valueFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.topBannerFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tempalatesLabel = new System.Windows.Forms.Label();
             this.templatesComboBox = new System.Windows.Forms.ComboBox();
             this.loadTemplateButton = new System.Windows.Forms.Button();
             this.openConfigDialog = new System.Windows.Forms.OpenFileDialog();
-            this.descriptionTextBox = new System.Windows.Forms.TextBox();
-            this.valueFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.relatedFlowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.mainToolStrip.SuspendLayout();
             this.mainTableLayoutPanel.SuspendLayout();
             this.nodePropsTableLayoutPanel.SuspendLayout();
@@ -114,16 +115,36 @@
             this.nodePropsTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.nodePropsTableLayoutPanel.Controls.Add(this.descriptionTextBox, 0, 1);
             this.nodePropsTableLayoutPanel.Controls.Add(this.valueFlowLayoutPanel, 0, 2);
+            this.nodePropsTableLayoutPanel.Controls.Add(this.relatedFlowLayoutPanel, 0, 3);
             this.nodePropsTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.nodePropsTableLayoutPanel.Location = new System.Drawing.Point(353, 39);
             this.nodePropsTableLayoutPanel.Name = "nodePropsTableLayoutPanel";
-            this.nodePropsTableLayoutPanel.RowCount = 4;
+            this.nodePropsTableLayoutPanel.RowCount = 5;
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 128F));
+            this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 96F));
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 96F));
             this.nodePropsTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.nodePropsTableLayoutPanel.Size = new System.Drawing.Size(628, 394);
             this.nodePropsTableLayoutPanel.TabIndex = 2;
+            // 
+            // descriptionTextBox
+            // 
+            this.descriptionTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.descriptionTextBox.Location = new System.Drawing.Point(3, 31);
+            this.descriptionTextBox.Multiline = true;
+            this.descriptionTextBox.Name = "descriptionTextBox";
+            this.descriptionTextBox.ReadOnly = true;
+            this.descriptionTextBox.Size = new System.Drawing.Size(622, 122);
+            this.descriptionTextBox.TabIndex = 0;
+            // 
+            // valueFlowLayoutPanel
+            // 
+            this.valueFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.valueFlowLayoutPanel.Location = new System.Drawing.Point(3, 159);
+            this.valueFlowLayoutPanel.Name = "valueFlowLayoutPanel";
+            this.valueFlowLayoutPanel.Size = new System.Drawing.Size(622, 90);
+            this.valueFlowLayoutPanel.TabIndex = 1;
             // 
             // topBannerFlowLayoutPanel
             // 
@@ -173,23 +194,14 @@
             this.openConfigDialog.Filter = "Late to the Party Configuration|config.json|All Files|*.*";
             this.openConfigDialog.Title = "Open Late to the Party Configuration";
             // 
-            // descriptionTextBox
+            // relatedFlowLayoutPanel
             // 
-            this.descriptionTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.descriptionTextBox.Location = new System.Drawing.Point(3, 31);
-            this.descriptionTextBox.Multiline = true;
-            this.descriptionTextBox.Name = "descriptionTextBox";
-            this.descriptionTextBox.ReadOnly = true;
-            this.descriptionTextBox.Size = new System.Drawing.Size(622, 122);
-            this.descriptionTextBox.TabIndex = 0;
-            // 
-            // valueFlowLayoutPanel
-            // 
-            this.valueFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.valueFlowLayoutPanel.Location = new System.Drawing.Point(3, 159);
-            this.valueFlowLayoutPanel.Name = "valueFlowLayoutPanel";
-            this.valueFlowLayoutPanel.Size = new System.Drawing.Size(622, 90);
-            this.valueFlowLayoutPanel.TabIndex = 1;
+            this.relatedFlowLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.relatedFlowLayoutPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.relatedFlowLayoutPanel.Location = new System.Drawing.Point(3, 255);
+            this.relatedFlowLayoutPanel.Name = "relatedFlowLayoutPanel";
+            this.relatedFlowLayoutPanel.Size = new System.Drawing.Size(622, 90);
+            this.relatedFlowLayoutPanel.TabIndex = 2;
             // 
             // LTTPConfigEditorForm
             // 
@@ -228,6 +240,7 @@
         private System.Windows.Forms.Button loadTemplateButton;
         private System.Windows.Forms.TextBox descriptionTextBox;
         private System.Windows.Forms.FlowLayoutPanel valueFlowLayoutPanel;
+        private System.Windows.Forms.FlowLayoutPanel relatedFlowLayoutPanel;
     }
 }
 

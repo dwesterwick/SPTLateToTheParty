@@ -53,6 +53,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Configuration\ConfigEditorInfoConfig.cs" />
+    <Compile Include="Configuration\ConfigDictionaryEntry.cs" />
     <Compile Include="LTTPConfigEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>
