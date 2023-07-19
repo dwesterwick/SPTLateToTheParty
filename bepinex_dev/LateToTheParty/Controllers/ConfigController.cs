@@ -11,9 +11,6 @@ namespace LateToTheParty.Controllers
 {
     public static class ConfigController
     {
-        public static Version MinCompatibleModVersion { get; private set; } = new Version("1.2.0");
-        public static Version MaxCompatibleModVersion { get; private set; } = new Version("1.2.1");
-
         public static Configuration.ModConfig Config { get; private set; } = null;
         public static Configuration.LootRankingWeightingConfig LootRanking { get; private set; } = null;
 

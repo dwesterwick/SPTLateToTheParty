@@ -22,7 +22,7 @@ namespace LTTPConfigEditor
     {
         private LateToTheParty.Configuration.ModConfig modConfig;
         private Configuration.ModPackageConfig modPackage;
-        private Dictionary<string, Configuration.ConfigEditorInfoConfig> configEditorInfo;
+        private Configuration.ConfigEditorConfig configEditorInfo;
 
         private BreadCrumbControl breadCrumbControl;
         private Dictionary<TreeNode, Type> configTypes = new Dictionary<TreeNode, Type>();
@@ -51,7 +51,10 @@ namespace LTTPConfigEditor
                 string packagePath = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\..\\package.json";
                 modPackage = LoadConfig<Configuration.ModPackageConfig>(packagePath);
 
-                if (!IsModVersionCompatible(new Version(modPackage.Version)))
+                string configEditorInfoFilename = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\configEditorInfo.json";
+                configEditorInfo = LoadConfig<Configuration.ConfigEditorConfig>(configEditorInfoFilename);
+
+                if (!IsModVersionCompatible(new Version(modPackage.Version), configEditorInfo.SupportedVersions))
                 {
                     throw new InvalidOperationException("The selected configuration file is for a version of the LTTP mod that is incompatible with this version of the editor.");
                 }
@@ -59,9 +62,6 @@ namespace LTTPConfigEditor
                 modConfig = LoadConfig<LateToTheParty.Configuration.ModConfig>(openConfigDialog.FileName);
                 configTypes.Clear();
                 configTreeView.Nodes.AddRange(CreateTreeNodesForType(modConfig.GetType(), modConfig));
-
-                string configEditorInfoFilename = openConfigDialog.FileName.Substring(0, openConfigDialog.FileName.LastIndexOf('\\')) + "\\configEditorInfo.json";
-                configEditorInfo = LoadConfig<Dictionary<string, Configuration.ConfigEditorInfoConfig>>(configEditorInfoFilename);
 
                 saveToolStripButton.Enabled = true;
                 openToolStripButton.Enabled = false;
@@ -109,7 +109,7 @@ namespace LTTPConfigEditor
             BreadCrumbControl.UpdateBreadCrumbControlForTreeView(breadCrumbControl, configTreeView, e.Node, callbackAction);
 
             string configPath = GetConfigPathForTreeNode(e.Node);
-            Configuration.ConfigEditorInfoConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
+            Configuration.ConfigSettingsConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
             descriptionTextBox.Text = nodeConfigInfo.Description;
 
             object obj = GetObjectForConfigPath(modConfig, configPath);
@@ -128,14 +128,14 @@ namespace LTTPConfigEditor
             File.WriteAllText(filename, json);
         }
 
-        private bool IsModVersionCompatible(Version modVersion)
+        private bool IsModVersionCompatible(Version modVersion, Configuration.ConfigVersionConfig configVersionsSupported)
         {
-            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MinCompatibleModVersion) < 0)
+            if (modVersion.CompareTo(new Version(configVersionsSupported.Min)) < 0)
             {
                 return false;
             }
 
-            if (modVersion.CompareTo(LateToTheParty.Controllers.ConfigController.MaxCompatibleModVersion) < 0)
+            if (modVersion.CompareTo(new Version(configVersionsSupported.Max)) > 0)
             {
                 return false;
             }
@@ -175,7 +175,7 @@ namespace LTTPConfigEditor
                         node.Nodes.Add(entryNode);
 
                         Type keyType = propType.GetGenericArguments()[0];
-                        var dictKey = typeof(ConfigDictionaryEntry<,>).MakeGenericType(keyType, valueType);
+                        var dictKey = typeof(Configuration.ConfigDictionaryEntry<,>).MakeGenericType(keyType, valueType);
                         configTypes.Add(entryNode, dictKey);
 
                         entryNode.Nodes.AddRange(CreateTreeNodesForType(entry.Value.GetType(), entry.Value));
@@ -189,17 +189,17 @@ namespace LTTPConfigEditor
             return nodes.ToArray();
         }
 
-        private Configuration.ConfigEditorInfoConfig GetConfigInfoForPath(string configPath)
+        private Configuration.ConfigSettingsConfig GetConfigInfoForPath(string configPath)
         {
-            if (configEditorInfo.ContainsKey(configPath))
+            if (configEditorInfo.Settings.ContainsKey(configPath))
             {
-                return configEditorInfo[configPath];
+                return configEditorInfo.Settings[configPath];
             }
 
-            return new Configuration.ConfigEditorInfoConfig();
+            return new Configuration.ConfigSettingsConfig();
         }
 
-        private Configuration.ConfigEditorInfoConfig GetConfigInfoForTreeNode(TreeNode node)
+        private Configuration.ConfigSettingsConfig GetConfigInfoForTreeNode(TreeNode node)
         {
             return GetConfigInfoForPath(GetConfigPathForTreeNode(node));
         }
@@ -294,7 +294,7 @@ namespace LTTPConfigEditor
             valueButtonActions.Clear();
         }
 
-        private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigEditorInfoConfig valueProperties)
+        private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigSettingsConfig valueProperties)
         {
             RemoveValueControls(panel);
 
@@ -312,12 +312,12 @@ namespace LTTPConfigEditor
                 return;
             }
 
-            if (!valueType.Namespace.StartsWith("System") && !valueType.Name.Contains(typeof(ConfigDictionaryEntry<,>).Name))
+            if (!valueType.Namespace.StartsWith("System") && !valueType.Name.Contains(typeof(Configuration.ConfigDictionaryEntry<,>).Name))
             {
                 return;
             }
 
-            if (valueType.Name.Contains(typeof(ConfigDictionaryEntry<,>).Name))
+            if (valueType.Name.Contains(typeof(Configuration.ConfigDictionaryEntry<,>).Name))
             {
                 Button editArrayButton = CreateValueButton("Remove Entry", () => { return; });
                 panel.Controls.Add(editArrayButton);
@@ -424,7 +424,7 @@ namespace LTTPConfigEditor
             TextBox textBox = sender as TextBox;
 
             string configPath = GetConfigPathForTreeNode(configTreeView.SelectedNode);
-            Configuration.ConfigEditorInfoConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
+            Configuration.ConfigSettingsConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
             Type configType = configTypes[configTreeView.SelectedNode];
 
             try

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LTTPConfigEditor.Configuration
 {
-    public class ConfigEditorInfoConfig
+    public class ConfigSettingsConfig
     {
         [JsonProperty("description")]
         public string Description { get; set; } = "";
@@ -24,7 +24,7 @@ namespace LTTPConfigEditor.Configuration
         [JsonProperty("default")]
         public double Default { get; set; } = double.NaN;
 
-        public ConfigEditorInfoConfig()
+        public ConfigSettingsConfig()
         {
 
         }

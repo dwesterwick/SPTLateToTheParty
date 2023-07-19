@@ -52,8 +52,10 @@
     <Compile Include="BreadCrumbControl.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Configuration\ConfigEditorInfoConfig.cs" />
+    <Compile Include="Configuration\ConfigEditorConfig.cs" />
+    <Compile Include="Configuration\ConfigSettingsConfig.cs" />
     <Compile Include="Configuration\ConfigDictionaryEntry.cs" />
+    <Compile Include="Configuration\ConfigVersionConfig.cs" />
     <Compile Include="LTTPConfigEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>
