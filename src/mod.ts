@@ -33,6 +33,8 @@ import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 import { TraderController } from "@spt-aki/controllers/TraderController";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
+import { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
+import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
@@ -67,6 +69,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private fenceService: FenceService;
     private traderController: TraderController;
     private fenceBaseAssortGenerator: FenceBaseAssortGenerator;
+    private ragfairOfferGenerator: RagfairOfferGenerator;
+    private ragfairOfferService: RagfairOfferService;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -269,6 +273,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.traderController = container.resolve<TraderController>("TraderController");
         this.fenceService = container.resolve<FenceService>("FenceService");
         this.fenceBaseAssortGenerator = container.resolve<FenceBaseAssortGenerator>("FenceBaseAssortGenerator");
+        this.ragfairOfferGenerator = container.resolve<RagfairOfferGenerator>("RagfairOfferGenerator");
+        this.ragfairOfferService = container.resolve<RagfairOfferService>("RagfairOfferService");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -349,6 +355,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 this.jsonUtil,
                 this.fenceService,
                 this.fenceBaseAssortGenerator,
+                this.ragfairOfferGenerator,
+                this.ragfairOfferService,
                 this.iTraderConfig,
                 this.randomUtil,
                 this.timeutil
@@ -506,6 +514,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 return this.getUpdatedTraderAssort(traderID, sessionId, false);
             }
         }
+
+        this.traderAssortGenerator.updateFleaOffersForTrader(traderID);
 
         return assort;
     }

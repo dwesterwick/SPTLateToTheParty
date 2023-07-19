@@ -6,9 +6,12 @@ import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
+import { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
+import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { TimeUtil } from "@spt-aki/utils/TimeUtil";
+import { MemberCategory } from "@spt-aki/models/enums/MemberCategory"
 import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { Item } from "@spt-aki/models/eft/common/tables/IItem";
@@ -29,6 +32,8 @@ export class TraderAssortGenerator
         private jsonUtil: JsonUtil,
         private fenceService: FenceService,
         private fenceBaseAssortGenerator: FenceBaseAssortGenerator,
+        private ragfairOfferGenerator: RagfairOfferGenerator,
+        private ragfairOfferService: RagfairOfferService,
         private iTraderConfig: ITraderConfig,
         private randomUtil: RandomUtil,
         private timeUtil: TimeUtil
@@ -52,6 +57,59 @@ export class TraderAssortGenerator
         if (!this.recentlyChangedQuests.includes(questID))
         {
             this.recentlyChangedQuests.push(questID);
+        }
+    }
+
+    public updateFleaOffersForTrader(traderID: string): void
+    {
+        if (this.lastAssort[traderID] === undefined)
+        {
+            return;
+        }
+
+        this.ragfairOfferGenerator.generateFleaOffersForTrader(traderID);
+        const offers = this.ragfairOfferService.getOffers();
+        const traderAssortIDs = this.lastAssort[traderID].items.map(item => item._id);
+
+        // Review all offers and generate an array of ID's for traders who appear in them
+        for (const offer in offers)
+        {
+            if ((offers[offer].user.memberType != MemberCategory.TRADER) || (offers[offer].user.id != traderID))
+            {
+                continue;
+            }
+
+            for (const i in offers[offer].items)
+            {
+                if ((offers[offer].items[i].upd === undefined) || (offers[offer].items[i].upd.StackObjectsCount === undefined) || (offers[offer].items[i].upd.UnlimitedCount))
+                {
+                    continue;
+                }
+                
+                if (traderAssortIDs.includes(offers[offer].items[i]._id))
+                {
+                    const matchingItem = this.lastAssort[traderID].items.find(item => item._id == offers[offer].items[i]._id);
+                    if (matchingItem === undefined)
+                    {
+                        this.commonUtils.logError(`Could not find matching offer for ${this.commonUtils.getItemName(offers[offer].items[i]._tpl)} from trader ${traderID}`);
+                    }
+
+                    const stackReduction = offers[offer].items[i].upd.StackObjectsCount - matchingItem.upd.StackObjectsCount;
+                    if (stackReduction > 0)
+                    {
+                        this.commonUtils.logInfo(`Changing stock of ${this.commonUtils.getItemName(offers[offer].items[i]._tpl)} from ${offers[offer].items[i].upd.StackObjectsCount} to ${matchingItem.upd.StackObjectsCount}`);
+                        this.ragfairOfferService.removeOfferStack(offers[offer]._id, stackReduction);
+                    }
+                }
+                else
+                {
+                    if (offers[offer].items[i].upd.StackObjectsCount > 0)
+                    {
+                        this.commonUtils.logInfo(`Depleting stock of ${this.commonUtils.getItemName(offers[offer].items[i]._tpl)}`);
+                        this.ragfairOfferService.removeOfferStack(offers[offer]._id, offers[offer].items[i].upd.StackObjectsCount);
+                    }
+                }
+            }
         }
     }
 
