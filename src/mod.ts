@@ -35,6 +35,7 @@ import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
 import { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
 import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
+import { RagfairController } from "@spt-aki/controllers/RagfairController";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
@@ -71,6 +72,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private fenceBaseAssortGenerator: FenceBaseAssortGenerator;
     private ragfairOfferGenerator: RagfairOfferGenerator;
     private ragfairOfferService: RagfairOfferService;
+    private ragfairController: RagfairController;
 
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
@@ -166,6 +168,25 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                     const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
                     const assort = this.getUpdatedTraderAssort(traderID, sessionId);
                     return this.httpResponseUtil.getBody(assort);
+                }
+            }], "aki"
+        );
+
+        // Search flea offers
+        // Needed to adjust flea offers to match trader stock
+        staticRouterModService.registerStaticRouter(`StaticAkiSearchRagfair${modName}`,
+            [{
+                url: "/client/ragfair/find",
+                action: (url: string, info: any, sessionId: string, output: string) => 
+                {
+                    if (!modConfig.trader_stock_changes.enabled)
+                    {
+                        return output;
+                    }
+
+                    let offers = this.ragfairController.getOffers(sessionId, info);
+                    offers = this.traderAssortGenerator.updateFleaOffers(offers);
+                    return this.httpResponseUtil.getBody(offers);
                 }
             }], "aki"
         );
@@ -275,6 +296,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.fenceBaseAssortGenerator = container.resolve<FenceBaseAssortGenerator>("FenceBaseAssortGenerator");
         this.ragfairOfferGenerator = container.resolve<RagfairOfferGenerator>("RagfairOfferGenerator");
         this.ragfairOfferService = container.resolve<RagfairOfferService>("RagfairOfferService");
+        this.ragfairController = container.resolve<RagfairController>("RagfairController");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
@@ -514,8 +536,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 return this.getUpdatedTraderAssort(traderID, sessionId, false);
             }
         }
-
-        this.traderAssortGenerator.updateFleaOffersForTrader(traderID);
 
         return assort;
     }

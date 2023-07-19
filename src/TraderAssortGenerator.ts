@@ -15,6 +15,7 @@ import { MemberCategory } from "@spt-aki/models/enums/MemberCategory"
 import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
 
 export class TraderAssortGenerator
 {
@@ -60,57 +61,51 @@ export class TraderAssortGenerator
         }
     }
 
-    public updateFleaOffersForTrader(traderID: string): void
+    public updateFleaOffers(originalOffersResult: IGetOffersResult): IGetOffersResult
     {
-        if (this.lastAssort[traderID] === undefined)
-        {
-            return;
-        }
+        const offersResult = this.jsonUtil.clone(originalOffersResult);
 
-        this.ragfairOfferGenerator.generateFleaOffersForTrader(traderID);
-        const offers = this.ragfairOfferService.getOffers();
-        const traderAssortIDs = this.lastAssort[traderID].items.map(item => item._id);
-
-        // Review all offers and generate an array of ID's for traders who appear in them
-        for (const offer in offers)
+        for (const offer in offersResult.offers)
         {
-            if ((offers[offer].user.memberType != MemberCategory.TRADER) || (offers[offer].user.id != traderID))
+            if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType != MemberCategory.TRADER))
             {
                 continue;
             }
 
-            for (const i in offers[offer].items)
+            for (const i in offersResult.offers[offer].items)
             {
-                if ((offers[offer].items[i].upd === undefined) || (offers[offer].items[i].upd.StackObjectsCount === undefined) || (offers[offer].items[i].upd.UnlimitedCount))
+                if ((offersResult.offers[offer].items[i].upd === undefined) || (offersResult.offers[offer].items[i].upd.StackObjectsCount === undefined) || (offersResult.offers[offer].items[i].upd.UnlimitedCount))
                 {
                     continue;
                 }
-                
-                if (traderAssortIDs.includes(offers[offer].items[i]._id))
+
+                if (this.lastAssort[offersResult.offers[offer].user.id] === undefined)
                 {
-                    const matchingItem = this.lastAssort[traderID].items.find(item => item._id == offers[offer].items[i]._id);
-                    if (matchingItem === undefined)
+                    continue;
+                }
+
+                const matchingItem = this.lastAssort[offersResult.offers[offer].user.id].items.find(item => item._id == offersResult.offers[offer].items[i]._id);
+                if (matchingItem === undefined)
+                {
+                    if (offersResult.offers[offer].items[i].upd.StackObjectsCount > 0)
                     {
-                        this.commonUtils.logError(`Could not find matching offer for ${this.commonUtils.getItemName(offers[offer].items[i]._tpl)} from trader ${traderID}`);
+                        this.commonUtils.logInfo(`Depleting stock of ${this.commonUtils.getItemName(offersResult.offers[offer].items[i]._tpl)}`);
+                        offersResult.offers[offer].items[i].upd.StackObjectsCount = 0;
                     }
 
-                    const stackReduction = offers[offer].items[i].upd.StackObjectsCount - matchingItem.upd.StackObjectsCount;
-                    if (stackReduction > 0)
-                    {
-                        this.commonUtils.logInfo(`Changing stock of ${this.commonUtils.getItemName(offers[offer].items[i]._tpl)} from ${offers[offer].items[i].upd.StackObjectsCount} to ${matchingItem.upd.StackObjectsCount}`);
-                        this.ragfairOfferService.removeOfferStack(offers[offer]._id, stackReduction);
-                    }
+                    continue;
                 }
-                else
+                
+                const stackReduction = offersResult.offers[offer].items[i].upd.StackObjectsCount - matchingItem.upd.StackObjectsCount;
+                if (stackReduction > 0)
                 {
-                    if (offers[offer].items[i].upd.StackObjectsCount > 0)
-                    {
-                        this.commonUtils.logInfo(`Depleting stock of ${this.commonUtils.getItemName(offers[offer].items[i]._tpl)}`);
-                        this.ragfairOfferService.removeOfferStack(offers[offer]._id, offers[offer].items[i].upd.StackObjectsCount);
-                    }
+                    this.commonUtils.logInfo(`Changing stock of ${this.commonUtils.getItemName(offersResult.offers[offer].items[i]._tpl)} from ${offersResult.offers[offer].items[i].upd.StackObjectsCount} to ${matchingItem.upd.StackObjectsCount}`);
+                    offersResult.offers[offer].items[i].upd.StackObjectsCount = matchingItem.upd.StackObjectsCount;
                 }
             }
         }
+
+        return offersResult;
     }
 
     public updateTraderStock(traderID: string, assort: ITraderAssort, ll: number, deleteDepletedItems: boolean): ITraderAssort
