@@ -61,6 +61,16 @@ export class TraderAssortGenerator
         }
     }
 
+    public getLastTraderAssort(traderID: string): ITraderAssort
+    {
+        return this.lastAssort[traderID];
+    }
+
+    public getLastTraderRefreshTimestamp(traderID: string): number
+    {
+        return this.lastAssortUpdate[traderID];
+    }
+
     public updateFleaOffers(originalOffersResult: IGetOffersResult): IGetOffersResult
     {
         const offersResult = this.jsonUtil.clone(originalOffersResult);
@@ -110,6 +120,8 @@ export class TraderAssortGenerator
 
     public updateTraderStock(traderID: string, assort: ITraderAssort, ll: number, deleteDepletedItems: boolean): ITraderAssort
     {
+        this.commonUtils.logInfo(`Updating stock for ${this.databaseTables.traders[traderID].base.nickname}...`);
+
         const now = this.timeUtil.getTimestamp();
 
         // Initialize data for when the last assort update 
@@ -125,7 +137,7 @@ export class TraderAssortGenerator
         }
         if ((this.lastLL[traderID] != ll) || (this.lastAssort[traderID] === undefined) || (this.lastAssort[traderID].items.length == 0))
         {
-            this.commonUtils.logInfo(`Resetting last-assort cache for trader ${traderID}`);
+            this.commonUtils.logInfo(`Resetting last-assort cache for ${this.databaseTables.traders[traderID].base.nickname}`);
             this.lastAssort[traderID] = this.jsonUtil.clone(assort);
         }
 
@@ -235,6 +247,8 @@ export class TraderAssortGenerator
         // Update the resupply time and stock
         this.lastAssort[traderID] = this.jsonUtil.clone(assort);
         this.lastAssortUpdate[traderID] = now;
+
+        //this.commonUtils.logInfo(`Updating stock for ${this.databaseTables.traders[traderID].base.nickname}...done.`);
 
         return assort;
     } 

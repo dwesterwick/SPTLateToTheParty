@@ -184,8 +184,38 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                         return output;
                     }
 
+                    const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
+
+                    for (const t in this.iTraderConfig.updateTime)
+                    {
+                        const traderID = this.iTraderConfig.updateTime[t].traderId;
+
+                        if (traderID == Traders.FENCE)
+                        {
+                            continue;
+                        }
+
+                        // This is undefined for some trader mods
+                        if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
+                        {
+                            continue;
+                        }
+
+                        const resupplyAge = this.timeutil.getTimestamp() - this.traderAssortGenerator.getLastTraderRefreshTimestamp(traderID);
+                        const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
+
+                        if (resupplyAge < resupplyAgeMax)
+                        {
+                            continue;
+                        }
+
+                        const assort = this.traderController.getAssort(sessionId, traderID);
+                        this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID == Traders.FENCE);
+                    }
+
                     let offers = this.ragfairController.getOffers(sessionId, info);
                     offers = this.traderAssortGenerator.updateFleaOffers(offers);
+
                     return this.httpResponseUtil.getBody(offers);
                 }
             }], "aki"

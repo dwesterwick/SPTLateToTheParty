@@ -33,6 +33,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("money_parent_id")]
         public string MoneyParentId { get; set; } = "543be5dd4bdc2deb348b4569";
 
+        [JsonProperty("ragfair_refresh_time_fraction")]
+        public double RagfairRefreshTimeFraction { get; set; } = 0.05;
+
         [JsonProperty("fence_stock_changes")]
         public FenceStockChangesConfig FenceStockChanges { get; set; } = new FenceStockChangesConfig();
 
