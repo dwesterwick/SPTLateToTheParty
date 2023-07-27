@@ -77,6 +77,7 @@ export class TraderAssortGenerator
 
         for (const offer in offersResult.offers)
         {
+            // Only modify trader offers
             if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType != MemberCategory.TRADER))
             {
                 continue;
@@ -84,16 +85,19 @@ export class TraderAssortGenerator
 
             for (const i in offersResult.offers[offer].items)
             {
+                // Ensure the offer is valid
                 if ((offersResult.offers[offer].items[i].upd === undefined) || (offersResult.offers[offer].items[i].upd.StackObjectsCount === undefined) || (offersResult.offers[offer].items[i].upd.UnlimitedCount))
                 {
                     continue;
                 }
 
+                // If the inventory for the trader has never been initialized, use the current data
                 if (this.lastAssort[offersResult.offers[offer].user.id] === undefined)
                 {
                     continue;
                 }
 
+                // Find the matching item in the trader's inventory. If it doesn't exist, that means it's sold out. 
                 const matchingItem = this.lastAssort[offersResult.offers[offer].user.id].items.find(item => item._id == offersResult.offers[offer].items[i]._id);
                 if (matchingItem === undefined)
                 {
@@ -106,6 +110,7 @@ export class TraderAssortGenerator
                     continue;
                 }
                 
+                // Determine how many units of the item have been sold since the last refresh, and then update the flea-market listing to reflect that change
                 const stackReduction = offersResult.offers[offer].items[i].upd.StackObjectsCount - matchingItem.upd.StackObjectsCount;
                 if (stackReduction > 0)
                 {

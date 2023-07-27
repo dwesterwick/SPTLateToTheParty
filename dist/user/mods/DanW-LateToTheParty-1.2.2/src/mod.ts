@@ -39,6 +39,8 @@ import { RagfairController } from "@spt-aki/controllers/RagfairController";
 import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
+import { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
+import { ISearchRequestData } from "@spt-aki/models/eft/ragfair/ISearchRequestData";
 
 const modName = "LateToTheParty";
 
@@ -184,38 +186,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                         return output;
                     }
 
-                    const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-
-                    for (const t in this.iTraderConfig.updateTime)
-                    {
-                        const traderID = this.iTraderConfig.updateTime[t].traderId;
-
-                        if (traderID == Traders.FENCE)
-                        {
-                            continue;
-                        }
-
-                        // This is undefined for some trader mods
-                        if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
-                        {
-                            continue;
-                        }
-
-                        const resupplyAge = this.timeutil.getTimestamp() - this.traderAssortGenerator.getLastTraderRefreshTimestamp(traderID);
-                        const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
-
-                        if (resupplyAge < resupplyAgeMax)
-                        {
-                            continue;
-                        }
-
-                        const assort = this.traderController.getAssort(sessionId, traderID);
-                        this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID == Traders.FENCE);
-                    }
-
-                    let offers = this.ragfairController.getOffers(sessionId, info);
-                    offers = this.traderAssortGenerator.updateFleaOffers(offers);
-
+                    const offers = this.getRagfairOffersForTraders(info, sessionId);
                     return this.httpResponseUtil.getBody(offers);
                 }
             }], "aki"
@@ -568,6 +539,47 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         }
 
         return assort;
+    }
+
+    private getRagfairOffersForTraders(info: ISearchRequestData, sessionId: string): IGetOffersResult
+    {
+        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
+
+        // Update each trader's inventory if too much time has elapsed since it was last refreshed
+        for (const t in this.iTraderConfig.updateTime)
+        {
+            const traderID = this.iTraderConfig.updateTime[t].traderId;
+
+            // Ignore Fence because his items aren't available on the flea market
+            if (traderID == Traders.FENCE)
+            {
+                continue;
+            }
+
+            // This is undefined for some trader mods
+            if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
+            {
+                continue;
+            }
+
+            // Determine how much time has passed since the trader's inventory was last updated, and compare that to the max time allowed
+            const resupplyAge = this.timeutil.getTimestamp() - this.traderAssortGenerator.getLastTraderRefreshTimestamp(traderID);
+            const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
+
+            if (resupplyAge < resupplyAgeMax)
+            {
+                continue;
+            }
+
+            const assort = this.traderController.getAssort(sessionId, traderID);
+            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID == Traders.FENCE);
+        }
+
+        // Update all offers to reflect the latest trader inventory
+        let offers = this.ragfairController.getOffers(sessionId, info);
+        offers = this.traderAssortGenerator.updateFleaOffers(offers);
+
+        return offers;
     }
 }
 module.exports = {mod: new LateToTheParty()}
