@@ -256,12 +256,11 @@ namespace LateToTheParty.Controllers
 
         private bool CheckIfDoorCanBeToggled(Door door, bool logResult = false)
         {
-            // Redundant check
-            /*if (!door.Operatable)
+            if (!door.Operatable)
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
                 return false;
-            }*/
+            }
 
             if (door.gameObject.layer != InteractiveLayer)
             {

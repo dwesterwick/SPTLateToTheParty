@@ -6,12 +6,16 @@ import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
+import { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
+import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { TimeUtil } from "@spt-aki/utils/TimeUtil";
+import { MemberCategory } from "@spt-aki/models/enums/MemberCategory"
 import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
 
 export class TraderAssortGenerator
 {
@@ -29,6 +33,8 @@ export class TraderAssortGenerator
         private jsonUtil: JsonUtil,
         private fenceService: FenceService,
         private fenceBaseAssortGenerator: FenceBaseAssortGenerator,
+        private ragfairOfferGenerator: RagfairOfferGenerator,
+        private ragfairOfferService: RagfairOfferService,
         private iTraderConfig: ITraderConfig,
         private randomUtil: RandomUtil,
         private timeUtil: TimeUtil
@@ -55,8 +61,67 @@ export class TraderAssortGenerator
         }
     }
 
+    public getLastTraderAssort(traderID: string): ITraderAssort
+    {
+        return this.lastAssort[traderID];
+    }
+
+    public getLastTraderRefreshTimestamp(traderID: string): number
+    {
+        return this.lastAssortUpdate[traderID];
+    }
+
+    public updateFleaOffers(originalOffersResult: IGetOffersResult): IGetOffersResult
+    {
+        const offersResult = this.jsonUtil.clone(originalOffersResult);
+
+        for (const offer in offersResult.offers)
+        {
+            if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType != MemberCategory.TRADER))
+            {
+                continue;
+            }
+
+            for (const i in offersResult.offers[offer].items)
+            {
+                if ((offersResult.offers[offer].items[i].upd === undefined) || (offersResult.offers[offer].items[i].upd.StackObjectsCount === undefined) || (offersResult.offers[offer].items[i].upd.UnlimitedCount))
+                {
+                    continue;
+                }
+
+                if (this.lastAssort[offersResult.offers[offer].user.id] === undefined)
+                {
+                    continue;
+                }
+
+                const matchingItem = this.lastAssort[offersResult.offers[offer].user.id].items.find(item => item._id == offersResult.offers[offer].items[i]._id);
+                if (matchingItem === undefined)
+                {
+                    if (offersResult.offers[offer].items[i].upd.StackObjectsCount > 0)
+                    {
+                        this.commonUtils.logInfo(`Depleting stock of ${this.commonUtils.getItemName(offersResult.offers[offer].items[i]._tpl)}`);
+                        offersResult.offers[offer].items[i].upd.StackObjectsCount = 0;
+                    }
+
+                    continue;
+                }
+                
+                const stackReduction = offersResult.offers[offer].items[i].upd.StackObjectsCount - matchingItem.upd.StackObjectsCount;
+                if (stackReduction > 0)
+                {
+                    this.commonUtils.logInfo(`Changing stock of ${this.commonUtils.getItemName(offersResult.offers[offer].items[i]._tpl)} from ${offersResult.offers[offer].items[i].upd.StackObjectsCount} to ${matchingItem.upd.StackObjectsCount}`);
+                    offersResult.offers[offer].items[i].upd.StackObjectsCount = matchingItem.upd.StackObjectsCount;
+                }
+            }
+        }
+
+        return offersResult;
+    }
+
     public updateTraderStock(traderID: string, assort: ITraderAssort, ll: number, deleteDepletedItems: boolean): ITraderAssort
     {
+        this.commonUtils.logInfo(`Updating stock for ${this.databaseTables.traders[traderID].base.nickname}...`);
+
         const now = this.timeUtil.getTimestamp();
 
         // Initialize data for when the last assort update 
@@ -72,7 +137,7 @@ export class TraderAssortGenerator
         }
         if ((this.lastLL[traderID] != ll) || (this.lastAssort[traderID] === undefined) || (this.lastAssort[traderID].items.length == 0))
         {
-            this.commonUtils.logInfo(`Resetting last-assort cache for trader ${traderID}`);
+            this.commonUtils.logInfo(`Resetting last-assort cache for ${this.databaseTables.traders[traderID].base.nickname}`);
             this.lastAssort[traderID] = this.jsonUtil.clone(assort);
         }
 
@@ -182,6 +247,8 @@ export class TraderAssortGenerator
         // Update the resupply time and stock
         this.lastAssort[traderID] = this.jsonUtil.clone(assort);
         this.lastAssortUpdate[traderID] = now;
+
+        //this.commonUtils.logInfo(`Updating stock for ${this.databaseTables.traders[traderID].base.nickname}...done.`);
 
         return assort;
     } 

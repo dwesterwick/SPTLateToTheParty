@@ -175,6 +175,7 @@
 		"hot_item_sell_chance_global_multiplier": 0.4,
 		"ammo_parent_id": "5485a8684bdc2da71d8b4567",
 		"money_parent_id": "543be5dd4bdc2deb348b4569",
+		"ragfair_refresh_time_fraction": 0.05,
 		"fence_stock_changes": {
 			"always_regenerate": false,
 			"assort_size": 190,
