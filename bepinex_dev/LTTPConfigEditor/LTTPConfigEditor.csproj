@@ -53,6 +53,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Configuration\ConfigEditorConfig.cs" />
+    <Compile Include="Configuration\ConfigSearchResult.cs" />
     <Compile Include="Configuration\ConfigSettingsConfig.cs" />
     <Compile Include="Configuration\ConfigDictionaryEntry.cs" />
     <Compile Include="Configuration\ConfigVersionConfig.cs" />

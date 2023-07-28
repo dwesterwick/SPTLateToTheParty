@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using LTTPConfigEditor.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.CodeDom;
 using System.Collections;
@@ -220,6 +221,33 @@ namespace LTTPConfigEditor
 
         private object GetObjectForConfigPath(object obj, string configPath)
         {
+            ConfigSearchResult data = GetConfigPathData(obj, configPath);
+
+            if (data.Object.GetType().Name.Contains(typeof(DictionaryEntry).Name))
+            {
+                DictionaryEntry de = (DictionaryEntry)data.Object;
+                return de.Value;
+            }
+
+            return data.PropertyInfo.GetValue(data.Object, null);
+        }
+
+        private void SetObjectForConfigPath(object obj, string configPath, object newValue)
+        {
+            ConfigSearchResult data = GetConfigPathData(obj, configPath);
+
+            if (data.Object.GetType().Name.Contains(typeof(DictionaryEntry).Name))
+            {
+                DictionaryEntry de = (DictionaryEntry)data.Object;
+                
+                return;
+            }
+
+            data.PropertyInfo.SetValue(data.Object, newValue, null);
+        }
+
+        private ConfigSearchResult GetConfigPathData(object obj, string configPath)
+        {
             string[] pathElements = configPath.Split('.');
 
             PropertyInfo[] props = obj.GetType().GetProperties();
@@ -230,7 +258,7 @@ namespace LTTPConfigEditor
                 string nodeName = jsonPropertyAttribute == null ? prop.Name : jsonPropertyAttribute.PropertyName;
                 object propObj = prop.GetValue(obj, null);
 
-                if 
+                if
                 (
                     (pathElements.Length > 1)
                     && (nodeName == pathElements[0])
@@ -238,13 +266,20 @@ namespace LTTPConfigEditor
                     && (propType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
                 )
                 {
+                    string newConfigPath = string.Join(".", pathElements, 2, pathElements.Length - 2);
+
                     IDictionary dict = prop.GetValue(obj, null) as IDictionary;
                     Type valueType = propType.GetGenericArguments()[1];
                     foreach (DictionaryEntry entry in dict)
                     {
                         if (entry.Key.ToString() == pathElements[1])
                         {
-                            return GetObjectForConfigPath(entry.Value, string.Join(".", pathElements, 2, pathElements.Length - 2));
+                            if (newConfigPath.Length == 0)
+                            {
+                                return new ConfigSearchResult(prop, entry);
+                            }
+
+                            return GetConfigPathData(entry.Value, newConfigPath);
                         }
                     }
                 }
@@ -256,13 +291,13 @@ namespace LTTPConfigEditor
 
                 if (pathElements.Length > 1)
                 {
-                    return GetObjectForConfigPath(propObj, string.Join(".", pathElements, 1, pathElements.Length - 1));
+                    return GetConfigPathData(propObj, string.Join(".", pathElements, 1, pathElements.Length - 1));
                 }
 
-                return propObj;
+                return new ConfigSearchResult(prop, obj);
             }
 
-            return obj;
+            throw new InvalidOperationException("Could not extract property for config path: " + configPath);
         }
 
         private void RemoveValueControls(Panel panel)
@@ -427,12 +462,36 @@ namespace LTTPConfigEditor
             Configuration.ConfigSettingsConfig nodeConfigInfo = GetConfigInfoForPath(configPath);
             Type configType = configTypes[configTreeView.SelectedNode];
 
+            if (configType.Name.Contains(typeof(ConfigDictionaryEntry<,>).Name))
+            {
+                configType = configType.GenericTypeArguments[1];
+            }
+
             try
             {
                 object newValueObj = Convert.ChangeType(textBox.Text, configType);
 
                 if (double.TryParse(newValueObj.ToString(), out double newValue))
                 {
+                    string newValueStr = newValue.ToString();
+                    if (newValueStr != textBox.Text)
+                    {
+                        if (MessageBox.Show("The new value " + textBox.Text + " will be saved as " + newValueStr + ". OK to proceed?", "New Value Accuracy Loss", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) == DialogResult.No)
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+
+                        newValueObj = Convert.ChangeType(newValueStr, configType);
+                        textBox.Text = newValueStr;
+                    }
+
+                    int decimalIndex = newValueStr.IndexOf('.');
+                    if ((decimalIndex > -1) && (newValueStr.Length - decimalIndex - 1 > nodeConfigInfo.DecimalPlaces))
+                    {
+                        throw new InvalidOperationException("The new value must have less than or equal to " + nodeConfigInfo.DecimalPlaces + " decimal places.");
+                    }
+
                     if (newValue > nodeConfigInfo.Max)
                     {
                         throw new InvalidOperationException("New value must be less than or equal to " + nodeConfigInfo.Max);
@@ -442,6 +501,8 @@ namespace LTTPConfigEditor
                         throw new InvalidOperationException("New value must be greather than or equal to " + nodeConfigInfo.Min);
                     }
                 }
+
+                SetObjectForConfigPath(modConfig, configPath, newValueObj);
             }
             catch (FormatException)
             {
