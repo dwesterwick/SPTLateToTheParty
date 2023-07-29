@@ -338,6 +338,16 @@ namespace LTTPConfigEditor
                 {
                     button.Click -= ValueButtonClickAction;
                 }
+
+                CheckBox checkBox = control as CheckBox;
+                if (checkBox == null)
+                {
+                    continue;
+                }
+                else
+                {
+                    checkBox.CheckedChanged -= ValueCheckboxCheckedChanged;
+                }
             }
 
             panel.Controls.Clear();
@@ -419,6 +429,7 @@ namespace LTTPConfigEditor
                 CheckBox valueCheckBox = new CheckBox();
                 valueCheckBox.Text = "";
                 valueCheckBox.Width = 32;
+                valueCheckBox.CheckedChanged += ValueCheckboxCheckedChanged;
 
                 valueCheckBox.Checked = (bool)value;
 
@@ -462,6 +473,14 @@ namespace LTTPConfigEditor
             }
 
             valueButtonActions[button.Text]();
+        }
+
+        private void ValueCheckboxCheckedChanged(object sender, EventArgs e)
+        {
+            CheckBox checkBox = sender as CheckBox;
+
+            string configPath = GetConfigPathForTreeNode(configTreeView.SelectedNode);
+            SetObjectForConfigPath(modConfig, configPath, checkBox.Checked);
         }
 
         private void ValueTextBoxValidating(object sender, CancelEventArgs e)
