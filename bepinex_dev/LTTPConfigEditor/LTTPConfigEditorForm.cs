@@ -354,20 +354,56 @@ namespace LTTPConfigEditor
             valueButtonActions.Clear();
         }
 
+        private Action addEntryAction(TreeNode treeNode)
+        {
+            return new Action(() =>
+            {
+                string configPath = GetConfigPathForTreeNode(treeNode);
+                
+                Type configType = configTypes[treeNode];
+                if (configType.Name.Contains(typeof(Dictionary<,>).Name))
+                {
+                    configType = configType.GenericTypeArguments[1];
+                }
+
+                IDictionary dict = GetObjectForConfigPath(modConfig, configPath) as IDictionary;
+
+                StringInputForm stringInputForm = new StringInputForm("New Key", dict.Keys.Cast<string>());
+                if (stringInputForm.ShowDialog() == DialogResult.Cancel)
+                {
+                    return;
+                }
+
+                object newValue = Activator.CreateInstance(configType);
+                SetObjectForConfigPath(modConfig, configPath + "." + stringInputForm.Input, newValue);
+
+                TreeNode newNode = new TreeNode(stringInputForm.Input);
+                configTypes.Add(newNode, configType);
+
+                newNode.Nodes.AddRange(CreateTreeNodesForType(configType, newValue));
+                treeNode.Nodes.Add(newNode);
+            });
+        }
+
         private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigSettingsConfig valueProperties)
         {
             RemoveValueControls(panel);
 
             if (valueType.IsArray)
             {
-                Button editArrayButton = CreateValueButton("Edit Array...", () => { return; });
+                Action editArrayAction = new Action(() =>
+                {
+
+                });
+
+                Button editArrayButton = CreateValueButton("Edit Array...", editArrayAction);
                 panel.Controls.Add(editArrayButton);
                 return;
             }
 
             if (valueType.Namespace.StartsWith("System") && valueType.Name.Contains(typeof(Dictionary<,>).Name))
             {
-                Button editArrayButton = CreateValueButton("Add Entry...", () => { return; });
+                Button editArrayButton = CreateValueButton("Add Entry...", addEntryAction(configTreeView.SelectedNode));
                 panel.Controls.Add(editArrayButton);
                 return;
             }
@@ -379,7 +415,12 @@ namespace LTTPConfigEditor
 
             if (valueType.Name.Contains(typeof(Configuration.ConfigDictionaryEntry<,>).Name))
             {
-                Button editArrayButton = CreateValueButton("Remove Entry", () => { return; });
+                Action removeEntryAction = new Action(() =>
+                {
+
+                });
+
+                Button editArrayButton = CreateValueButton("Remove Entry", removeEntryAction);
                 panel.Controls.Add(editArrayButton);
 
                 if (!valueType.GetGenericArguments()[1].Namespace.StartsWith("System"))
