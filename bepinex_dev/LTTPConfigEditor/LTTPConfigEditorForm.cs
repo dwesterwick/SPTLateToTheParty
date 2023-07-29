@@ -239,7 +239,19 @@ namespace LTTPConfigEditor
             if (data.Object.GetType().Name.Contains(typeof(DictionaryEntry).Name))
             {
                 DictionaryEntry de = (DictionaryEntry)data.Object;
-                
+                IDictionary dict = data.PropertyInfo.GetValue(data.DictionaryObject, null) as IDictionary;
+
+                if (dict.Contains(de.Key))
+                {
+                    dict[de.Key] = newValue;
+                }
+                else
+                {
+                    dict.Add(de.Key, newValue);
+                }
+
+                data.PropertyInfo.SetValue(data.DictionaryObject, dict, null);
+
                 return;
             }
 
@@ -276,12 +288,15 @@ namespace LTTPConfigEditor
                         {
                             if (newConfigPath.Length == 0)
                             {
-                                return new ConfigSearchResult(prop, entry);
+                                return new ConfigSearchResult(prop, entry, obj);
                             }
 
                             return GetConfigPathData(entry.Value, newConfigPath);
                         }
                     }
+
+                    DictionaryEntry newEntry = new DictionaryEntry(pathElements[1], Activator.CreateInstance(valueType));
+                    return new ConfigSearchResult(prop, newEntry, obj);
                 }
 
                 if (nodeName != pathElements[0])
