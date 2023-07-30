@@ -35,16 +35,20 @@ export declare class MatchController {
     protected botConfig: IBotConfig;
     constructor(logger: ILogger, saveServer: SaveServer, profileHelper: ProfileHelper, matchLocationService: MatchLocationService, traderHelper: TraderHelper, botLootCacheService: BotLootCacheService, configServer: ConfigServer, profileSnapshotService: ProfileSnapshotService, botGenerationCacheService: BotGenerationCacheService, applicationContext: ApplicationContext);
     getEnabled(): boolean;
+    /** Handle raid/profile/list */
     getProfile(info: IGetProfileRequestData): IPmcData[];
+    /** Handle client/match/group/create */
     createGroup(sessionID: string, info: ICreateGroupRequestData): any;
+    /** Handle client/match/group/delete */
     deleteGroup(info: any): void;
-    joinMatch(info: IJoinMatchRequestData, sessionID: string): IJoinMatchResult[];
-    protected getMatch(location: string): any;
+    /** Handle match/group/start_game */
+    joinMatch(info: IJoinMatchRequestData, sessionId: string): IJoinMatchResult;
+    /** Handle client/match/group/status */
     getGroupStatus(info: IGetGroupStatusRequestData): any;
     /**
      * Handle /client/raid/configuration
-     * @param request
-     * @param sessionID
+     * @param request Raid config request
+     * @param sessionID Session id
      */
     startOfflineRaid(request: IGetRaidConfigurationRequestData, sessionID: string): void;
     /**
@@ -53,5 +57,26 @@ export declare class MatchController {
      * @returns bot difficulty
      */
     protected convertDifficultyDropdownIntoBotDifficulty(botDifficulty: string): string;
-    endOfflineRaid(info: IEndOfflineRaidRequestData, sessionID: string): void;
+    /** Handle client/match/offline/end */
+    endOfflineRaid(info: IEndOfflineRaidRequestData, sessionId: string): void;
+    /**
+     * Was extract by car
+     * @param extractName name of extract
+     * @returns true if car extract
+     */
+    protected extractWasViaCar(extractName: string): boolean;
+    /**
+     * Handle when a player extracts using a car - Add rep to fence
+     * @param extractName name of the extract used
+     * @param pmcData Player profile
+     * @param sessionId Session id
+     */
+    protected handleCarExtract(extractName: string, pmcData: IPmcData, sessionId: string): void;
+    /**
+     * Update players fence trader standing value in profile
+     * @param pmcData Player profile
+     * @param fenceId Id of fence trader
+     * @param extractName Name of extract used
+     */
+    protected updateFenceStandingInProfile(pmcData: IPmcData, fenceId: string, extractName: string): void;
 }

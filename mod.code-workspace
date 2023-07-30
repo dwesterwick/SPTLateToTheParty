@@ -8,5 +8,8 @@
 		"recommendations": [
 			"dbaeumer.vscode-eslint"
 		]
+	},
+	"settings": {
+		"dotnet.defaultSolution": "bepinex_dev/LateToTheParty/LateToTheParty.sln"
 	}
 }

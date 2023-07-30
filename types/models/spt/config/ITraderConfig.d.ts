@@ -3,10 +3,10 @@ import { IBaseConfig } from "./IBaseConfig";
 export interface ITraderConfig extends IBaseConfig {
     kind: "aki-trader";
     updateTime: UpdateTime[];
+    purchasesAreFoundInRaid: boolean;
     updateTimeDefault: number;
-    /** What % of max durability an item needs to sell to a trader*/
-    durabilityPurchaseThreshhold: Record<string, number>;
     traderPriceMultipler: number;
+    /** Keep track of purchased trader-limited items beyond server restarts to prevent server-restart item scumming */
     persistPurchaseDataInProfile: boolean;
     fence: FenceConfig;
 }
@@ -24,8 +24,12 @@ export interface FenceConfig {
     presetPriceMult: number;
     armorMaxDurabilityPercentMinMax: MinMax;
     presetMaxDurabilityPercentMinMax: MinMax;
+    /** Key: item tpl */
+    itemStackSizeOverrideMinMax: Record<string, MinMax>;
     itemTypeLimits: Record<string, number>;
     regenerateAssortsOnRefresh: boolean;
+    /** Block seasonal items from appearing when season is inactive */
+    blacklistSeasonalItems: boolean;
     blacklist: string[];
 }
 export interface DiscountOptions {

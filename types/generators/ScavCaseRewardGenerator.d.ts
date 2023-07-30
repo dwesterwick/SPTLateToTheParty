@@ -1,5 +1,6 @@
 import { ItemHelper } from "../helpers/ItemHelper";
 import { Product } from "../models/eft/common/tables/IBotBase";
+import { Upd } from "../models/eft/common/tables/IItem";
 import { ITemplateItem } from "../models/eft/common/tables/ITemplateItem";
 import { IHideoutScavCase } from "../models/eft/hideout/IHideoutScavCase";
 import { IScavCaseConfig } from "../models/spt/config/IScavCaseConfig";
@@ -78,7 +79,7 @@ export declare class ScavCaseRewardGenerator {
     protected addStackCountToAmmoAndMoney(item: ITemplateItem, resultItem: {
         _id: string;
         _tpl: string;
-        upd: any;
+        upd: Upd;
     }, rarity: string): void;
     /**
      *
@@ -88,7 +89,7 @@ export declare class ScavCaseRewardGenerator {
      */
     protected getFilteredItemsByPrice(dbItems: ITemplateItem[], itemFilters: RewardCountAndPriceDetails): ITemplateItem[];
     /**
-     * Gathers the reward options from config and scavcase.json into a single object
+     * Gathers the reward min and max count params for each reward quality level from config and scavcase.json into a single object
      * @param scavCaseDetails scavcase.json values
      * @returns ScavCaseRewardCountsAndPrices object
      */

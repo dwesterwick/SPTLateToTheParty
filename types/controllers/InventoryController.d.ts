@@ -1,10 +1,11 @@
+import { LootGenerator } from "../generators/LootGenerator";
 import { InventoryHelper } from "../helpers/InventoryHelper";
+import { ItemHelper } from "../helpers/ItemHelper";
 import { PaymentHelper } from "../helpers/PaymentHelper";
 import { PresetHelper } from "../helpers/PresetHelper";
 import { ProfileHelper } from "../helpers/ProfileHelper";
-import { WeightedRandomHelper } from "../helpers/WeightedRandomHelper";
+import { QuestHelper } from "../helpers/QuestHelper";
 import { IPmcData } from "../models/eft/common/IPmcData";
-import { IAddItemRequestData } from "../models/eft/inventory/IAddItemRequestData";
 import { IInventoryBindRequestData } from "../models/eft/inventory/IInventoryBindRequestData";
 import { IInventoryCreateMarkerRequestData } from "../models/eft/inventory/IInventoryCreateMarkerRequestData";
 import { IInventoryDeleteMarkerRequestData } from "../models/eft/inventory/IInventoryDeleteMarkerRequestData";
@@ -37,19 +38,21 @@ export declare class InventoryController {
     protected logger: ILogger;
     protected hashUtil: HashUtil;
     protected jsonUtil: JsonUtil;
+    protected itemHelper: ItemHelper;
     protected randomUtil: RandomUtil;
     protected databaseServer: DatabaseServer;
     protected fenceService: FenceService;
     protected presetHelper: PresetHelper;
     protected inventoryHelper: InventoryHelper;
+    protected questHelper: QuestHelper;
     protected ragfairOfferService: RagfairOfferService;
     protected profileHelper: ProfileHelper;
-    protected weightedRandomHelper: WeightedRandomHelper;
     protected paymentHelper: PaymentHelper;
     protected localisationService: LocalisationService;
+    protected lootGenerator: LootGenerator;
     protected eventOutputHolder: EventOutputHolder;
     protected httpResponseUtil: HttpResponseUtil;
-    constructor(logger: ILogger, hashUtil: HashUtil, jsonUtil: JsonUtil, randomUtil: RandomUtil, databaseServer: DatabaseServer, fenceService: FenceService, presetHelper: PresetHelper, inventoryHelper: InventoryHelper, ragfairOfferService: RagfairOfferService, profileHelper: ProfileHelper, weightedRandomHelper: WeightedRandomHelper, paymentHelper: PaymentHelper, localisationService: LocalisationService, eventOutputHolder: EventOutputHolder, httpResponseUtil: HttpResponseUtil);
+    constructor(logger: ILogger, hashUtil: HashUtil, jsonUtil: JsonUtil, itemHelper: ItemHelper, randomUtil: RandomUtil, databaseServer: DatabaseServer, fenceService: FenceService, presetHelper: PresetHelper, inventoryHelper: InventoryHelper, questHelper: QuestHelper, ragfairOfferService: RagfairOfferService, profileHelper: ProfileHelper, paymentHelper: PaymentHelper, localisationService: LocalisationService, lootGenerator: LootGenerator, eventOutputHolder: EventOutputHolder, httpResponseUtil: HttpResponseUtil);
     /**
     * Move Item
     * change location of item with parentId and slotId
@@ -61,6 +64,12 @@ export declare class InventoryController {
      * @returns IItemEventRouterResponse
      */
     moveItem(pmcData: IPmcData, moveRequest: IInventoryMoveRequestData, sessionID: string): IItemEventRouterResponse;
+    /**
+     * Get a event router response with inventory trader message
+     * @param output Item event router response
+     * @returns Item event router response
+     */
+    protected getTraderExploitErrorResponse(output: IItemEventRouterResponse): IItemEventRouterResponse;
     /**
     * Remove Item from Profile
     * Deep tree item deletion, also removes items from insurance list
@@ -92,16 +101,15 @@ export declare class InventoryController {
     */
     swapItem(pmcData: IPmcData, body: IInventorySwapRequestData, sessionID: string): IItemEventRouterResponse;
     /**
-    * Give Item
-    * its used for "add" item like gifts etc.
-    */
-    addItem(pmcData: IPmcData, body: IAddItemRequestData, output: IItemEventRouterResponse, sessionID: string, callback: any, foundInRaid?: boolean, addUpd?: any): IItemEventRouterResponse;
-    /**
      * Handles folding of Weapons
      */
     foldItem(pmcData: IPmcData, body: IInventoryFoldRequestData, sessionID: string): IItemEventRouterResponse;
     /**
      * Toggles "Toggleable" items like night vision goggles and face shields.
+     * @param pmcData player profile
+     * @param body Toggle request
+     * @param sessionID Session id
+     * @returns IItemEventRouterResponse
      */
     toggleItem(pmcData: IPmcData, body: IInventoryToggleRequestData, sessionID: string): IItemEventRouterResponse;
     /**
@@ -112,7 +120,14 @@ export declare class InventoryController {
      * @returns client response object
      */
     tagItem(pmcData: IPmcData, body: IInventoryTagRequestData, sessionID: string): IItemEventRouterResponse;
-    bindItem(pmcData: IPmcData, body: IInventoryBindRequestData, sessionID: string): IItemEventRouterResponse;
+    /**
+     * Bind an inventory item to the quick access menu at bottom of player screen
+     * @param pmcData Player profile
+     * @param bindRequest Reqeust object
+     * @param sessionID Session id
+     * @returns IItemEventRouterResponse
+     */
+    bindItem(pmcData: IPmcData, bindRequest: IInventoryBindRequestData, sessionID: string): IItemEventRouterResponse;
     /**
      * Handles examining an item
      * @param pmcData player profile
@@ -137,10 +152,38 @@ export declare class InventoryController {
      * @returns IItemEventRouterResponse
      */
     sortInventory(pmcData: IPmcData, request: IInventorySortRequestData, sessionID: string): IItemEventRouterResponse;
-    createMapMarker(pmcData: IPmcData, body: IInventoryCreateMarkerRequestData, sessionID: string): IItemEventRouterResponse;
-    deleteMapMarker(pmcData: IPmcData, body: IInventoryDeleteMarkerRequestData, sessionID: string): IItemEventRouterResponse;
-    editMapMarker(pmcData: IPmcData, body: IInventoryEditMarkerRequestData, sessionID: string): IItemEventRouterResponse;
     /**
+     * Add note to a map
+     * @param pmcData Player profile
+     * @param request Add marker request
+     * @param sessionID Session id
+     * @returns IItemEventRouterResponse
+     */
+    createMapMarker(pmcData: IPmcData, request: IInventoryCreateMarkerRequestData, sessionID: string): IItemEventRouterResponse;
+    /**
+     * Delete a map marker
+     * @param pmcData Player profile
+     * @param request Delete marker request
+     * @param sessionID Session id
+     * @returns IItemEventRouterResponse
+     */
+    deleteMapMarker(pmcData: IPmcData, request: IInventoryDeleteMarkerRequestData, sessionID: string): IItemEventRouterResponse;
+    /**
+     * Edit an existing map marker
+     * @param pmcData Player profile
+     * @param request Edit marker request
+     * @param sessionID Session id
+     * @returns IItemEventRouterResponse
+     */
+    editMapMarker(pmcData: IPmcData, request: IInventoryEditMarkerRequestData, sessionID: string): IItemEventRouterResponse;
+    /**
+     * Strip out characters from note string that are not: letter/numbers/unicode/spaces
+     * @param mapNoteText Marker text to sanitise
+     * @returns Sanitised map marker text
+     */
+    protected sanitiseMapMarkerText(mapNoteText: string): string;
+    /**
+     * Handle OpenRandomLootContainer event
      * Handle event fired when a container is unpacked (currently only the halloween pumpkin)
      * @param pmcData Profile data
      * @param body open loot container request data

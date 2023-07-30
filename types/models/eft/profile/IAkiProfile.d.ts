@@ -1,9 +1,11 @@
+import { MemberCategory } from "../../../models/enums/MemberCategory";
 import { MessageType } from "../../enums/MessageType";
 import { IPmcData } from "../common/IPmcData";
 import { Item } from "../common/tables/IItem";
 export interface IAkiProfile {
     info: Info;
     characters: Characters;
+    /** Clothing purchases */
     suits: string[];
     weaponbuilds: WeaponBuild[];
     dialogues: Record<string, Dialogue>;
@@ -36,19 +38,32 @@ export interface WeaponBuild {
     items: Item[];
 }
 export interface Dialogue {
-    _id: string;
-    messages: Message[];
-    pinned: boolean;
-    new: number;
     attachmentsNew: number;
+    type: MessageType;
+    new: number;
+    _id: string;
+    Users?: IUserDialogInfo[];
+    pinned: boolean;
+    messages: Message[];
+}
+export interface IUserDialogInfo {
+    _id: string;
+    info: IUserDialogDetails;
+}
+export interface IUserDialogDetails {
+    Nickname: string;
+    Side: string;
+    Level: number;
+    MemberCategory: MemberCategory;
 }
 export interface DialogueInfo {
     attachmentsNew: number;
     new: number;
+    _id: string;
     type: MessageType;
     pinned: boolean;
+    Users?: IUserDialogInfo[];
     message: MessagePreview;
-    _id: string;
 }
 export interface Message {
     _id: string;
@@ -57,11 +72,11 @@ export interface Message {
     dt: number;
     UtcDateTime?: number;
     Member?: IUpdatableChatMember;
-    templateId: string;
+    templateId?: string;
     text?: string;
     hasRewards: boolean;
     rewardCollected: boolean;
-    items: MessageItems;
+    items?: MessageItems;
     maxStorageTime?: number;
     systemData?: ISystemData;
     profileChangeEvents?: any[];
@@ -72,6 +87,7 @@ export interface MessagePreview {
     dt: number;
     templateId: string;
     text?: string;
+    systemData?: ISystemData;
 }
 export interface MessageItems {
     stash?: string;
@@ -89,7 +105,7 @@ export interface IUpdatableChatMember {
     Nickname: string;
     Side: string;
     Level: number;
-    MemberCategory: string;
+    MemberCategory: MemberCategory;
     Ignored: boolean;
     Banned: boolean;
 }
@@ -100,12 +116,17 @@ export interface DateTime {
 export interface Aki {
     version: string;
     mods?: ModDetails[];
+    receivedGifts: ReceivedGift[];
 }
 export interface ModDetails {
     name: string;
     version: string;
     author: string;
     dateAdded: number;
+}
+export interface ReceivedGift {
+    giftId: string;
+    timestampAccepted: number;
 }
 export interface Vitality {
     health: Health;

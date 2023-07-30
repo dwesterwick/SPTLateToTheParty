@@ -68,6 +68,13 @@ export declare class BotWeaponGenerator {
      */
     generateWeaponByTpl(sessionId: string, weaponTpl: string, equipmentSlot: string, botTemplateInventory: Inventory, weaponParentId: string, modChances: ModsChances, botRole: string, isPmc: boolean, botLevel: number): GenerateWeaponResult;
     /**
+     * Insert a cartridge into a weapon
+     * @param weaponWithModsArray Weapon and mods
+     * @param ammoTpl Cartridge to add to weapon
+     * @param desiredSlotId name of slot, e.g. patron_in_weapon
+     */
+    protected addCartridgeToChamber(weaponWithModsArray: Item[], ammoTpl: string, desiredSlotId: string): void;
+    /**
      * Create array with weapon base as only element and
      * add additional properties based on weapon type
      * @param weaponTpl Weapon tpl to create item with
@@ -140,26 +147,27 @@ export declare class BotWeaponGenerator {
     protected getWeaponCaliber(weaponTemplate: ITemplateItem): string;
     /**
      * Fill existing magazines to full, while replacing their contents with specified ammo
-     * @param weaponMods
-     * @param magazine
-     * @param ammoTpl
+     * @param weaponMods Weapon with children
+     * @param magazine Magazine item
+     * @param cartridgeTpl Cartridge to insert into magazine
      */
-    protected fillExistingMagazines(weaponMods: Item[], magazine: Item, ammoTpl: string): void;
+    protected fillExistingMagazines(weaponMods: Item[], magazine: Item, cartridgeTpl: string): void;
     /**
      * Add desired ammo tpl as item to weaponmods array, placed as child to UBGL
-     * @param weaponMods
-     * @param ubglMod
-     * @param ubglAmmoTpl
+     * @param weaponMods Weapon with children
+     * @param ubglMod UBGL item
+     * @param ubglAmmoTpl Grenade ammo tpl
      */
     protected fillUbgl(weaponMods: Item[], ubglMod: Item, ubglAmmoTpl: string): void;
     /**
      * Add cartridge item to weapon Item array, if it already exists, update
-     * @param weaponMods Weapon items array to amend
+     * @param weaponWithMods Weapon items array to amend
      * @param magazine magazine item details we're adding cartridges to
-     * @param chosenAmmo cartridge to put into the magazine
+     * @param chosenAmmoTpl cartridge to put into the magazine
      * @param newStackSize how many cartridges should go into the magazine
+     * @param magazineTemplate magazines db template
      */
-    protected addOrUpdateMagazinesChildWithAmmo(weaponMods: Item[], magazine: Item, chosenAmmo: string, newStackSize: number): void;
+    protected addOrUpdateMagazinesChildWithAmmo(weaponWithMods: Item[], magazine: Item, chosenAmmoTpl: string, magazineTemplate: ITemplateItem): void;
     /**
      * Fill each Camora with a bullet
      * @param weaponMods Weapon mods to find and update camora mod(s) from
