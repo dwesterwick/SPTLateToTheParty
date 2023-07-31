@@ -70,7 +70,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
-            float escapeTimeSec = GClass1425.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float escapeTimeSec = GClass1473.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
 
             // Don't run the script before the raid begins
@@ -269,7 +269,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure there are context menu options for the door
-            GClass2645 availableActions = GClass1766.GetAvailableActions(gamePlayerOwner, door);
+            GClass2891 availableActions = GClass1829.GetAvailableActions(gamePlayerOwner, door);
             if ((availableActions == null) || (availableActions.Actions.Count == 0))
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has no interaction options.");
@@ -378,7 +378,7 @@ namespace LateToTheParty.Controllers
                 //door.OnEnable();
 
                 // This plays the opening noise and animation
-                door.Interact(new GClass2600(EInteractionType.Open));
+                door.Interact(new GClass2846(EInteractionType.Open));
                 return true;
             }
 
@@ -389,7 +389,7 @@ namespace LateToTheParty.Controllers
                 //door.OnEnable();
 
                 // This plays the opening noise and animation
-                door.Interact(new GClass2600(EInteractionType.Close));
+                door.Interact(new GClass2846(EInteractionType.Close));
                 return true;
             }
 

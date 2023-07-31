@@ -96,8 +96,13 @@ namespace LateToTheParty.Controllers
             float closestDistance = float.MaxValue;
             Player closestPlayer = Singleton<GameWorld>.Instance.MainPlayer;
 
-            foreach (Player player in Singleton<GameWorld>.Instance.AllPlayers)
+            foreach (Player player in Singleton<GameWorld>.Instance.AllPlayersEverExisted)
             {
+                if (!player.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
                 float distance = Vector3.Distance(position, player.Transform.position);
                 if (distance < closestDistance)
                 {
