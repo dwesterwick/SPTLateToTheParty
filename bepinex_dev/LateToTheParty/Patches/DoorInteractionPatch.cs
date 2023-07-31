@@ -16,7 +16,7 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass1766).GetMethod("smethod_9", BindingFlags.NonPublic | BindingFlags.Static);
+            return typeof(GClass1829).GetMethod("smethod_9", BindingFlags.NonPublic | BindingFlags.Static);
         }
 
         [PatchPostfix]

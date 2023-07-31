@@ -88,7 +88,7 @@ namespace LateToTheParty.Controllers
 
         public static Player GetNearestPlayer(Vector3 position)
         {
-            if (!Singleton<GameWorld>.Instantiated)
+            if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 return null;
             }
