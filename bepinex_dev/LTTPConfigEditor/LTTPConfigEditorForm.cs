@@ -437,18 +437,31 @@ namespace LTTPConfigEditor
             });
         }
 
+        private Action editArrayAction(TreeNode treeNode)
+        {
+            return new Action(() =>
+            {
+                string configPath = GetConfigPathForTreeNode(treeNode);
+                Type configType = configTypes[treeNode];
+                object arrayObj = GetObjectForConfigPath(modConfig, configPath);
+
+                ArrayEditorForm arrayEditorForm = new ArrayEditorForm(configType, arrayObj);
+                if (arrayEditorForm.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                SetObjectForConfigPath(modConfig, configPath, arrayEditorForm.ArrayObject);
+            });
+        }
+
         private void CreateValueControls(Panel panel, object value, Type valueType, Configuration.ConfigSettingsConfig valueProperties)
         {
             RemoveValueControls(panel);
 
             if (valueType.IsArray)
             {
-                Action editArrayAction = new Action(() =>
-                {
-
-                });
-
-                Button editArrayButton = CreateValueButton("Edit Array...", editArrayAction);
+                Button editArrayButton = CreateValueButton("Edit Array...", editArrayAction(configTreeView.SelectedNode));
                 panel.Controls.Add(editArrayButton);
                 return;
             }
