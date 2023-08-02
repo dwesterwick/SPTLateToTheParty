@@ -30,6 +30,7 @@ namespace LTTPConfigEditor
             this.ArrayObject = _arrayObj;
 
             buildDataGridView();
+            buildChart();
         }
 
         public int GetJaggedDimensions()
@@ -37,31 +38,83 @@ namespace LTTPConfigEditor
             return ArrayType.Name.Count((c) => c == '[');
         }
 
-        public void buildDataGridView()
+        private void buildDataGridView()
         {
             int[] indices = new int[array.Rank];
+            for (int d = 0; d < array.Rank; d++)
+            {
+                indices[d] = 0;
+                object val = array.GetValue(indices);
+
+                int cols = 1;
+                if (val.GetType().IsArray)
+                {
+                    Array innerArray = val as Array;
+                    cols = innerArray.GetLength(0);
+                }
+
+                while (arrayDataGridView.Columns.Count < cols)
+                {
+                    DataGridViewTextBoxColumn newCol = new DataGridViewTextBoxColumn();
+                    arrayDataGridView.Columns.Add(newCol);
+                }
+            }
+
             for (int d = 0; d < array.Rank; d++)
             {
                 int rows = array.GetLength(d);
                 for (int r = 0; r < rows; r++)
                 {
+                    DataGridViewRow row = new DataGridViewRow();
+                    for (int c = 0; c < arrayDataGridView.Columns.Count; c++)
+                    {
+                        DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
+                        row.Cells.Add(cell);
+                    }
+                    arrayDataGridView.Rows.Add(row);
+
                     indices[d] = r;
                     object val = array.GetValue(indices);
 
-                    int cols = 1;
                     if (val.GetType().IsArray)
                     {
                         Array innerArray = val as Array;
-                        cols = innerArray.GetLength(0);
+                        int cols = innerArray.GetLength(0);
+                        for (int c = 0; c < cols; c++)
+                        {
+                            arrayDataGridView.Rows[r].Cells[c].Value = innerArray.GetValue(c);
+                        }
                     }
-
-                    while (arrayDataGridView.Columns.Count < cols)
+                    else
                     {
-                        DataGridViewTextBoxColumn newCol = new DataGridViewTextBoxColumn();
-                        arrayDataGridView.Columns.Add(newCol);
+                        arrayDataGridView.Rows[r].Cells[0].Value = val;
                     }
                 }
             }
+        }
+
+        private void buildChart()
+        {
+            arrayChart.Series[0].Points.Clear();
+
+            int rows = arrayDataGridView.Rows.Count - 1;
+            int cols = arrayDataGridView.Columns.Count;
+            switch (cols)
+            {
+                case 1:
+                    for (int r = 0; r < rows; r++)
+                    {
+                        arrayChart.Series[0].Points.AddY(arrayDataGridView.Rows[r].Cells[0].Value);
+                    }
+                    break;
+                case 2:
+                    for (int r = 0; r < rows; r++)
+                    {
+                        arrayChart.Series[0].Points.AddXY(arrayDataGridView.Rows[r].Cells[0].Value, arrayDataGridView.Rows[r].Cells[1].Value);
+                    }
+                    break;
+            }
+
         }
 
         private void cancelButton_Click(object sender, EventArgs e)
@@ -74,6 +127,30 @@ namespace LTTPConfigEditor
         {
             this.DialogResult = DialogResult.OK;
             this.Close();
+        }
+
+        private void arrayDataGridViewCellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            Type baseType = ArrayType;
+            while (baseType.Name.Contains("[]"))
+            {
+                baseType = baseType.GetElementType();
+            }
+
+            try
+            {
+                object newValueObj = Convert.ChangeType(e.FormattedValue, baseType);
+            }
+            catch (FormatException)
+            {
+                e.Cancel = true;
+                MessageBox.Show("Invalid entry. The value must be a " + baseType.Name + ".", "Invalid Config Change", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void arrayDataGridViewCellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            buildChart();
         }
     }
 }

@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.mainTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.cancelButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
@@ -92,18 +92,20 @@
             this.arrayDataGridView.Name = "arrayDataGridView";
             this.arrayDataGridView.Size = new System.Drawing.Size(300, 412);
             this.arrayDataGridView.TabIndex = 2;
+            this.arrayDataGridView.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.arrayDataGridViewCellValidating);
+            this.arrayDataGridView.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.arrayDataGridViewCellValueChanged);
             // 
             // arrayChart
             // 
-            chartArea1.Name = "ChartArea1";
-            this.arrayChart.ChartAreas.Add(chartArea1);
+            chartArea4.Name = "ChartArea1";
+            this.arrayChart.ChartAreas.Add(chartArea4);
             this.arrayChart.Dock = System.Windows.Forms.DockStyle.Fill;
             this.arrayChart.Location = new System.Drawing.Point(0, 0);
             this.arrayChart.Name = "arrayChart";
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Name = "Series1";
-            this.arrayChart.Series.Add(series1);
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series4.Name = "Series1";
+            this.arrayChart.Series.Add(series4);
             this.arrayChart.Size = new System.Drawing.Size(490, 412);
             this.arrayChart.TabIndex = 3;
             this.arrayChart.Text = "chart1";
