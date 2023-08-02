@@ -176,8 +176,8 @@ namespace LTTPConfigEditor
                         node.Nodes.Add(entryNode);
 
                         Type keyType = propType.GetGenericArguments()[0];
-                        var dictKey = typeof(Configuration.ConfigDictionaryEntry<,>).MakeGenericType(keyType, valueType);
-                        configTypes.Add(entryNode, dictKey);
+                        var configEntryType = typeof(Configuration.ConfigDictionaryEntry<,>).MakeGenericType(keyType, valueType);
+                        configTypes.Add(entryNode, configEntryType);
 
                         entryNode.Nodes.AddRange(CreateTreeNodesForType(entry.Value.GetType(), entry.Value));
                     }
@@ -256,6 +256,28 @@ namespace LTTPConfigEditor
             }
 
             data.PropertyInfo.SetValue(data.Object, newValue, null);
+        }
+
+        private void RemoveDictionaryEntryFromConfigPath(object obj, string configPath)
+        {
+            ConfigSearchResult data = GetConfigPathData(obj, configPath);
+
+            if (data.Object.GetType().Name.Contains(typeof(DictionaryEntry).Name))
+            {
+                DictionaryEntry de = (DictionaryEntry)data.Object;
+                IDictionary dict = data.PropertyInfo.GetValue(data.DictionaryObject, null) as IDictionary;
+
+                if (dict.Contains(de.Key))
+                {
+                    dict.Remove(de.Key);
+                }
+
+                data.PropertyInfo.SetValue(data.DictionaryObject, dict, null);
+
+                return;
+            }
+
+            throw new ArgumentException("The path \"" + configPath + "\" does not correspond with a dictionary entry.", "configPath");
         }
 
         private ConfigSearchResult GetConfigPathData(object obj, string configPath)
@@ -361,9 +383,12 @@ namespace LTTPConfigEditor
                 string configPath = GetConfigPathForTreeNode(treeNode);
                 
                 Type configType = configTypes[treeNode];
+
+                Type valueType = configType;
                 if (configType.Name.Contains(typeof(Dictionary<,>).Name))
                 {
-                    configType = configType.GenericTypeArguments[1];
+                    valueType = configType.GenericTypeArguments[1];
+                    configType = typeof(Configuration.ConfigDictionaryEntry<,>).MakeGenericType(configType.GenericTypeArguments[0], configType.GenericTypeArguments[1]);
                 }
 
                 IDictionary dict = GetObjectForConfigPath(modConfig, configPath) as IDictionary;
@@ -374,14 +399,41 @@ namespace LTTPConfigEditor
                     return;
                 }
 
-                object newValue = Activator.CreateInstance(configType);
+                object newValue = Activator.CreateInstance(valueType);
                 SetObjectForConfigPath(modConfig, configPath + "." + stringInputForm.Input, newValue);
 
                 TreeNode newNode = new TreeNode(stringInputForm.Input);
+
                 configTypes.Add(newNode, configType);
 
-                newNode.Nodes.AddRange(CreateTreeNodesForType(configType, newValue));
+                newNode.Nodes.AddRange(CreateTreeNodesForType(valueType, newValue));
                 treeNode.Nodes.Add(newNode);
+            });
+        }
+
+        private Action removeEntryAction(TreeNode treeNode)
+        {
+            return new Action(() =>
+            {
+                if (MessageBox.Show("Are you sure you want to remove this entry?", "Remove Entry", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)
+                {
+                    return;
+                }
+
+                string configPath = GetConfigPathForTreeNode(treeNode);
+
+                Type configType = configTypes[treeNode];
+                if (configType.Name.Contains(typeof(Dictionary<,>).Name))
+                {
+                    configType = configType.GenericTypeArguments[1];
+                }
+
+                IDictionary dict = GetObjectForConfigPath(modConfig, configPath) as IDictionary;
+
+                RemoveDictionaryEntryFromConfigPath(modConfig, configPath);
+
+                TreeNode parentNode = treeNode.Parent;
+                parentNode.Nodes.Remove(treeNode);
             });
         }
 
@@ -415,12 +467,7 @@ namespace LTTPConfigEditor
 
             if (valueType.Name.Contains(typeof(Configuration.ConfigDictionaryEntry<,>).Name))
             {
-                Action removeEntryAction = new Action(() =>
-                {
-
-                });
-
-                Button editArrayButton = CreateValueButton("Remove Entry", removeEntryAction);
+                Button editArrayButton = CreateValueButton("Remove Entry", removeEntryAction(configTreeView.SelectedNode));
                 panel.Controls.Add(editArrayButton);
 
                 if (!valueType.GetGenericArguments()[1].Namespace.StartsWith("System"))
