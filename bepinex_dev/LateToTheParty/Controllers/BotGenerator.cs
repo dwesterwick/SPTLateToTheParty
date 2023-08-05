@@ -164,11 +164,13 @@ namespace LateToTheParty.Controllers
             }
 
             SpawnPointParams playerSpawnPoint = getNearestSpawnPoint(Singleton<GameWorld>.Instance.MainPlayer.Position, allSpawnPoints.ToArray());
+            LoggingController.LogInfo("Nearest spawn point to player: " + playerSpawnPoint.Position.ToUnityVector3().ToString());
             spawnPoints.Add(playerSpawnPoint);
 
-            for (int s = 1; s < count; s++)
+            for (int s = 0; s < count; s++)
             {
                 SpawnPointParams newSpawnPoint = getFurthestSpawnPoint(spawnPoints.ToArray(), validSpawnPoints.ToArray());
+                LoggingController.LogInfo("Found furthest spawn point: " + newSpawnPoint.Position.ToUnityVector3().ToString());
                 spawnPoints.Add(newSpawnPoint);
             }
 
@@ -189,22 +191,27 @@ namespace LateToTheParty.Controllers
                 throw new ArgumentException("The spawn-point array is empty.", "allSpawnPoints");
             }
 
-            List<SpawnPointParams> possibleSpawnPoints = new List<SpawnPointParams>();
-            Dictionary<SpawnPointParams, float> furthestDistances = new Dictionary<SpawnPointParams, float>();
-            for (int r = 0; r < referenceSpawnPoints.Length; r++)
+            Dictionary<SpawnPointParams, float> nearestReferencePoints = new Dictionary<SpawnPointParams, float>();
+            for (int s = 0; s < allSpawnPoints.Length; s++)
             {
-                SpawnPointParams furthestSpawnPoint = getFurthestSpawnPoint(referenceSpawnPoints[r].Position.ToUnityVector3(), allSpawnPoints);
+                SpawnPointParams nearestSpawnPoint = referenceSpawnPoints[0];
+                float nearestDistance = Vector3.Distance(referenceSpawnPoints[0].Position.ToUnityVector3(), allSpawnPoints[s].Position.ToUnityVector3());
 
-                if (!furthestDistances.ContainsKey(furthestSpawnPoint))
+                for (int r = 1; r < referenceSpawnPoints.Length; r++)
                 {
-                    float furthestDistance = Vector3.Distance(referenceSpawnPoints[r].Position.ToUnityVector3(), furthestSpawnPoint.Position.ToUnityVector3());
-                    furthestDistances.Add(furthestSpawnPoint, furthestDistance);
+                    float distance = Vector3.Distance(referenceSpawnPoints[r].Position.ToUnityVector3(), allSpawnPoints[s].Position.ToUnityVector3());
+
+                    if (distance < nearestDistance)
+                    {
+                        nearestSpawnPoint = referenceSpawnPoints[r];
+                        nearestDistance = distance;
+                    }
                 }
 
-                possibleSpawnPoints.Add(furthestSpawnPoint);
+                nearestReferencePoints.Add(allSpawnPoints[s], nearestDistance);
             }
 
-            return possibleSpawnPoints.OrderBy(d => furthestDistances[d]).Last();
+            return nearestReferencePoints.OrderBy(p => p.Value).Last().Key;
         }
 
         private SpawnPointParams getFurthestSpawnPoint(Vector3 postition, SpawnPointParams[] allSpawnPoints)
