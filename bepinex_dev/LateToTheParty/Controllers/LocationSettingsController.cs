@@ -19,6 +19,7 @@ namespace LateToTheParty.Controllers
         private static string[] CarExtractNames = new string[0];
         private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
         private static Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>> nearestSpawnPointPositions = new Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>>();
+        private static Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>> furthestSpawnPointPositions = new Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>>();
         private static BackendConfigSettingsClass.GClass1350.GClass1357 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
@@ -26,6 +27,7 @@ namespace LateToTheParty.Controllers
         {
             LoggingController.LogInfo("Discarding cached location parameters...");
             nearestSpawnPointPositions.Clear();
+            furthestSpawnPointPositions.Clear();
             OriginalSettings.Clear();
             LastLocationSelected = null;
             LastOriginalEscapeTime = -1;
@@ -144,6 +146,54 @@ namespace LateToTheParty.Controllers
             }
 
             return nearestPosition;
+        }
+
+        public static Vector3? GetFurthestSpawnPointPosition(Vector3 position, EPlayerSideMask playerSideMask = EPlayerSideMask.All)
+        {
+            if (LastLocationSelected == null)
+            {
+                return null;
+            }
+
+            // Use the cached furthest position if available
+            if (furthestSpawnPointPositions.ContainsKey(playerSideMask) && furthestSpawnPointPositions[playerSideMask].ContainsKey(position))
+            {
+                return furthestSpawnPointPositions[playerSideMask][position];
+            }
+
+            Vector3? furthestPosition = null;
+            float furthestDistance = 0;
+
+            // Find the furthest spawn point to the desired position
+            foreach (SpawnPointParams spawnPoint in LastLocationSelected.SpawnPointParams)
+            {
+                // Make sure the spawn point is valid for at least one of the specified player sides
+                if (!spawnPoint.Sides.Any(playerSideMask))
+                {
+                    continue;
+                }
+
+                Vector3 spawnPointPosition = spawnPoint.Position.ToUnityVector3();
+                float distance = Vector3.Distance(position, spawnPointPosition);
+                if (distance > furthestDistance)
+                {
+                    furthestPosition = spawnPointPosition;
+                    furthestDistance = distance;
+                }
+            }
+
+            // If a spawn point was selected, cache it
+            if (furthestPosition.HasValue)
+            {
+                if (!furthestSpawnPointPositions.ContainsKey(playerSideMask))
+                {
+                    furthestSpawnPointPositions.Add(playerSideMask, new Dictionary<Vector3, Vector3>());
+                }
+
+                furthestSpawnPointPositions[playerSideMask].Add(position, furthestPosition.Value);
+            }
+
+            return furthestPosition;
         }
 
         public static double InterpolateForFirstCol(double[][] array, double value)
@@ -332,7 +382,7 @@ namespace LateToTheParty.Controllers
             }
 
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
-            int minTimeBeforeActivation = 20;
+            int minTimeBeforeActivation = 1;
 
             LoggingController.LogInfo("Adjusting " + location.waves.Length + " bot-wave times...");
             foreach (WildSpawnWave wave in location.waves)
@@ -351,8 +401,9 @@ namespace LateToTheParty.Controllers
                     wave.time_max = wave.time_min + 1;
                 }
 
-                //LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
+                LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
             }
+
             LoggingController.LogInfo("Adjusting " + location.waves.Length + " bot-wave times...done.");
         }
 
