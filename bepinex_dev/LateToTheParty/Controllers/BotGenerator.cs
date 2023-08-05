@@ -73,6 +73,8 @@ namespace LateToTheParty.Controllers
 
             if (PMCBots.Count == 0)
             {
+                ConfigController.ForcePMCSpawns();
+
                 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 generateBots(WildSpawnType.assault, EPlayerSide.Savage, BotDifficulty.normal, LocationSettingsController.LastLocationSelected.MaxPlayers);
                 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed

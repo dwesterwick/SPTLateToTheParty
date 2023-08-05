@@ -73,6 +73,11 @@ namespace LateToTheParty.Controllers
             RequestHandler.GetJson("/LateToTheParty/EscapeTime/" + escapeTime + "/" + timeRemaining);
         }
 
+        public static void ForcePMCSpawns()
+        {
+            RequestHandler.GetJson("/LateToTheParty/ForcePMCSpawns");
+        }
+
         public static void ShareQuestStatusChange(string questID, string newStatus)
         {
             RequestHandler.GetJson("/LateToTheParty/QuestStatusChange/" + questID + "/" + newStatus);
