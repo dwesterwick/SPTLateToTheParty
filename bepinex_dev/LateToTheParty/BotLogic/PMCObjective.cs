@@ -17,12 +17,24 @@ namespace LateToTheParty.BotLogic
         public bool IsObjectiveReached { get; set; } = false;
         public Vector3? Position { get; set; } = null;
 
+        private BotOwner botOwner = null;
         private LocationSettingsClass.Location location = null;
         private SpawnPointParams? targetSpawnPoint = null;
 
         public Vector3 PlayerPosition
         {
             get { return getPlayerPosition(); }
+        }
+
+        public void Init(BotOwner _botOwner)
+        {
+            botOwner = _botOwner;
+        }
+
+        public void SetRandomObjective()
+        {
+            targetSpawnPoint = getRandomSpawnPoint();
+            Position = targetSpawnPoint.Value.Position;
         }
 
         private void Update()
@@ -35,6 +47,7 @@ namespace LateToTheParty.BotLogic
             if (!targetSpawnPoint.HasValue)
             {
                 targetSpawnPoint = getPlayerSpawnPoint();
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has a new objective: " + targetSpawnPoint.Value.Id);
             }
 
             if (!Position.HasValue)

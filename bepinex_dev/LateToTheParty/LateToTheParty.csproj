@@ -89,6 +89,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BotLogic\BotBrains.cs" />
     <Compile Include="BotLogic\PMCDefaultAction.cs" />
     <Compile Include="BotLogic\PMCObjective.cs" />
     <Compile Include="BotLogic\PMCObjectiveAction.cs" />

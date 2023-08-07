@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -9,9 +10,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Comfort.Common;
+using DrakiaXYZ.BigBrain.Brains;
 using EFT;
 using EFT.Bots;
 using EFT.Game.Spawning;
+using EFT.UI;
 using HarmonyLib;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
@@ -23,12 +26,17 @@ namespace LateToTheParty.Controllers
         public static bool IsSpawningPMCs { get; private set; } = false;
         public static bool IsGeneratingPMCs { get; private set; } = false;
         public static int SpawnedPMCCount { get; private set; } = 0;
-
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(5);
         private static CancellationTokenSource cancellationTokenSource;
+        private static List<BotOwner> initiallySpawnedPMCBots = new List<BotOwner>();
         private static List<GClass628> PMCBots = new List<GClass628>();
         private static Dictionary<SpawnPointParams, Vector3> spawnPositions = new Dictionary<SpawnPointParams, Vector3>();
         private static int maxPMCBots = 0;
+
+        public static ReadOnlyCollection<BotOwner> InitiallySpawnedPMCBots
+        {
+            get { return new ReadOnlyCollection<BotOwner>(initiallySpawnedPMCBots); }
+        }
 
         public static void Clear()
         {
@@ -43,6 +51,7 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsGeneratingPMCs);
             }
 
+            initiallySpawnedPMCBots.Clear();
             PMCBots.Clear();
             spawnPositions.Clear();
         }
@@ -274,8 +283,14 @@ namespace LateToTheParty.Controllers
             float _originalDelayToCanSpawnSec = spawnPoint.DelayToCanSpawnSec;
             spawnPoint.DelayToCanSpawnSec = 0;
 
+            Action<BotOwner> callback = new Action<BotOwner>((botOwner) =>
+            {
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " spawned as an initial PMC.");
+                initiallySpawnedPMCBots.Add(botOwner);
+            });
+
             MethodInfo botSpawnMethod = typeof(BotSpawnerClass).GetMethod("method_11", BindingFlags.Instance | BindingFlags.NonPublic);
-            botSpawnMethod.Invoke(botSpawnerClass, new object[] { closestBotZone, PMCBots[SpawnedPMCCount], null, cancellationTokenSource.Token });
+            botSpawnMethod.Invoke(botSpawnerClass, new object[] { closestBotZone, PMCBots[SpawnedPMCCount], callback, cancellationTokenSource.Token });
 
             LoggingController.LogInfo("Spawning PMC #" + (SpawnedPMCCount + 1) + " at " + spawnPoint.Id + "...done.");
 

@@ -18,6 +18,7 @@ namespace LateToTheParty.BotLogic
             botOwner = _botOwner;
 
             objective = botOwner.GetPlayer.gameObject.AddComponent<PMCObjective>();
+            objective.Init(botOwner);
         }
 
         public override string GetName()

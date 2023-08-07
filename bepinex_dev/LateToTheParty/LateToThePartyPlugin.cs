@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
@@ -47,8 +48,11 @@ namespace LateToTheParty
                 {
                     this.GetOrAddComponent<BotGenerator>();
 
-                    BrainManager.RemoveLayer("Utility peace", new List<string>() { "Assault" });
-                    BrainManager.AddCustomLayer(typeof(PMCObjectiveLayer), new List<string>() { "Assault" }, 0);
+                    List<string> botBrainsToChange = BotBrains.AllBots.ToList();
+                    LoggingController.LogInfo("Loading LateToThePartyPlugin...changing bot brains: " + string.Join(", ", botBrainsToChange));
+
+                    //BrainManager.RemoveLayer("Utility peace", botBrainsToChange);
+                    BrainManager.AddCustomLayer(typeof(PMCObjectiveLayer), botBrainsToChange, 99);
                 }
 
                 if (ConfigController.Config.Debug.Enabled)

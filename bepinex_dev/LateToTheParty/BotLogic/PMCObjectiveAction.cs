@@ -26,12 +26,12 @@ namespace LateToTheParty.BotLogic
 
         public override void Start()
         {
-            BotOwner.PatrollingData.Pause();
+            botOwner.PatrollingData.Pause();
         }
 
         public override void Stop()
         {
-            BotOwner.PatrollingData.Unpause();
+            botOwner.PatrollingData.Unpause();
         }
 
         public override void Update()
@@ -50,9 +50,9 @@ namespace LateToTheParty.BotLogic
                 return;
             }
 
-            if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, BotOwner.Position) < 10f)
+            if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, botOwner.Position) < 10f)
             {
-                LoggingController.LogInfo("Bot " + BotOwner.Profile.Nickname + " reached its objective.");
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective.");
                 objective.IsObjectiveReached = true;
             }
             else
@@ -61,7 +61,8 @@ namespace LateToTheParty.BotLogic
 
                 if (!isMovingToObjective)
                 {
-                    LoggingController.LogWarning("Bot " + BotOwner.Profile.Nickname + " cannot go to its objective.");
+                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot go to its objective. Setting another one...");
+                    objective.SetRandomObjective();
                 }
             }
         }
@@ -70,7 +71,7 @@ namespace LateToTheParty.BotLogic
         {
             if (!canRun)
             {
-                NavMeshPathStatus? pathStatus = BotOwner.Mover?.GoToPoint(position, true, 0.5f, false, false);
+                NavMeshPathStatus? pathStatus = botOwner.Mover?.GoToPoint(position, true, 0.5f, false, false);
 
                 if (!pathStatus.HasValue)
                 {
@@ -81,7 +82,7 @@ namespace LateToTheParty.BotLogic
             }
             else
             {
-                return BotOwner.BotRun.Run(position, false);
+                return botOwner.BotRun.Run(position, false);
             }
         }
     }
