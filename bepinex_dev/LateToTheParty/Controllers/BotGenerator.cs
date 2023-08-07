@@ -28,6 +28,7 @@ namespace LateToTheParty.Controllers
         private static CancellationTokenSource cancellationTokenSource;
         private static List<GClass628> PMCBots = new List<GClass628>();
         private static Dictionary<SpawnPointParams, Vector3> spawnPositions = new Dictionary<SpawnPointParams, Vector3>();
+        private static int maxPMCBots = 0;
 
         public static void Clear()
         {
@@ -73,10 +74,11 @@ namespace LateToTheParty.Controllers
 
             if (PMCBots.Count == 0)
             {
+                maxPMCBots = LocationSettingsController.LastLocationSelected.MaxPlayers - 1;
                 ConfigController.ForcePMCSpawns();
 
                 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                generateBots(WildSpawnType.assault, EPlayerSide.Savage, BotDifficulty.normal, LocationSettingsController.LastLocationSelected.MaxPlayers);
+                generateBots(WildSpawnType.assault, EPlayerSide.Savage, BotDifficulty.normal, maxPMCBots);
                 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
                 return;
@@ -92,6 +94,79 @@ namespace LateToTheParty.Controllers
             cancellationTokenSource = AccessTools.Field(typeof(BotSpawnerClass), "cancellationTokenSource_0").GetValue(botSpawnerClass) as CancellationTokenSource;
             
             StartCoroutine(SpawnPMCs(botSpawnerClass));
+        }
+
+        public static SpawnPointParams GetFurthestSpawnPoint(SpawnPointParams[] referenceSpawnPoints, SpawnPointParams[] allSpawnPoints)
+        {
+            if (referenceSpawnPoints.Length == 0)
+            {
+                throw new ArgumentException("The reference spawn-point array is empty.", "referenceSpawnPoints");
+            }
+
+            if (allSpawnPoints.Length == 0)
+            {
+                throw new ArgumentException("The spawn-point array is empty.", "allSpawnPoints");
+            }
+
+            Dictionary<SpawnPointParams, float> nearestReferencePoints = new Dictionary<SpawnPointParams, float>();
+            for (int s = 0; s < allSpawnPoints.Length; s++)
+            {
+                SpawnPointParams nearestSpawnPoint = referenceSpawnPoints[0];
+                float nearestDistance = Vector3.Distance(referenceSpawnPoints[0].Position.ToUnityVector3(), allSpawnPoints[s].Position.ToUnityVector3());
+
+                for (int r = 1; r < referenceSpawnPoints.Length; r++)
+                {
+                    float distance = Vector3.Distance(referenceSpawnPoints[r].Position.ToUnityVector3(), allSpawnPoints[s].Position.ToUnityVector3());
+
+                    if (distance < nearestDistance)
+                    {
+                        nearestSpawnPoint = referenceSpawnPoints[r];
+                        nearestDistance = distance;
+                    }
+                }
+
+                nearestReferencePoints.Add(allSpawnPoints[s], nearestDistance);
+            }
+
+            return nearestReferencePoints.OrderBy(p => p.Value).Last().Key;
+        }
+
+        public static SpawnPointParams GetFurthestSpawnPoint(Vector3 postition, SpawnPointParams[] allSpawnPoints)
+        {
+            SpawnPointParams furthestSpawnPoint = allSpawnPoints[0];
+            float furthestDistance = Vector3.Distance(postition, furthestSpawnPoint.Position.ToUnityVector3());
+
+            for (int s = 1; s < allSpawnPoints.Length; s++)
+            {
+                float distance = Vector3.Distance(postition, allSpawnPoints[s].Position.ToUnityVector3());
+
+                if (distance > furthestDistance)
+                {
+                    furthestSpawnPoint = allSpawnPoints[s];
+                    furthestDistance = distance;
+                }
+            }
+
+            return furthestSpawnPoint;
+        }
+
+        public static SpawnPointParams GetNearestSpawnPoint(Vector3 postition, SpawnPointParams[] allSpawnPoints)
+        {
+            SpawnPointParams nearestSpawnPoint = allSpawnPoints[0];
+            float nearestDistance = Vector3.Distance(postition, nearestSpawnPoint.Position.ToUnityVector3());
+
+            for (int s = 1; s < allSpawnPoints.Length; s++)
+            {
+                float distance = Vector3.Distance(postition, allSpawnPoints[s].Position.ToUnityVector3());
+
+                if (distance < nearestDistance)
+                {
+                    nearestSpawnPoint = allSpawnPoints[s];
+                    nearestDistance = distance;
+                }
+            }
+
+            return nearestSpawnPoint;
         }
 
         private async Task generateBots(WildSpawnType wildSpawnType, EPlayerSide side, BotDifficulty botdifficulty, int count)
@@ -125,7 +200,7 @@ namespace LateToTheParty.Controllers
         {
             IsSpawningPMCs = true;
 
-            SpawnPointParams[] spawnPoints = getPMCSpawnPoints(LocationSettingsController.LastLocationSelected.SpawnPointParams, LocationSettingsController.LastLocationSelected.MaxPlayers);
+            SpawnPointParams[] spawnPoints = getPMCSpawnPoints(LocationSettingsController.LastLocationSelected.SpawnPointParams, maxPMCBots);
             yield return enumeratorWithTimeLimit.Run(spawnPoints, spawnPMCBot, botSpawnerClass);
 
             IsSpawningPMCs = false;
@@ -165,13 +240,13 @@ namespace LateToTheParty.Controllers
                 validSpawnPoints.Add(spawnPoint);
             }
 
-            SpawnPointParams playerSpawnPoint = getNearestSpawnPoint(Singleton<GameWorld>.Instance.MainPlayer.Position, allSpawnPoints.ToArray());
+            SpawnPointParams playerSpawnPoint = GetNearestSpawnPoint(Singleton<GameWorld>.Instance.MainPlayer.Position, allSpawnPoints.ToArray());
             LoggingController.LogInfo("Nearest spawn point to player: " + playerSpawnPoint.Position.ToUnityVector3().ToString());
             spawnPoints.Add(playerSpawnPoint);
 
             for (int s = 0; s < count; s++)
             {
-                SpawnPointParams newSpawnPoint = getFurthestSpawnPoint(spawnPoints.ToArray(), validSpawnPoints.ToArray());
+                SpawnPointParams newSpawnPoint = GetFurthestSpawnPoint(spawnPoints.ToArray(), validSpawnPoints.ToArray());
                 LoggingController.LogInfo("Found furthest spawn point: " + newSpawnPoint.Position.ToUnityVector3().ToString());
                 spawnPoints.Add(newSpawnPoint);
             }
@@ -181,84 +256,11 @@ namespace LateToTheParty.Controllers
             return spawnPoints.ToArray();
         }
 
-        private SpawnPointParams getFurthestSpawnPoint(SpawnPointParams[] referenceSpawnPoints, SpawnPointParams[] allSpawnPoints)
-        {
-            if (referenceSpawnPoints.Length == 0)
-            {
-                throw new ArgumentException("The reference spawn-point array is empty.", "referenceSpawnPoints");
-            }
-
-            if (allSpawnPoints.Length == 0)
-            {
-                throw new ArgumentException("The spawn-point array is empty.", "allSpawnPoints");
-            }
-
-            Dictionary<SpawnPointParams, float> nearestReferencePoints = new Dictionary<SpawnPointParams, float>();
-            for (int s = 0; s < allSpawnPoints.Length; s++)
-            {
-                SpawnPointParams nearestSpawnPoint = referenceSpawnPoints[0];
-                float nearestDistance = Vector3.Distance(referenceSpawnPoints[0].Position.ToUnityVector3(), allSpawnPoints[s].Position.ToUnityVector3());
-
-                for (int r = 1; r < referenceSpawnPoints.Length; r++)
-                {
-                    float distance = Vector3.Distance(referenceSpawnPoints[r].Position.ToUnityVector3(), allSpawnPoints[s].Position.ToUnityVector3());
-
-                    if (distance < nearestDistance)
-                    {
-                        nearestSpawnPoint = referenceSpawnPoints[r];
-                        nearestDistance = distance;
-                    }
-                }
-
-                nearestReferencePoints.Add(allSpawnPoints[s], nearestDistance);
-            }
-
-            return nearestReferencePoints.OrderBy(p => p.Value).Last().Key;
-        }
-
-        private SpawnPointParams getFurthestSpawnPoint(Vector3 postition, SpawnPointParams[] allSpawnPoints)
-        {
-            SpawnPointParams furthestSpawnPoint = allSpawnPoints[0];
-            float furthestDistance = Vector3.Distance(postition, furthestSpawnPoint.Position.ToUnityVector3());
-
-            for (int s = 1; s < allSpawnPoints.Length; s++)
-            {
-                float distance = Vector3.Distance(postition, allSpawnPoints[s].Position.ToUnityVector3());
-
-                if (distance > furthestDistance)
-                {
-                    furthestSpawnPoint = allSpawnPoints[s];
-                    furthestDistance = distance;
-                }
-            }
-
-            return furthestSpawnPoint;
-        }
-
-        private SpawnPointParams getNearestSpawnPoint(Vector3 postition, SpawnPointParams[] allSpawnPoints)
-        {
-            SpawnPointParams nearestSpawnPoint = allSpawnPoints[0];
-            float nearestDistance = Vector3.Distance(postition, nearestSpawnPoint.Position.ToUnityVector3());
-
-            for (int s = 1; s < allSpawnPoints.Length; s++)
-            {
-                float distance = Vector3.Distance(postition, allSpawnPoints[s].Position.ToUnityVector3());
-
-                if (distance < nearestDistance)
-                {
-                    nearestSpawnPoint = allSpawnPoints[s];
-                    nearestDistance = distance;
-                }
-            }
-
-            return nearestSpawnPoint;
-        }
-
         private void spawnPMCBot(SpawnPointParams spawnPoint, BotSpawnerClass botSpawnerClass)
         {
-            if (SpawnedPMCCount > LocationSettingsController.LastLocationSelected.MaxPlayers)
+            if (SpawnedPMCCount > maxPMCBots)
             {
-                LoggingController.LogWarning("Max PMC count of " + LocationSettingsController.LastLocationSelected.MaxPlayers + " already reached.");
+                LoggingController.LogWarning("Max PMC count of " + maxPMCBots + " already reached.");
                 return;
             }
 

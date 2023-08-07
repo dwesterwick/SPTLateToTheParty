@@ -1,11 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
+using DrakiaXYZ.BigBrain.Brains;
+using LateToTheParty.BotLogic;
 using LateToTheParty.Controllers;
+using UnityEngine;
 
 namespace LateToTheParty
 {
+    [BepInDependency("xyz.drakia.waypoints", "1.2.0")]
+    [BepInDependency("xyz.drakia.bigbrain", "0.2.0")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.3.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
@@ -36,7 +42,14 @@ namespace LateToTheParty
                 this.GetOrAddComponent<DoorController>();
                 this.GetOrAddComponent<BotConversionController>();
                 this.GetOrAddComponent<NavMeshController>();
-                this.GetOrAddComponent<BotGenerator>();
+
+                if (ConfigController.Config.AdjustBotSpawnChances.Enabled)
+                {
+                    this.GetOrAddComponent<BotGenerator>();
+
+                    BrainManager.RemoveLayer("Utility peace", new List<string>() { "Assault" });
+                    BrainManager.AddCustomLayer(typeof(PMCObjectiveLayer), new List<string>() { "Assault" }, 0);
+                }
 
                 if (ConfigController.Config.Debug.Enabled)
                 {

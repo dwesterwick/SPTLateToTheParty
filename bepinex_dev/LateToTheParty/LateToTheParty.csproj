@@ -55,6 +55,9 @@
     <Reference Include="Comfort.Unity">
       <HintPath>..\..\..\SPTHardcoreRules\bepinex_dev\Libraries\Managed\Comfort.Unity.dll</HintPath>
     </Reference>
+    <Reference Include="DrakiaXYZ-BigBrain">
+      <HintPath>..\Libraries\BepInEx\plugins\DrakiaXYZ-BigBrain.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -86,6 +89,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BotLogic\PMCDefaultAction.cs" />
+    <Compile Include="BotLogic\PMCObjective.cs" />
+    <Compile Include="BotLogic\PMCObjectiveAction.cs" />
+    <Compile Include="BotLogic\PMCObjectiveLayer.cs" />
     <Compile Include="Configuration\AdjustBotSpawnChancesConfig.cs" />
     <Compile Include="Configuration\AdjustRaidTimesConfig.cs" />
     <Compile Include="Configuration\CheckLootAccessibilityConfig.cs" />
