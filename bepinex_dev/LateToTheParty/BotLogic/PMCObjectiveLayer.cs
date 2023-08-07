@@ -1,5 +1,6 @@
 ﻿using DrakiaXYZ.BigBrain.Brains;
 using EFT;
+using LateToTheParty.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,9 +29,22 @@ namespace LateToTheParty.BotLogic
 
         public override Action GetNextAction()
         {
+            if (!objective.IsObjectiveActive)
+            {
+                return new Action(typeof(PMCDefaultAction), "NoObjectiveSet");
+            }
+
             if (objective.IsObjectiveReached)
             {
-                return new Action(typeof(PMCDefaultAction), "ObjectiveReached");
+                if (objective.TimeSpentAtObjective > 30)
+                {
+                    LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective. Setting a new one...");
+                    objective.ChangeObjective();
+                }
+                else
+                {
+                    return new Action(typeof(PMCDefaultAction), "ObjectiveReached");
+                }
             }
 
             return new Action(typeof(PMCObjectiveAction), "GoToObjective");
@@ -38,12 +52,12 @@ namespace LateToTheParty.BotLogic
 
         public override bool IsActive()
         {
-            return !objective.IsObjectiveReached;
+            return objective.IsObjectiveActive && !objective.IsObjectiveReached;
         }
 
         public override bool IsCurrentActionEnding()
         {
-            return objective.IsObjectiveReached;
+            return objective.IsObjectiveReached || !objective.IsObjectiveActive;
         }
     }
 }

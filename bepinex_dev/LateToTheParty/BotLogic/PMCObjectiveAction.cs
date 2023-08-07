@@ -45,7 +45,7 @@ namespace LateToTheParty.BotLogic
                 canRun = false;
             }
 
-            if (!objective.Position.HasValue)
+            if (!objective.IsObjectiveActive || !objective.Position.HasValue)
             {
                 return;
             }
@@ -62,7 +62,7 @@ namespace LateToTheParty.BotLogic
                 if (!isMovingToObjective)
                 {
                     LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot go to its objective. Setting another one...");
-                    objective.SetRandomObjective();
+                    objective.ChangeObjective();
                 }
             }
         }

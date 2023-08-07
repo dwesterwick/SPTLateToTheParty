@@ -137,6 +137,80 @@ namespace LateToTheParty.Controllers
             return toggleableDoors.Any(d => d.Id == door.Id);
         }
 
+        public bool ToggleDoor(Door door, EDoorState newState, bool canUnlock = true)
+        {
+            // Check if the door is already in the desired state
+            if (newState == EDoorState.Shut && (door.DoorState == EDoorState.Shut || door.DoorState == EDoorState.Locked))
+            {
+                return false;
+            }
+            if (newState == EDoorState.Open && door.DoorState == EDoorState.Open)
+            {
+                return false;
+            }
+
+            // Unlock or "breach" the door if necessary
+            if ((door.DoorState == EDoorState.Locked) && (newState == EDoorState.Open))
+            {
+                if (!canUnlock)
+                {
+                    return false;
+                }
+
+                if (door.KeyId.Length > 0)
+                {
+                    // Check if the door can be unlocked based on chance
+                    System.Random randomObj = new System.Random();
+                    if (randomObj.Next(0, 100) > ConfigController.Config.OpenDoorsDuringRaid.ChanceOfUnlockingDoors)
+                    {
+                        return false;
+                    }
+
+                    LoggingController.LogInfo("Unlocking door: " + door.Id + " (Key ID: " + door.KeyId + ")");
+                }
+                else
+                {
+                    LoggingController.LogInfo("Preparing to breach door: " + door.Id);
+                }
+
+                door.DoorState = EDoorState.Shut;
+                door.OnEnable();
+
+                // This doesn't work
+                //door.Interact(new GClass2600(EInteractionType.Unlock));
+            }
+
+            // Ignore doors that are currently being opened/closed                    
+            if (!(bool)canStartInteractionMethodInfo.Invoke(door, new object[] { newState, true }))
+            {
+                return false;
+            }
+
+            if ((door.DoorState != EDoorState.Open) && (door.DoorState != EDoorState.Locked) && (newState == EDoorState.Open))
+            {
+                LoggingController.LogInfo("Opening door: " + door.Id);
+                //door.DoorState = EDoorState.Open;
+                //door.OnEnable();
+
+                // This plays the opening noise and animation
+                door.Interact(new GClass2846(EInteractionType.Open));
+                return true;
+            }
+
+            if ((door.DoorState == EDoorState.Open) && (newState == EDoorState.Shut))
+            {
+                LoggingController.LogInfo("Closing door: " + door.Id);
+                //door.DoorState = EDoorState.Open;
+                //door.OnEnable();
+
+                // This plays the opening noise and animation
+                door.Interact(new GClass2846(EInteractionType.Close));
+                return true;
+            }
+
+            return false;
+        }
+
         private IEnumerator ToggleRandomDoors(int doorsToToggle)
         {
             try
@@ -325,75 +399,6 @@ namespace LateToTheParty.Controllers
                     }
                 }
             }
-        }
-
-        private bool ToggleDoor(Door door, EDoorState newState)
-        {
-            // Check if the door is already in the desired state
-            if (newState == EDoorState.Shut && (door.DoorState == EDoorState.Shut || door.DoorState == EDoorState.Locked))
-            {
-                return false;
-            }
-            if (newState == EDoorState.Open && door.DoorState == EDoorState.Open)
-            {
-                return false;
-            }
-
-            // Unlock or "breach" the door if necessary
-            if ((door.DoorState == EDoorState.Locked) && (newState == EDoorState.Open))
-            {
-                if (door.KeyId.Length > 0)
-                {
-                    // Check if the door can be unlocked based on chance
-                    System.Random randomObj = new System.Random();
-                    if (randomObj.Next(0, 100) > ConfigController.Config.OpenDoorsDuringRaid.ChanceOfUnlockingDoors)
-                    {
-                        return false;
-                    }
-
-                    LoggingController.LogInfo("Unlocking door: " + door.Id + " (Key ID: " + door.KeyId + ")");
-                }
-                else
-                {
-                    LoggingController.LogInfo("Preparing to breach door: " + door.Id);
-                }
-
-                door.DoorState = EDoorState.Shut;
-                door.OnEnable();
-
-                // This doesn't work
-                //door.Interact(new GClass2600(EInteractionType.Unlock));
-            }
-
-            // Ignore doors that are currently being opened/closed                    
-            if (!(bool)canStartInteractionMethodInfo.Invoke(door, new object[] { newState, true }))
-            {
-                return false;
-            }
-
-            if ((door.DoorState != EDoorState.Open) && (door.DoorState != EDoorState.Locked) && (newState == EDoorState.Open))
-            {
-                LoggingController.LogInfo("Opening door: " + door.Id);
-                //door.DoorState = EDoorState.Open;
-                //door.OnEnable();
-
-                // This plays the opening noise and animation
-                door.Interact(new GClass2846(EInteractionType.Open));
-                return true;
-            }
-
-            if ((door.DoorState == EDoorState.Open) && (newState == EDoorState.Shut))
-            {
-                LoggingController.LogInfo("Closing door: " + door.Id);
-                //door.DoorState = EDoorState.Open;
-                //door.OnEnable();
-
-                // This plays the opening noise and animation
-                door.Interact(new GClass2846(EInteractionType.Close));
-                return true;
-            }
-
-            return false;
         }
     }
 }

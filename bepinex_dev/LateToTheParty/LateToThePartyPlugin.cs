@@ -32,27 +32,38 @@ namespace LateToTheParty
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
                 new Patches.GameWorldOnDestroyPatch().Enable();
-                new Patches.OnItemAddedOrRemovedPatch().Enable();
-                new Patches.OnBeenKilledByAggressorPatch().Enable();
                 new Patches.OnGameStartedPatch().Enable();
-                new Patches.OnBoxLandPatch().Enable();
-                new Patches.QuestSetStatusPatch().Enable();
+                
+                if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
+                {
+                    new Patches.OnItemAddedOrRemovedPatch().Enable();
+                    new Patches.OnBeenKilledByAggressorPatch().Enable();
+                    new Patches.OnBoxLandPatch().Enable();
+                }
+
+                if (ConfigController.Config.TraderStockChanges.Enabled)
+                {
+                    new Patches.QuestSetStatusPatch().Enable();
+                }
 
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
-                this.GetOrAddComponent<LootDestroyerController>();
                 this.GetOrAddComponent<DoorController>();
-                this.GetOrAddComponent<BotConversionController>();
                 this.GetOrAddComponent<NavMeshController>();
+
+                if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
+                {
+                    this.GetOrAddComponent<LootDestroyerController>();
+                }
 
                 if (ConfigController.Config.AdjustBotSpawnChances.Enabled)
                 {
+                    this.GetOrAddComponent<BotConversionController>();
                     this.GetOrAddComponent<BotGenerator>();
 
                     List<string> botBrainsToChange = BotBrains.AllBots.ToList();
                     LoggingController.LogInfo("Loading LateToThePartyPlugin...changing bot brains: " + string.Join(", ", botBrainsToChange));
 
-                    //BrainManager.RemoveLayer("Utility peace", botBrainsToChange);
-                    BrainManager.AddCustomLayer(typeof(PMCObjectiveLayer), botBrainsToChange, 99);
+                    BrainManager.AddCustomLayer(typeof(PMCObjectiveLayer), botBrainsToChange, 25);
                 }
 
                 if (ConfigController.Config.Debug.Enabled)

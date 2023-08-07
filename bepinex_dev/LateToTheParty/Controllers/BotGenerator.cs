@@ -26,6 +26,7 @@ namespace LateToTheParty.Controllers
         public static bool IsSpawningPMCs { get; private set; } = false;
         public static bool IsGeneratingPMCs { get; private set; } = false;
         public static int SpawnedPMCCount { get; private set; } = 0;
+
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(5);
         private static CancellationTokenSource cancellationTokenSource;
         private static List<BotOwner> initiallySpawnedPMCBots = new List<BotOwner>();
@@ -54,6 +55,11 @@ namespace LateToTheParty.Controllers
             initiallySpawnedPMCBots.Clear();
             PMCBots.Clear();
             spawnPositions.Clear();
+        }
+
+        public static bool IsBotFromInitialPMCSpawns(BotOwner bot)
+        {
+            return InitiallySpawnedPMCBots.Contains(bot);
         }
 
         private void Update()
