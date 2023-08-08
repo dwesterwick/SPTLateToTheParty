@@ -124,6 +124,7 @@
     <Compile Include="Controllers\PathRender.cs" />
     <Compile Include="CoroutineExtensions\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />
+    <Compile Include="Models\BotSpawnInfo.cs" />
     <Compile Include="Models\DoorObstacle.cs" />
     <Compile Include="Models\LoggingBuffer.cs" />
     <Compile Include="Models\PathAccessibilityData.cs" />

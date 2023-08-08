@@ -29,14 +29,14 @@ namespace LateToTheParty.Controllers
 
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(5);
         private static CancellationTokenSource cancellationTokenSource;
-        private static List<BotOwner> initiallySpawnedPMCBots = new List<BotOwner>();
-        private static List<GClass628> PMCBots = new List<GClass628>();
-        private static Dictionary<SpawnPointParams, Vector3> spawnPositions = new Dictionary<SpawnPointParams, Vector3>();
+        private static List<Models.BotSpawnInfo> initialPMCBots = new List<Models.BotSpawnInfo>();
+        private static SpawnPointParams[] initialPMCBotSpawnPoints = new SpawnPointParams[0];
+        private static Dictionary<string, Vector3> spawnPositions = new Dictionary<string, Vector3>();
         private static int maxPMCBots = 0;
 
-        public static ReadOnlyCollection<BotOwner> InitiallySpawnedPMCBots
+        public static ReadOnlyCollection<Models.BotSpawnInfo> InitiallySpawnedPMCBots
         {
-            get { return new ReadOnlyCollection<BotOwner>(initiallySpawnedPMCBots); }
+            get { return new ReadOnlyCollection<Models.BotSpawnInfo>(initialPMCBots); }
         }
 
         public static void Clear()
@@ -52,14 +52,14 @@ namespace LateToTheParty.Controllers
                 TaskWithTimeLimit.WaitForCondition(() => !IsGeneratingPMCs);
             }
 
-            initiallySpawnedPMCBots.Clear();
-            PMCBots.Clear();
+            initialPMCBots.Clear();
+            initialPMCBotSpawnPoints = new SpawnPointParams[0];
             spawnPositions.Clear();
         }
 
         public static bool IsBotFromInitialPMCSpawns(BotOwner bot)
         {
-            return InitiallySpawnedPMCBots.Contains(bot);
+            return InitiallySpawnedPMCBots.Any(b => b.Owner ==  bot);
         }
 
         private void Update()
@@ -87,15 +87,19 @@ namespace LateToTheParty.Controllers
                 //return;
             }
 
-            if (PMCBots.Count == 0)
+            if (initialPMCBots.Count == 0)
             {
                 maxPMCBots = LocationSettingsController.LastLocationSelected.MaxPlayers - 1;
                 ConfigController.ForcePMCSpawns();
 
+                // Create bot data from the server
                 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 generateBots(WildSpawnType.assault, EPlayerSide.Savage, BotDifficulty.normal, maxPMCBots);
                 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
+                // Generate inital PMC spawn points
+                initialPMCBotSpawnPoints = getPMCSpawnPoints(LocationSettingsController.LastLocationSelected.SpawnPointParams, maxPMCBots);
+                
                 return;
             }
 
@@ -107,8 +111,14 @@ namespace LateToTheParty.Controllers
 
             BotSpawnerClass botSpawnerClass = Singleton<IBotGame>.Instance.BotsController.BotSpawner;
             cancellationTokenSource = AccessTools.Field(typeof(BotSpawnerClass), "cancellationTokenSource_0").GetValue(botSpawnerClass) as CancellationTokenSource;
-            
-            StartCoroutine(SpawnPMCs(botSpawnerClass));
+
+            for (int b = 0; b < initialPMCBots.Count; b++)
+            {
+                LoggingController.LogInfo("Assigning initial PMC bot #" + b + " the spawn point " + initialPMCBotSpawnPoints[b]);
+                initialPMCBots[b].SpawnPoint = initialPMCBotSpawnPoints[b];
+            }
+
+            StartCoroutine(SpawnInitialPMCs(initialPMCBots, botSpawnerClass, LocationSettingsController.LastLocationSelected.SpawnPointParams));
         }
 
         public static SpawnPointParams GetFurthestSpawnPoint(SpawnPointParams[] referenceSpawnPoints, SpawnPointParams[] allSpawnPoints)
@@ -203,7 +213,8 @@ namespace LateToTheParty.Controllers
                 }*/
 
                 LoggingController.LogInfo("Generating PMC bot #" + i + "...");
-                PMCBots.Add(await GClass628.Create(botData, ibotCreator, 1, botSpawnerClass));
+                GClass628 newBotData = await GClass628.Create(botData, ibotCreator, 1, botSpawnerClass);
+                initialPMCBots.Add(new Models.BotSpawnInfo(newBotData));
             }
 
             LoggingController.LogInfo("Generating PMC bots...done.");
@@ -211,12 +222,23 @@ namespace LateToTheParty.Controllers
             IsGeneratingPMCs = false;
         }
 
-        private IEnumerator SpawnPMCs(BotSpawnerClass botSpawnerClass)
+        private IEnumerator SpawnInitialPMCs(IEnumerable<Models.BotSpawnInfo> initialPMCs, BotSpawnerClass botSpawnerClass, SpawnPointParams[] allSpawnPoints)
         {
             IsSpawningPMCs = true;
 
-            SpawnPointParams[] spawnPoints = getPMCSpawnPoints(LocationSettingsController.LastLocationSelected.SpawnPointParams, maxPMCBots);
-            yield return enumeratorWithTimeLimit.Run(spawnPoints, spawnPMCBot, botSpawnerClass);
+            Dictionary<SpawnPointParams, float> originalSpawnDelays = new Dictionary<SpawnPointParams, float>();
+            for (int s = 0; s < allSpawnPoints.Length; s++)
+            {
+                originalSpawnDelays.Add(allSpawnPoints[s], allSpawnPoints[s].DelayToCanSpawnSec);
+                allSpawnPoints[s].DelayToCanSpawnSec = 0;
+            }
+
+            yield return enumeratorWithTimeLimit.Run(initialPMCs, spawnInitialPMCAtSpawnPoint, botSpawnerClass);
+
+            for (int s = 0; s < allSpawnPoints.Length; s++)
+            {
+                allSpawnPoints[s].DelayToCanSpawnSec = originalSpawnDelays[allSpawnPoints[s]];
+            }
 
             IsSpawningPMCs = false;
         }
@@ -241,9 +263,9 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                if (!spawnPositions.ContainsKey(spawnPoint))
+                if (!spawnPositions.ContainsKey(spawnPoint.Id))
                 {
-                    spawnPositions.Add(spawnPoint, navMeshPosition.Value);
+                    spawnPositions.Add(spawnPoint.Id, navMeshPosition.Value);
                 }
 
                 if (Vector3.Distance(navMeshPosition.Value, Singleton<GameWorld>.Instance.MainPlayer.Position) < 20)
@@ -271,7 +293,7 @@ namespace LateToTheParty.Controllers
             return spawnPoints.ToArray();
         }
 
-        private void spawnPMCBot(SpawnPointParams spawnPoint, BotSpawnerClass botSpawnerClass)
+        private void spawnInitialPMCAtSpawnPoint(Models.BotSpawnInfo initialPMCBot, BotSpawnerClass botSpawnerClass)
         {
             if (SpawnedPMCCount > maxPMCBots)
             {
@@ -279,30 +301,36 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            LoggingController.LogInfo("Spawning PMC #" + (SpawnedPMCCount + 1) + " at " + spawnPoint.Id + "...");
+            if (!initialPMCBot.SpawnPoint.HasValue && !initialPMCBot.SpawnPosition.HasValue)
+            {
+                LoggingController.LogError("No spawn position assigned to initial PMC bot #" + (SpawnedPMCCount + 1) + ".");
+                return;
+            }
 
-            BotZone closestBotZone = botSpawnerClass.GetClosestZone(spawnPositions[spawnPoint], out float dist);
-            PMCBots[SpawnedPMCCount].AddPosition(spawnPositions[spawnPoint]);
-
-            LoggingController.LogInfo("Spawning PMC at " + spawnPoint.Id + "...");
-
-            float _originalDelayToCanSpawnSec = spawnPoint.DelayToCanSpawnSec;
-            spawnPoint.DelayToCanSpawnSec = 0;
+            if (!initialPMCBot.SpawnPosition.HasValue)
+            {
+                initialPMCBot.AssignSpawnPositionFromSpawnPoint();
+            }
 
             Action<BotOwner> callback = new Action<BotOwner>((botOwner) =>
             {
                 LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " spawned as an initial PMC.");
-                initiallySpawnedPMCBots.Add(botOwner);
+                initialPMCBot.Owner = botOwner;
             });
 
-            MethodInfo botSpawnMethod = typeof(BotSpawnerClass).GetMethod("method_11", BindingFlags.Instance | BindingFlags.NonPublic);
-            botSpawnMethod.Invoke(botSpawnerClass, new object[] { closestBotZone, PMCBots[SpawnedPMCCount], callback, cancellationTokenSource.Token });
-
-            LoggingController.LogInfo("Spawning PMC #" + (SpawnedPMCCount + 1) + " at " + spawnPoint.Id + "...done.");
+            LoggingController.LogInfo("Spawning PMC #" + (SpawnedPMCCount + 1) + " at " + initialPMCBot.SpawnPosition.Value.ToString() + "...");
+            spawnBot(initialPMCBot.Data, initialPMCBot.SpawnPosition.Value, callback, cancellationTokenSource.Token, botSpawnerClass);
 
             SpawnedPMCCount++;
+        }
 
-            spawnPoint.DelayToCanSpawnSec = _originalDelayToCanSpawnSec;
+        private void spawnBot(GClass628 bot, Vector3 position, Action<BotOwner> callback, CancellationToken cancellationToken, BotSpawnerClass botSpawnerClass)
+        {
+            BotZone closestBotZone = botSpawnerClass.GetClosestZone(position, out float dist);
+            bot.AddPosition(position);
+
+            MethodInfo botSpawnMethod = typeof(BotSpawnerClass).GetMethod("method_11", BindingFlags.Instance | BindingFlags.NonPublic);
+            botSpawnMethod.Invoke(botSpawnerClass, new object[] { closestBotZone, bot, callback, botSpawnerClass.GetCancelToken() });
         }
     }
 }
