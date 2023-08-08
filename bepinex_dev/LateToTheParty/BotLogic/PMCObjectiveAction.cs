@@ -15,6 +15,7 @@ namespace LateToTheParty.BotLogic
     {
         private PMCObjective objective;
         private BotOwner botOwner;
+        private GClass274 baseSteeringLogic = new GClass274();
         private bool canRun = false;
 
         public PMCObjectiveAction(BotOwner _botOwner) : base(_botOwner)
@@ -36,14 +37,24 @@ namespace LateToTheParty.BotLogic
 
         public override void Update()
         {
+            // Look where you're going
+            botOwner.SetPose(1f);
+            botOwner.Steering.LookToMovingDirection();
+            botOwner.SetTargetMoveSpeed(1f);
+
             if (botOwner.GetPlayer.Physical.Stamina.NormalValue > 0.5f)
             {
+                botOwner.GetPlayer.EnableSprint(true);
                 canRun = true;
             }
             if (botOwner.GetPlayer.Physical.Stamina.NormalValue < 0.1f)
             {
+                botOwner.GetPlayer.EnableSprint(false);
                 canRun = false;
             }
+
+            botOwner.DoorOpener.Update();
+            baseSteeringLogic.Update(botOwner);
 
             if (!objective.IsObjectiveActive || !objective.Position.HasValue)
             {

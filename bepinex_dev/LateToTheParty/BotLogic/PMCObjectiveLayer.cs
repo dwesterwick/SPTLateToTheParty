@@ -36,15 +36,8 @@ namespace LateToTheParty.BotLogic
 
             if (objective.IsObjectiveReached)
             {
-                if (objective.TimeSpentAtObjective > 30)
-                {
-                    LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective. Setting a new one...");
-                    objective.ChangeObjective();
-                }
-                else
-                {
-                    return new Action(typeof(PMCDefaultAction), "ObjectiveReached");
-                }
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective.");
+                return new Action(typeof(PMCDefaultAction), "ObjectiveReached");
             }
 
             return new Action(typeof(PMCObjectiveAction), "GoToObjective");
@@ -52,12 +45,29 @@ namespace LateToTheParty.BotLogic
 
         public override bool IsActive()
         {
-            return objective.IsObjectiveActive && !objective.IsObjectiveReached;
+            if (!objective.IsObjectiveActive)
+            {
+                return false;
+            }
+
+            if (!objective.IsObjectiveReached)
+            {
+                return true;
+            }
+
+            if (objective.TimeSpentAtObjective > 30)
+            {
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective. Setting a new one...");
+                objective.ChangeObjective();
+                return true;
+            }
+
+            return false;
         }
 
         public override bool IsCurrentActionEnding()
         {
-            return objective.IsObjectiveReached || !objective.IsObjectiveActive;
+            return !objective.IsObjectiveActive || objective.IsObjectiveReached;
         }
     }
 }

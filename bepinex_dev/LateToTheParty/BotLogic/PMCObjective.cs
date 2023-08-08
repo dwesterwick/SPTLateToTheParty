@@ -23,6 +23,7 @@ namespace LateToTheParty.BotLogic
         private LocationSettingsClass.Location location = null;
         private SpawnPointParams? targetSpawnPoint = null;
         private Stopwatch timeSpentAtObjectiveTimer = new Stopwatch();
+        private List<SpawnPointParams> blacklistedSpawnPoints = new List<SpawnPointParams>();
 
         public Vector3 PlayerPosition
         {
@@ -43,7 +44,21 @@ namespace LateToTheParty.BotLogic
 
         public void ChangeObjective()
         {
-            updateObjective(getNewObjective());
+            if (targetSpawnPoint.HasValue)
+            {
+                blacklistedSpawnPoints.Add(targetSpawnPoint.Value);
+            }
+
+            SpawnPointParams? newSpawnPoint = getNewObjective();
+            if (newSpawnPoint.HasValue)
+            {
+                updateObjective(newSpawnPoint.Value);
+            }
+            else
+            {
+                LoggingController.LogWarning("Could not find any valid objectives for bot " + botOwner.Profile.Nickname);
+                IsObjectiveActive = false;
+            }
         }
 
         public float GetDistanceToPlayer()
@@ -83,7 +98,7 @@ namespace LateToTheParty.BotLogic
             }
         }
 
-        private SpawnPointParams getNewObjective()
+        private SpawnPointParams? getNewObjective()
         {
             float distanceToPlayer = GetDistanceToPlayer();
 
@@ -92,7 +107,13 @@ namespace LateToTheParty.BotLogic
                 return getPlayerSpawnPoint();
             }
 
-            return getRandomSpawnPoint(ESpawnCategoryMask.Bot, ESpawnCategoryMask.Player);
+            SpawnPointParams? randomSpawnPoint = getRandomSpawnPoint(ESpawnCategoryMask.Bot, ESpawnCategoryMask.Player);
+            if (randomSpawnPoint.HasValue)
+            {
+                return randomSpawnPoint.Value;
+            }
+
+            return null;
         }
 
         private void updateObjective(SpawnPointParams newTarget)
@@ -109,13 +130,20 @@ namespace LateToTheParty.BotLogic
             return Singleton<GameWorld>.Instance.MainPlayer.Position;
         }
 
-        private SpawnPointParams getRandomSpawnPoint(ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All, ESpawnCategoryMask blacklistedSpawnTypes = ESpawnCategoryMask.None, float minDistance = 0)
+        private SpawnPointParams? getRandomSpawnPoint(ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All, ESpawnCategoryMask blacklistedSpawnTypes = ESpawnCategoryMask.None, float minDistance = 0)
         {
-            return location.SpawnPointParams
+            IEnumerable<SpawnPointParams> possibleSpawnPoints = location.SpawnPointParams
+                .Where(s => !blacklistedSpawnPoints.Contains(s))
                 .Where(s => s.Categories.Any(spawnTypes))
                 .Where(s => !s.Categories.Any(blacklistedSpawnTypes))
-                .Where(s => Vector3.Distance(s.Position, botOwner.Position) >= minDistance)
-                .Random();
+                .Where(s => Vector3.Distance(s.Position, botOwner.Position) >= minDistance);
+
+            if (possibleSpawnPoints.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            return possibleSpawnPoints.Random();
         }
 
         private SpawnPointParams getPlayerSpawnPoint()

@@ -69,6 +69,7 @@ namespace LateToTheParty
                 if (ConfigController.Config.Debug.Enabled)
                 {
                     new Patches.DoorInteractionPatch().Enable();
+                    new Patches.BotDoorInteractionPatch().Enable();
                     this.GetOrAddComponent<PathRender>();
                     AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
                 }
