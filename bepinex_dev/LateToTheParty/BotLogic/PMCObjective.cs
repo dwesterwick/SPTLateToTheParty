@@ -17,6 +17,7 @@ namespace LateToTheParty.BotLogic
     {
         public bool IsObjectiveActive { get; private set; } = false;
         public bool IsObjectiveReached { get; set; } = false;
+        public bool CanRushPlayerSpawn { get; private set; } = false;
         public Vector3? Position { get; set; } = null;
 
         private BotOwner botOwner = null;
@@ -39,7 +40,8 @@ namespace LateToTheParty.BotLogic
         {
             botOwner = _botOwner;
 
-            IsObjectiveActive = BotGenerator.IsBotFromInitialPMCSpawns(botOwner);
+            IsObjectiveActive = botOwner.Side != EPlayerSide.Savage;
+            CanRushPlayerSpawn = BotGenerator.IsBotFromInitialPMCSpawns(botOwner);
         }
 
         public void ChangeObjective()
@@ -98,15 +100,25 @@ namespace LateToTheParty.BotLogic
             }
         }
 
+        public float GetRaidET()
+        {
+            // Get the current number of seconds remaining and elapsed in the raid
+            float escapeTimeSec = GClass1473.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
+
+            return raidTimeElapsed;
+        }
+
         private SpawnPointParams? getNewObjective()
         {
             float distanceToPlayer = GetDistanceToPlayer();
 
-            if (distanceToPlayer < 50)
+            if (CanRushPlayerSpawn && (GetRaidET() < 999) && (distanceToPlayer < 50))
             {
                 SpawnPointParams playerSpawnPoint = getPlayerSpawnPoint();
                 if (!blacklistedSpawnPoints.Contains(playerSpawnPoint))
                 {
+                    LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " is heading to your spawn point!");
                     return playerSpawnPoint;
                 }
             }

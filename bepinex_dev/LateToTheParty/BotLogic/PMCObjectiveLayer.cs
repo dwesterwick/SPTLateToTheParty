@@ -29,16 +29,6 @@ namespace LateToTheParty.BotLogic
 
         public override Action GetNextAction()
         {
-            /*if (!objective.IsObjectiveActive)
-            {
-                return new Action(typeof(PMCDefaultAction), "NoObjectiveSet");
-            }
-
-            if (objective.IsObjectiveReached)
-            {
-                return new Action(typeof(PMCDefaultAction), "ObjectiveReached");
-            }*/
-
             return new Action(typeof(PMCObjectiveAction), "GoToObjective");
         }
 
