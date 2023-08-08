@@ -104,7 +104,11 @@ namespace LateToTheParty.BotLogic
 
             if (distanceToPlayer < 50)
             {
-                return getPlayerSpawnPoint();
+                SpawnPointParams playerSpawnPoint = getPlayerSpawnPoint();
+                if (!blacklistedSpawnPoints.Contains(playerSpawnPoint))
+                {
+                    return playerSpawnPoint;
+                }
             }
 
             SpawnPointParams? randomSpawnPoint = getRandomSpawnPoint(ESpawnCategoryMask.Bot, ESpawnCategoryMask.Player);
@@ -133,7 +137,7 @@ namespace LateToTheParty.BotLogic
         private SpawnPointParams? getRandomSpawnPoint(ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All, ESpawnCategoryMask blacklistedSpawnTypes = ESpawnCategoryMask.None, float minDistance = 0)
         {
             IEnumerable<SpawnPointParams> possibleSpawnPoints = location.SpawnPointParams
-                .Where(s => !blacklistedSpawnPoints.Contains(s))
+                .Where(s => !blacklistedSpawnPoints.Any(b => b.Id == s.Id))
                 .Where(s => s.Categories.Any(spawnTypes))
                 .Where(s => !s.Categories.Any(blacklistedSpawnTypes))
                 .Where(s => Vector3.Distance(s.Position, botOwner.Position) >= minDistance);

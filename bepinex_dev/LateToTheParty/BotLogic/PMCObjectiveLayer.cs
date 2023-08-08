@@ -29,16 +29,15 @@ namespace LateToTheParty.BotLogic
 
         public override Action GetNextAction()
         {
-            if (!objective.IsObjectiveActive)
+            /*if (!objective.IsObjectiveActive)
             {
                 return new Action(typeof(PMCDefaultAction), "NoObjectiveSet");
             }
 
             if (objective.IsObjectiveReached)
             {
-                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective.");
                 return new Action(typeof(PMCDefaultAction), "ObjectiveReached");
-            }
+            }*/
 
             return new Action(typeof(PMCObjectiveAction), "GoToObjective");
         }
@@ -55,7 +54,7 @@ namespace LateToTheParty.BotLogic
                 return true;
             }
 
-            if (objective.TimeSpentAtObjective > 30)
+            if (objective.TimeSpentAtObjective > 10)
             {
                 LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective. Setting a new one...");
                 objective.ChangeObjective();
