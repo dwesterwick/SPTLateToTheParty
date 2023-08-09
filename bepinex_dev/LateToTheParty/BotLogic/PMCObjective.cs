@@ -17,13 +17,17 @@ namespace LateToTheParty.BotLogic
     {
         public bool IsObjectiveActive { get; private set; } = false;
         public bool IsObjectiveReached { get; set; } = false;
+        public bool CanChangeObjective { get; set; } = true;
         public bool CanRushPlayerSpawn { get; private set; } = false;
+        public bool CanReachObjective { get; set; } = true;
+        public float MinTimeAtObjective { get; set; } = 10f;
         public Vector3? Position { get; set; } = null;
 
         private BotOwner botOwner = null;
         private LocationSettingsClass.Location location = null;
         private SpawnPointParams? targetSpawnPoint = null;
         private Stopwatch timeSpentAtObjectiveTimer = new Stopwatch();
+        private Stopwatch timeSinceChangingObjectiveTimer = Stopwatch.StartNew();
         private List<SpawnPointParams> blacklistedSpawnPoints = new List<SpawnPointParams>();
 
         public Vector3 PlayerPosition
@@ -36,6 +40,11 @@ namespace LateToTheParty.BotLogic
             get { return timeSpentAtObjectiveTimer.ElapsedMilliseconds / 1000.0; }
         }
 
+        public double TimeSinceChangingObjective
+        {
+            get { return timeSinceChangingObjectiveTimer.ElapsedMilliseconds / 1000.0; }
+        }
+
         public void Init(BotOwner _botOwner)
         {
             botOwner = _botOwner;
@@ -46,21 +55,25 @@ namespace LateToTheParty.BotLogic
 
         public void ChangeObjective()
         {
-            if (targetSpawnPoint.HasValue)
+            if (!CanChangeObjective)
+            {
+                return;
+            }
+
+            if (targetSpawnPoint.HasValue && !blacklistedSpawnPoints.Contains(targetSpawnPoint.Value))
             {
                 blacklistedSpawnPoints.Add(targetSpawnPoint.Value);
             }
 
             SpawnPointParams? newSpawnPoint = getNewObjective();
-            if (newSpawnPoint.HasValue)
+            if (!newSpawnPoint.HasValue)
             {
-                updateObjective(newSpawnPoint.Value);
-            }
-            else
-            {
-                LoggingController.LogWarning("Could not find any valid objectives for bot " + botOwner.Profile.Nickname);
+                LoggingController.LogError("Could not find any valid objectives for bot " + botOwner.Profile.Nickname);
                 IsObjectiveActive = false;
+                return;
             }
+
+            updateObjective(newSpawnPoint.Value);
         }
 
         public float GetDistanceToPlayer()
@@ -94,7 +107,7 @@ namespace LateToTheParty.BotLogic
                 ChangeObjective();
             }
 
-            if (!Position.HasValue)
+            if (!Position.HasValue && targetSpawnPoint.HasValue)
             {
                 Position = targetSpawnPoint.Value.Position;
             }
@@ -113,7 +126,7 @@ namespace LateToTheParty.BotLogic
         {
             float distanceToPlayer = GetDistanceToPlayer();
 
-            if (CanRushPlayerSpawn && (GetRaidET() < 999) && (distanceToPlayer < 50))
+            if (CanRushPlayerSpawn && (GetRaidET() < 999) && (distanceToPlayer < 75))
             {
                 SpawnPointParams playerSpawnPoint = getPlayerSpawnPoint();
                 if (!blacklistedSpawnPoints.Contains(playerSpawnPoint))
@@ -123,7 +136,7 @@ namespace LateToTheParty.BotLogic
                 }
             }
 
-            SpawnPointParams? randomSpawnPoint = getRandomSpawnPoint(ESpawnCategoryMask.Bot, ESpawnCategoryMask.Player);
+            SpawnPointParams? randomSpawnPoint = getRandomSpawnPoint(ESpawnCategoryMask.Bot, ESpawnCategoryMask.Player, 25);
             if (randomSpawnPoint.HasValue)
             {
                 return randomSpawnPoint.Value;
@@ -138,6 +151,7 @@ namespace LateToTheParty.BotLogic
             Position = targetSpawnPoint.Value.Position;
             IsObjectiveReached = false;
 
+            timeSinceChangingObjectiveTimer.Restart();
             LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has a new objective: " + targetSpawnPoint.Value.Id);
         }
 

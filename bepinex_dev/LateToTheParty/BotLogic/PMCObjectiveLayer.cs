@@ -1,11 +1,12 @@
-﻿using DrakiaXYZ.BigBrain.Brains;
-using EFT;
-using LateToTheParty.Controllers;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DrakiaXYZ.BigBrain.Brains;
+using EFT;
+using LateToTheParty.Controllers;
 
 namespace LateToTheParty.BotLogic
 {
@@ -13,6 +14,7 @@ namespace LateToTheParty.BotLogic
     {
         private PMCObjective objective;
         private BotOwner botOwner;
+        private float minTimeBetweenSwitchingObjectives = 5f;
 
         public PMCObjectiveLayer(BotOwner _botOwner, int _priority) : base(_botOwner, _priority)
         {
@@ -39,12 +41,19 @@ namespace LateToTheParty.BotLogic
                 return false;
             }
 
+            objective.CanChangeObjective = objective.TimeSinceChangingObjective > minTimeBetweenSwitchingObjectives;
+
+            if (!objective.CanReachObjective && !objective.CanChangeObjective)
+            {
+                return false;
+            }
+
             if (!objective.IsObjectiveReached)
             {
                 return true;
             }
 
-            if (objective.TimeSpentAtObjective > 10)
+            if (objective.TimeSpentAtObjective > objective.MinTimeAtObjective)
             {
                 LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective. Setting a new one...");
                 objective.ChangeObjective();

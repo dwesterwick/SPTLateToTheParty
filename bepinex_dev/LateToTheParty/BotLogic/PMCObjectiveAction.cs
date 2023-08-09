@@ -16,7 +16,6 @@ namespace LateToTheParty.BotLogic
         private PMCObjective objective;
         private BotOwner botOwner;
         private GClass274 baseSteeringLogic = new GClass274();
-        private bool canRun = false;
 
         public PMCObjectiveAction(BotOwner _botOwner) : base(_botOwner)
         {
@@ -41,36 +40,34 @@ namespace LateToTheParty.BotLogic
             botOwner.SetPose(1f);
             botOwner.Steering.LookToMovingDirection();
             botOwner.SetTargetMoveSpeed(1f);
+            baseSteeringLogic.Update(botOwner);
+
+            botOwner.DoorOpener.Update();
 
             if (botOwner.GetPlayer.Physical.Stamina.NormalValue > 0.5f)
             {
                 botOwner.GetPlayer.EnableSprint(true);
-                canRun = true;
             }
             if (botOwner.GetPlayer.Physical.Stamina.NormalValue < 0.1f)
             {
                 botOwner.GetPlayer.EnableSprint(false);
-                canRun = false;
             }
-
-            botOwner.DoorOpener.Update();
-            baseSteeringLogic.Update(botOwner);
 
             if (!objective.IsObjectiveActive || !objective.Position.HasValue)
             {
                 return;
             }
 
-            if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, botOwner.Position) < 10f)
+            if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, botOwner.Position) < 3f)
             {
                 LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective.");
                 objective.IsObjectiveReached = true;
             }
             else
             {
-                bool isMovingToObjective = TryGoToObjective(objective.Position.Value);
+                objective.CanReachObjective = TryGoToObjective(objective.Position.Value);
 
-                if (!isMovingToObjective)
+                if (!objective.CanReachObjective && objective.CanChangeObjective)
                 {
                     LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot go to its objective. Setting another one...");
                     objective.ChangeObjective();
@@ -80,21 +77,14 @@ namespace LateToTheParty.BotLogic
 
         public bool TryGoToObjective(Vector3 position)
         {
-            if (!canRun)
-            {
-                NavMeshPathStatus? pathStatus = botOwner.Mover?.GoToPoint(position, true, 0.5f, false, false);
+            NavMeshPathStatus? pathStatus = botOwner.Mover?.GoToPoint(position, true, 0.5f, false, false);
 
-                if (!pathStatus.HasValue)
-                {
-                    return false;
-                }
-
-                return pathStatus.Value == NavMeshPathStatus.PathComplete;
-            }
-            else
+            if (!pathStatus.HasValue)
             {
-                return botOwner.BotRun.Run(position, false);
+                return false;
             }
+
+            return pathStatus.Value == NavMeshPathStatus.PathComplete;
         }
     }
 }

@@ -226,10 +226,10 @@ namespace LateToTheParty.Controllers
         {
             IsSpawningPMCs = true;
 
-            Dictionary<SpawnPointParams, float> originalSpawnDelays = new Dictionary<SpawnPointParams, float>();
+            Dictionary<string, float> originalSpawnDelays = new Dictionary<string, float>();
             for (int s = 0; s < allSpawnPoints.Length; s++)
             {
-                originalSpawnDelays.Add(allSpawnPoints[s], allSpawnPoints[s].DelayToCanSpawnSec);
+                originalSpawnDelays.Add(allSpawnPoints[s].Id, allSpawnPoints[s].DelayToCanSpawnSec);
                 allSpawnPoints[s].DelayToCanSpawnSec = 0;
             }
 
@@ -237,7 +237,7 @@ namespace LateToTheParty.Controllers
 
             for (int s = 0; s < allSpawnPoints.Length; s++)
             {
-                allSpawnPoints[s].DelayToCanSpawnSec = originalSpawnDelays[allSpawnPoints[s]];
+                allSpawnPoints[s].DelayToCanSpawnSec = originalSpawnDelays[allSpawnPoints[s].Id];
             }
 
             IsSpawningPMCs = false;
