@@ -41,6 +41,11 @@ namespace LateToTheParty.BotLogic
                 return false;
             }
 
+            if (!BotQuestController.HaveTriggersBeenFound)
+            {
+                return false;
+            }
+
             objective.CanChangeObjective = objective.TimeSinceChangingObjective > minTimeBetweenSwitchingObjectives;
 
             if (!objective.CanReachObjective && !objective.CanChangeObjective)

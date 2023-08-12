@@ -301,7 +301,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 action: () => 
                 {
                     return JSON.stringify({ quests: this.questHelper.getQuestsFromDb() });
-                    //return this.httpResponseUtil.getBody(this.questHelper.getQuestsFromDb());
                 }
             }], "GetAllQuestTemplates"
         );

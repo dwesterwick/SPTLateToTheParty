@@ -64,6 +64,11 @@ namespace LateToTheParty.BotLogic
                 blacklistedSpawnPoints.Add(targetSpawnPoint.Value);
             }
 
+            if (TryToGoToRandomQuestObjective())
+            {
+                return;
+            }
+
             SpawnPointParams? newSpawnPoint = getNewObjective();
             if (!newSpawnPoint.HasValue)
             {
@@ -144,14 +149,47 @@ namespace LateToTheParty.BotLogic
             return null;
         }
 
+        private bool TryToGoToRandomQuestObjective()
+        {
+            RawQuestClass quest = BotQuestController.getRandomQuestWithZoneIDs();
+            if (quest == null)
+            {
+                LoggingController.LogWarning("Could not get a quest for bot " + botOwner.Profile.Nickname);
+                return false;
+            }
+
+            string zoneID = BotQuestController.getRandomZoneIDForQuest(quest);
+            if (zoneID == null)
+            {
+                LoggingController.LogWarning("Could not get a target zone for quest " + quest.Name + " for bot " + botOwner.Profile.Nickname);
+                return false;
+            }
+
+            Vector3? targetPosition = BotQuestController.getTargetPositionForZoneID(zoneID);
+            if (!targetPosition.HasValue)
+            {
+                LoggingController.LogWarning("Could not get a position for target zone " + zoneID + " for quest " + quest.Name + " for bot " + botOwner.Profile.Nickname);
+                return false;
+            }
+
+            updateObjective(targetPosition.Value, zoneID + " for quest " + quest.Name);
+
+            return true;
+        }
+
         private void updateObjective(SpawnPointParams newTarget)
         {
             targetSpawnPoint = newTarget;
-            Position = targetSpawnPoint.Value.Position;
+            updateObjective(targetSpawnPoint.Value.Position, "Spawn point " + targetSpawnPoint.Value.Id);
+        }
+
+        private void updateObjective(Vector3 newTargetPosition, string objectiveDescription)
+        {
+            Position = newTargetPosition;
             IsObjectiveReached = false;
 
             timeSinceChangingObjectiveTimer.Restart();
-            LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has a new objective: " + targetSpawnPoint.Value.Id);
+            LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has a new objective: " + objectiveDescription);
         }
 
         private Vector3 getPlayerPosition()

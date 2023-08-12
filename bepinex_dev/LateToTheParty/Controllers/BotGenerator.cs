@@ -79,7 +79,7 @@ namespace LateToTheParty.Controllers
             // Do not force spawns if the player spawned late
             if (raidTimeElapsed > 30)
             {
-                return;
+                //return;
             }
 
             if (initialPMCBots.Count == 0)
