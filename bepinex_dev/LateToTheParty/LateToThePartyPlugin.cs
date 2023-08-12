@@ -49,6 +49,7 @@ namespace LateToTheParty
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<DoorController>();
                 this.GetOrAddComponent<NavMeshController>();
+                this.GetOrAddComponent<BotQuestController>();
 
                 if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
                 {

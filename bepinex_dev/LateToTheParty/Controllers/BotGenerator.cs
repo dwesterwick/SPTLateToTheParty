@@ -4,17 +4,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Comfort.Common;
-using DrakiaXYZ.BigBrain.Brains;
 using EFT;
-using EFT.Bots;
 using EFT.Game.Spawning;
-using EFT.UI;
+using EFT.Interactive;
 using HarmonyLib;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
@@ -28,7 +24,6 @@ namespace LateToTheParty.Controllers
         public static int SpawnedPMCCount { get; private set; } = 0;
 
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(5);
-        private static CancellationTokenSource cancellationTokenSource;
         private static List<Models.BotSpawnInfo> initialPMCBots = new List<Models.BotSpawnInfo>();
         private static SpawnPointParams[] initialPMCBotSpawnPoints = new SpawnPointParams[0];
         private static Dictionary<string, Vector3> spawnPositions = new Dictionary<string, Vector3>();
@@ -84,7 +79,7 @@ namespace LateToTheParty.Controllers
             // Do not force spawns if the player spawned late
             if (raidTimeElapsed > 30)
             {
-                //return;
+                return;
             }
 
             if (initialPMCBots.Count == 0)
@@ -110,7 +105,6 @@ namespace LateToTheParty.Controllers
             }
 
             BotSpawnerClass botSpawnerClass = Singleton<IBotGame>.Instance.BotsController.BotSpawner;
-            cancellationTokenSource = AccessTools.Field(typeof(BotSpawnerClass), "cancellationTokenSource_0").GetValue(botSpawnerClass) as CancellationTokenSource;
 
             for (int b = 0; b < initialPMCBots.Count; b++)
             {
@@ -319,12 +313,12 @@ namespace LateToTheParty.Controllers
             });
 
             LoggingController.LogInfo("Spawning PMC #" + (SpawnedPMCCount + 1) + " at " + initialPMCBot.SpawnPosition.Value.ToString() + "...");
-            spawnBot(initialPMCBot.Data, initialPMCBot.SpawnPosition.Value, callback, cancellationTokenSource.Token, botSpawnerClass);
+            spawnBot(initialPMCBot.Data, initialPMCBot.SpawnPosition.Value, callback, botSpawnerClass);
 
             SpawnedPMCCount++;
         }
 
-        private void spawnBot(GClass628 bot, Vector3 position, Action<BotOwner> callback, CancellationToken cancellationToken, BotSpawnerClass botSpawnerClass)
+        private void spawnBot(GClass628 bot, Vector3 position, Action<BotOwner> callback, BotSpawnerClass botSpawnerClass)
         {
             BotZone closestBotZone = botSpawnerClass.GetClosestZone(position, out float dist);
             bot.AddPosition(position);

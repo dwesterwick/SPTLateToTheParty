@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
+using EFT.Interactive;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -47,7 +48,7 @@ namespace LateToTheParty.Controllers
 
             LoggingController.Logger.LogInfo("Updating raid settings for " + LastLocationSelected.Id + "...");
 
-            if (CarExtractNames.Length == 0)
+            if (ConfigController.Config.AdjustRaidTimes.AdjustVexChance && (CarExtractNames.Length == 0))
             {
                 LoggingController.Logger.LogInfo("Getting car extract names...");
                 CarExtractNames = ConfigController.GetCarExtractNames();
@@ -401,7 +402,7 @@ namespace LateToTheParty.Controllers
                     wave.time_max = wave.time_min + 1;
                 }
 
-                LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
+                //LoggingController.LogInfo("Wave adjusted: MinTime=" + wave.time_min + ", MaxTime=" + wave.time_max);
             }
 
             LoggingController.LogInfo("Adjusting " + location.waves.Length + " bot-wave times...done.");
