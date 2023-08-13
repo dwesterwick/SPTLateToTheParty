@@ -138,6 +138,10 @@
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
     <Compile Include="Models\PathVisualizationData.cs" />
     <Compile Include="Models\Quest.cs" />
+    <Compile Include="Models\QuestItemObjective.cs" />
+    <Compile Include="Models\QuestObjective.cs" />
+    <Compile Include="Models\QuestSpawnPointObjective.cs" />
+    <Compile Include="Models\QuestZoneObjective.cs" />
     <Compile Include="Patches\BotDoorInteractionPatch.cs" />
     <Compile Include="Patches\DoorInteractionPatch.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />

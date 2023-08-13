@@ -38,9 +38,11 @@ namespace LateToTheParty.BotLogic
                 TaskWithTimeLimit.WaitForCondition(() => !IsFindingTriggers);
             }
 
+            allQuests.RemoveAll(q => q.Template == null);
+
             foreach (Quest quest in allQuests)
             {
-                quest.ClearPositionData();
+                quest.Clear();
             }
 
             zoneIDsInLocation.Clear();
@@ -64,7 +66,12 @@ namespace LateToTheParty.BotLogic
             StartCoroutine(LoadAllQuests());
         }
 
-        public static Quest findQuest(string questID)
+        public static void AddQuest(Quest quest)
+        {
+            allQuests.Add(quest);
+        }
+
+        public static Quest FindQuest(string questID)
         {
             IEnumerable<Quest> matchingQuests = allQuests.Where(q => q.TemplateId == questID);
             if (matchingQuests.Count() == 0)
@@ -75,11 +82,12 @@ namespace LateToTheParty.BotLogic
             return matchingQuests.First();
         }
 
-        public static Quest getRandomQuestInCurrentLocation()
+        public static Quest GetRandomQuestForBot(BotOwner bot)
         {
             IEnumerable<Quest> applicableQuests = allQuests
-                .Where(q => q.ZoneIDs.Length > 0)
-                .Where(q => q.ZoneIDs.Any(z => zoneIDsInLocation.Contains(z)));
+                .Where(q => q.CanAssignBot(bot))
+                .Where(q => q.Template != null)
+                .Where(q => q.NumberOfValidObjectives > 0);
             
             if (applicableQuests.Count() == 0)
             {
@@ -87,28 +95,6 @@ namespace LateToTheParty.BotLogic
             }
 
             return applicableQuests.Random();
-        }
-
-        public static string getRandomZoneIDForQuest(Quest quest)
-        {
-            string[] zoneIDs = quest.ZoneIDs;
-            if (zoneIDs.Length == 0)
-            {
-                return null;
-            }
-
-            return zoneIDs.Random();
-        }
-
-        public static string getRandomZoneIDForQuest(string questID)
-        {
-            Quest quest = findQuest(questID);
-            if (quest == null)
-            {
-                return null;
-            }
-
-            return getRandomZoneIDForQuest(quest);
         }
 
         private IEnumerator LoadAllQuests()
@@ -173,7 +159,8 @@ namespace LateToTheParty.BotLogic
                         continue;
                     }
 
-                    if (quest.FindLootItem(target) != null)
+                    QuestObjective objective = quest.GetObjectiveForLootItem(target);
+                    if (objective != null)
                     {
                         continue;
                     }
@@ -201,7 +188,7 @@ namespace LateToTheParty.BotLogic
                             return;
                         }
 
-                        quest.AddItemAndPosition(item, navMeshTargetPoint.Value);
+                        quest.AddObjective(new QuestItemObjective(item, navMeshTargetPoint.Value));
                         LoggingController.LogInfo("Found " + item.Item.LocalizedName() + " for quest " + quest.Name);
                     }
                 }
@@ -221,7 +208,10 @@ namespace LateToTheParty.BotLogic
             }
 
             //LoggingController.LogInfo("Zone ID's for quest \"" + quest.Name + "\": " + string.Join(",", zoneIDs));
-            quest.AddZonesWithoutPosition(zoneIDs);
+            foreach (string zoneID in zoneIDs)
+            {
+                quest.AddObjective(new QuestZoneObjective(zoneID));
+            }
 
             int minLevel = getMinLevelForQuest(quest);
             //LoggingController.LogInfo("Min level for quest \"" + quest.Name + "\": " + minLevel);
@@ -325,9 +315,7 @@ namespace LateToTheParty.BotLogic
 
         private void ProcessTrigger(TriggerWithId trigger)
         {
-            zoneIDsInLocation.Add(trigger.Id);
-
-            Quest[] matchingQuests = allQuests.Where(q => q.ZoneIDs.Contains(trigger.Id)).ToArray();
+            Quest[] matchingQuests = allQuests.Where(q => q.GetObjectiveForZoneID(trigger.Id) != null).ToArray();
             if (matchingQuests.Length == 0)
             {
                 return;
@@ -340,25 +328,45 @@ namespace LateToTheParty.BotLogic
                 return;
             }
 
-            float searchDistance = Math.Max(2f, triggerCollider.bounds.extents.y);
-            Vector3? navMeshTargetPoint = NavMeshController.FindNearestNavMeshPosition(triggerCollider.bounds.center, searchDistance);
+            Vector3 triggerTargetPosition = triggerCollider.bounds.center;
+            if (triggerCollider.bounds.extents.y > 1.5f)
+            {
+                LoggingController.LogInfo("Adjusting position for zone " + trigger.Id);
+                triggerTargetPosition.y = triggerCollider.bounds.min.y + 0.75f;
+            }
+
+            Vector3? navMeshTargetPoint = NavMeshController.FindNearestNavMeshPosition(triggerTargetPosition, 2f);
             if (!navMeshTargetPoint.HasValue)
             {
-                LoggingController.LogError("Cannot find NavMesh point for trigger " + trigger.Id + ". Search distance: " + searchDistance);
+                LoggingController.LogError("Cannot find NavMesh point for trigger " + trigger.Id);
                 return;
             }
 
             foreach (Quest quest in matchingQuests)
             {
-                LoggingController.LogInfo("Found trigger " + trigger.Id + " for quest: " + quest);
-                quest.AddZoneAndPosition(trigger.Id, navMeshTargetPoint.Value);
+                if (zoneIDsInLocation.Contains(trigger.Id))
+                {
+                    continue;
+                }
+
+                LoggingController.LogInfo("Found trigger " + trigger.Id + " for quest: " + quest.Name);
+
+                QuestObjective objective = quest.GetObjectiveForZoneID(trigger.Id);
+                objective.Position = navMeshTargetPoint.Value;
+                objective.MaxBots = triggerCollider.bounds.Volume() > 5 ? 4 : 2;
+
+                zoneIDsInLocation.Add(trigger.Id);
             }
 
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled)
             {
                 Vector3[] triggerColliderBounds = PathRender.GetBoundingBoxPoints(triggerCollider.bounds);
-                PathVisualizationData triggerVisual = new PathVisualizationData("Trigger_" + trigger.Id, triggerColliderBounds, Color.white);
-                PathRender.AddOrUpdatePath(triggerVisual);
+                PathVisualizationData triggerBoundingBox = new PathVisualizationData("Trigger_" + trigger.Id, triggerColliderBounds, Color.cyan);
+                PathRender.AddOrUpdatePath(triggerBoundingBox);
+
+                Vector3[] triggerTargetPoint = PathRender.GetSpherePoints(navMeshTargetPoint.Value, 0.5f, 10);
+                PathVisualizationData triggerTargetPosSphere = new PathVisualizationData("TriggerTargetPos_" + trigger.Id, triggerTargetPoint, Color.cyan);
+                PathRender.AddOrUpdatePath(triggerTargetPosSphere);
             }
         }
     }

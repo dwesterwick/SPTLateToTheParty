@@ -12,6 +12,7 @@ using EFT;
 using EFT.Game.Spawning;
 using EFT.Interactive;
 using HarmonyLib;
+using LateToTheParty.BotLogic;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 
@@ -94,7 +95,9 @@ namespace LateToTheParty.Controllers
 
                 // Generate inital PMC spawn points
                 initialPMCBotSpawnPoints = getPMCSpawnPoints(LocationSettingsController.LastLocationSelected.SpawnPointParams, maxPMCBots);
-                
+
+                generateSpawnPointQuest(LocationSettingsController.LastLocationSelected.SpawnPointParams);
+
                 return;
             }
 
@@ -325,6 +328,22 @@ namespace LateToTheParty.Controllers
 
             MethodInfo botSpawnMethod = typeof(BotSpawnerClass).GetMethod("method_11", BindingFlags.Instance | BindingFlags.NonPublic);
             botSpawnMethod.Invoke(botSpawnerClass, new object[] { closestBotZone, bot, callback, botSpawnerClass.GetCancelToken() });
+        }
+
+        private void generateSpawnPointQuest(SpawnPointParams[] allSpawnPoints, ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All)
+        {
+            IEnumerable<SpawnPointParams> eligibleSpawnPoints = allSpawnPoints.Where(s => s.Categories.Any(spawnTypes));
+            if (eligibleSpawnPoints.IsNullOrEmpty())
+            {
+                return;
+            }
+
+            Models.Quest quest = new Models.Quest("Spawn Points");
+            foreach (SpawnPointParams spawnPoint in eligibleSpawnPoints)
+            {
+                quest.AddObjective(new Models.QuestSpawnPointObjective(spawnPoint, spawnPoint.Position));
+            }
+            BotQuestController.AddQuest(quest);
         }
     }
 }

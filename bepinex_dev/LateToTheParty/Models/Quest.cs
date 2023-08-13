@@ -1,8 +1,14 @@
-﻿using EFT.Interactive;
+﻿using EFT;
+using EFT.Game.Spawning;
+using EFT.Interactive;
+using EFT.InventoryLogic;
+using LateToTheParty.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -11,97 +17,144 @@ namespace LateToTheParty.Models
 {
     public class Quest
     {
-        public RawQuestClass Template { get; private set; }
-        public int MinLevel { get; set; }
-        
-        private Dictionary<string, Vector3> zoneIDsAndPositions = new Dictionary<string, Vector3>();
-        private Dictionary<LootItem, Vector3> itemsAndPositions = new Dictionary<LootItem, Vector3>();
+        public RawQuestClass Template { get; private set; } = null;
+        public int MinLevel { get; set; } = 0;
 
-        public string Name => Template.Name;
-        public string TemplateId => Template.TemplateId;
-        public string[] ZoneIDs => zoneIDsAndPositions.Keys.ToArray();
-        public LootItem[] Items => itemsAndPositions.Keys.ToArray();
+        private string name = "Unnamed Quest";
+        private List<QuestObjective> objectives = new List<QuestObjective>();
+        private List<BotOwner> blacklistedBots = new List<BotOwner>();
 
-        public Quest(RawQuestClass template)
+        public string Name => Template.Name ?? name;
+        public string TemplateId => Template.TemplateId ?? "";
+        public ReadOnlyCollection<QuestObjective> AllObjectives => new ReadOnlyCollection<QuestObjective>(objectives);
+        public IEnumerable<QuestObjective> ValidObjectives => AllObjectives.Where(o => o.Position.HasValue);
+        public int NumberOfObjectives => AllObjectives.Count;
+        public int NumberOfValidObjectives => ValidObjectives.Count();
+
+        public Quest()
+        {
+            
+        }
+
+        public Quest(string _name): this()
+        {
+            name = _name;
+        }
+
+        public Quest(RawQuestClass template) : this()
         {
             Template = template;
         }
 
-        public void ClearPositionData()
+        public void Clear()
         {
-            zoneIDsAndPositions.Clear();
-            itemsAndPositions.Clear();
+            blacklistedBots.Clear();
+
+            foreach(QuestObjective objective in objectives)
+            {
+                objective.Clear();
+            }
         }
 
-        public Vector3? GetPositionForZoneID(string zoneID)
+        public void BlacklistBot(BotOwner bot)
         {
-            if (!zoneIDsAndPositions.ContainsKey(zoneID))
+            if (!blacklistedBots.Contains(bot))
+            {
+                blacklistedBots.Add(bot);
+            }
+        }
+
+        public bool CanAssignBot(BotOwner bot)
+        {
+            return !blacklistedBots.Contains(bot);
+        }
+
+        public void AddObjective(QuestObjective objective)
+        {
+            objectives.Add(objective);
+        }
+
+        public QuestObjective GetRandomObjective()
+        {
+            IEnumerable<QuestObjective> possibleObjectives = ValidObjectives
+                .Where(o => o.CanAssignMoreBots);
+            
+            if (!possibleObjectives.Any())
             {
                 return null;
             }
 
-            return zoneIDsAndPositions[zoneID];
+            return possibleObjectives.Random();
         }
 
-        public Vector3? GetPositionForItem(LootItem item)
+        public QuestObjective GetRandomNewObjective(BotOwner bot)
         {
-            if (!itemsAndPositions.ContainsKey(item))
+            IEnumerable<QuestObjective> validObjectives = ValidObjectives;
+
+            IEnumerable<QuestObjective> possibleObjectives = validObjectives
+                .OfType<QuestSpawnPointObjective>()
+                .Where(o => o.CanAssignMoreBots);
+
+            possibleObjectives = possibleObjectives.Concat(validObjectives
+                .OfType<QuestZoneObjective>()
+                .Where(o => o.CanAssignBot(bot))
+                .Where(o => o.CanAssignMoreBots));
+
+            possibleObjectives = possibleObjectives.Concat(validObjectives
+                .OfType<QuestItemObjective>()
+                .Where(o => o.CanAssignBot(bot))
+                .Where(o => o.CanAssignMoreBots));
+
+            if (!possibleObjectives.Any())
             {
                 return null;
             }
 
-            return itemsAndPositions[item];
+            return possibleObjectives.Random();
         }
 
-        public LootItem FindLootItem(string templateID)
+        public QuestObjective GetObjectiveForZoneID(string zoneId)
         {
-            IEnumerable<LootItem> matchingItems = Items.Where(i => i.TemplateId == templateID);
-            if (matchingItems.Count() != 1)
+            IEnumerable<QuestZoneObjective> matchingObjectives = objectives.OfType<QuestZoneObjective>().Where(o => o.ZoneID == zoneId);
+            if (matchingObjectives.Count() != 1)
             {
                 return null;
             }
 
-            return matchingItems.First();
+            return matchingObjectives.First();
         }
 
-        public void AddZonesWithoutPosition(IEnumerable<string> zoneIDs)
+        public QuestObjective GetObjectiveForLootItem(LootItem item)
         {
-            foreach(string zoneID in zoneIDs)
+            IEnumerable<QuestItemObjective> matchingObjectives = objectives.OfType<QuestItemObjective>().Where(o => o.Item.TemplateId == item.TemplateId);
+            if (matchingObjectives.Count() != 1)
             {
-                AddZoneWithoutPosition(zoneID);
+                return null;
             }
+
+            return matchingObjectives.First();
         }
 
-        public void AddZoneWithoutPosition(string zoneID)
+        public QuestObjective GetObjectiveForLootItem(string templateID)
         {
-            if (zoneIDsAndPositions.ContainsKey(zoneID))
+            IEnumerable<QuestItemObjective> matchingObjectives = objectives.OfType<QuestItemObjective>().Where(o => o.Item.TemplateId == templateID);
+            if (matchingObjectives.Count() != 1)
             {
-                return;
+                return null;
             }
 
-            zoneIDsAndPositions.Add(zoneID, Vector3.positiveInfinity);
+            return matchingObjectives.First();
         }
 
-        public void AddZoneAndPosition(string zoneID, Vector3 position)
+        public QuestObjective GetObjectiveForSpawnPoint(SpawnPointParams spawnPoint)
         {
-            if (zoneIDsAndPositions.ContainsKey(zoneID))
+            IEnumerable<QuestSpawnPointObjective> matchingObjectives = objectives.OfType<QuestSpawnPointObjective>().Where(o => o.SpawnPoint?.Id == spawnPoint.Id);
+            if (matchingObjectives.Count() != 1)
             {
-                zoneIDsAndPositions[zoneID] = position;
-                return;
+                return null;
             }
 
-            zoneIDsAndPositions.Add(zoneID, position);
-        }
-
-        public void AddItemAndPosition(LootItem item, Vector3 position)
-        {
-            if (itemsAndPositions.ContainsKey(item))
-            {
-                itemsAndPositions[item] = position;
-                return;
-            }
-
-            itemsAndPositions.Add(item, position);
+            return matchingObjectives.First();
         }
     }
 }

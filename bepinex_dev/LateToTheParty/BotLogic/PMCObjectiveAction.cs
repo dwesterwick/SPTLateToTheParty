@@ -58,33 +58,45 @@ namespace LateToTheParty.BotLogic
                 return;
             }
 
+            string objectiveText = objective.GetObjectiveText();
+
             if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, botOwner.Position) < 3f)
             {
-                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective.");
-                objective.IsObjectiveReached = true;
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective (" + objectiveText + ")");
+                objective.CompleteObjective();
+                
             }
             else
             {
-                objective.CanReachObjective = TryGoToObjective(objective.Position.Value);
+                NavMeshPathStatus? pathStatus = botOwner.Mover?.GoToPoint(objective.Position.Value, true, 0.5f, false, false);
+                if (!pathStatus.HasValue || (pathStatus.Value == NavMeshPathStatus.PathInvalid))
+                {
+                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a path to " + objective.Position.Value.ToString() + " for " + objectiveText);
+                    objective.RejectObjective();
+                }
+                if (pathStatus.HasValue && (pathStatus.Value == NavMeshPathStatus.PathPartial))
+                {
+                    Vector3? lastPathPoint = botOwner.Mover?.CurPathLastPoint;
+
+                    float remainingDistance = float.NaN;
+                    if (lastPathPoint.HasValue)
+                    {
+                        remainingDistance = Vector3.Distance(objective.Position.Value, lastPathPoint.Value);
+                    }
+
+                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objectiveText + "). Remaining distance: " + remainingDistance);
+                    objective.RejectObjective();
+                }
+                if (pathStatus.HasValue && (pathStatus.Value == NavMeshPathStatus.PathComplete))
+                {
+                    objective.RejectObjective();
+                }
 
                 if (!objective.CanReachObjective && objective.CanChangeObjective)
                 {
-                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot go to its objective. Setting another one...");
                     objective.ChangeObjective();
                 }
             }
-        }
-
-        public bool TryGoToObjective(Vector3 position)
-        {
-            NavMeshPathStatus? pathStatus = botOwner.Mover?.GoToPoint(position, true, 0.5f, false, false);
-
-            if (!pathStatus.HasValue)
-            {
-                return false;
-            }
-
-            return pathStatus.Value == NavMeshPathStatus.PathComplete;
         }
     }
 }
