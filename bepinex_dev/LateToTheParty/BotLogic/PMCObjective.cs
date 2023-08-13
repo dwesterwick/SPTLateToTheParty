@@ -27,7 +27,6 @@ namespace LateToTheParty.BotLogic
         private SpawnPointParams? targetSpawnPoint = null;
         private Models.Quest targetQuest = null;
         private Models.QuestObjective targetObjective = null;
-        private string targetZone = null;
         private Stopwatch timeSpentAtObjectiveTimer = new Stopwatch();
         private Stopwatch timeSinceChangingObjectiveTimer = Stopwatch.StartNew();
         private List<SpawnPointParams> blacklistedSpawnPoints = new List<SpawnPointParams>();
@@ -64,7 +63,17 @@ namespace LateToTheParty.BotLogic
         public void RejectObjective()
         {
             CanReachObjective = false;
-            targetObjective.RemoveBot(botOwner);
+            targetObjective.BotFailedObjective(botOwner);
+        }
+
+        public override string ToString()
+        {
+            if (targetQuest != null)
+            {
+                return targetObjective?.ToString() ?? "???" + " for quest " + targetQuest.Name;
+            }
+
+            return "Position " + Position?.ToString() ?? "???";
         }
 
         public void ChangeObjective()
@@ -83,10 +92,12 @@ namespace LateToTheParty.BotLogic
 
             if (TryToGoToRandomQuestObjective())
             {
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has accepted objective " + targetObjective.ToString() + " for quest " + targetQuest.Name);
                 return;
             }
-            LoggingController.LogWarning("Could not assing quest for bot " + botOwner.Profile.Nickname);
+            //LoggingController.LogWarning("Could not assign quest for bot " + botOwner.Profile.Nickname);
 
+            timeSinceChangingObjectiveTimer.Restart();
             return;
 
             SpawnPointParams? newSpawnPoint = getNewObjective();
@@ -126,33 +137,10 @@ namespace LateToTheParty.BotLogic
                 location = LocationSettingsController.LastLocationSelected;
             }
 
-            if (!Position.HasValue && (!targetSpawnPoint.HasValue || (targetQuest == null)))
+            if (!Position.HasValue)
             {
                 ChangeObjective();
             }
-        }
-
-        public string GetObjectiveText()
-        {
-            string text = "";
-
-            if (targetQuest != null)
-            {
-                if (targetZone != null)
-                {
-                    text += targetZone + " for ";
-                }
-
-                text += targetQuest.Name;
-                return text;
-            }
-
-            if (targetSpawnPoint.HasValue)
-            {
-                return "Spawn point: " + targetSpawnPoint.Value.Position.ToUnityVector3().ToString();
-            }
-
-            return text;
         }
 
         public float GetRaidET()
@@ -221,7 +209,7 @@ namespace LateToTheParty.BotLogic
             }
 
             targetObjective = nextObjective;
-            updateObjective(targetObjective.Position.Value, targetObjective.ToString() + " for quest " + targetQuest.Name);
+            updateObjective(targetObjective.Position.Value);
             
             return true;
         }
@@ -229,16 +217,14 @@ namespace LateToTheParty.BotLogic
         private void updateObjective(SpawnPointParams newTarget)
         {
             targetSpawnPoint = newTarget;
-            updateObjective(targetSpawnPoint.Value.Position, "Spawn point " + targetSpawnPoint.Value.Id);
+            updateObjective(targetSpawnPoint.Value.Position);
         }
 
-        private void updateObjective(Vector3 newTargetPosition, string objectiveDescription)
+        private void updateObjective(Vector3 newTargetPosition)
         {
             Position = newTargetPosition;
             IsObjectiveReached = false;
-
             timeSinceChangingObjectiveTimer.Restart();
-            LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has a new objective: " + GetObjectiveText());
         }
 
         private Vector3 getPlayerPosition()

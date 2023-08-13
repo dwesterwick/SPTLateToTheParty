@@ -58,20 +58,17 @@ namespace LateToTheParty.BotLogic
                 return;
             }
 
-            string objectiveText = objective.GetObjectiveText();
-
             if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, botOwner.Position) < 3f)
             {
-                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective (" + objectiveText + ")");
+                LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective (" + objective + ").");
                 objective.CompleteObjective();
-                
             }
             else
             {
                 NavMeshPathStatus? pathStatus = botOwner.Mover?.GoToPoint(objective.Position.Value, true, 0.5f, false, false);
                 if (!pathStatus.HasValue || (pathStatus.Value == NavMeshPathStatus.PathInvalid))
                 {
-                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a path to " + objective.Position.Value.ToString() + " for " + objectiveText);
+                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a path to " + objective);
                     objective.RejectObjective();
                 }
                 if (pathStatus.HasValue && (pathStatus.Value == NavMeshPathStatus.PathPartial))
@@ -84,11 +81,7 @@ namespace LateToTheParty.BotLogic
                         remainingDistance = Vector3.Distance(objective.Position.Value, lastPathPoint.Value);
                     }
 
-                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objectiveText + "). Remaining distance: " + remainingDistance);
-                    objective.RejectObjective();
-                }
-                if (pathStatus.HasValue && (pathStatus.Value == NavMeshPathStatus.PathComplete))
-                {
+                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objective + "). Remaining distance: " + remainingDistance);
                     objective.RejectObjective();
                 }
 

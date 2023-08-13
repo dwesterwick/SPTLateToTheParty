@@ -96,8 +96,6 @@ namespace LateToTheParty.Controllers
                 // Generate inital PMC spawn points
                 initialPMCBotSpawnPoints = getPMCSpawnPoints(LocationSettingsController.LastLocationSelected.SpawnPointParams, maxPMCBots);
 
-                generateSpawnPointQuest(LocationSettingsController.LastLocationSelected.SpawnPointParams);
-
                 return;
             }
 
@@ -116,6 +114,23 @@ namespace LateToTheParty.Controllers
             }
 
             StartCoroutine(SpawnInitialPMCs(initialPMCBots, botSpawnerClass, LocationSettingsController.LastLocationSelected.SpawnPointParams));
+        }
+
+        public static Models.Quest CreateSpawnPointQuest(ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All)
+        {
+            IEnumerable<SpawnPointParams> eligibleSpawnPoints = LocationSettingsController.LastLocationSelected.SpawnPointParams.Where(s => s.Categories.Any(spawnTypes));
+            if (eligibleSpawnPoints.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            Models.Quest quest = new Models.Quest("Spawn Points");
+            foreach (SpawnPointParams spawnPoint in eligibleSpawnPoints)
+            {
+                quest.AddObjective(new Models.QuestSpawnPointObjective(spawnPoint, spawnPoint.Position));
+            }
+            
+            return quest;
         }
 
         public static SpawnPointParams GetFurthestSpawnPoint(SpawnPointParams[] referenceSpawnPoints, SpawnPointParams[] allSpawnPoints)
@@ -328,22 +343,6 @@ namespace LateToTheParty.Controllers
 
             MethodInfo botSpawnMethod = typeof(BotSpawnerClass).GetMethod("method_11", BindingFlags.Instance | BindingFlags.NonPublic);
             botSpawnMethod.Invoke(botSpawnerClass, new object[] { closestBotZone, bot, callback, botSpawnerClass.GetCancelToken() });
-        }
-
-        private void generateSpawnPointQuest(SpawnPointParams[] allSpawnPoints, ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All)
-        {
-            IEnumerable<SpawnPointParams> eligibleSpawnPoints = allSpawnPoints.Where(s => s.Categories.Any(spawnTypes));
-            if (eligibleSpawnPoints.IsNullOrEmpty())
-            {
-                return;
-            }
-
-            Models.Quest quest = new Models.Quest("Spawn Points");
-            foreach (SpawnPointParams spawnPoint in eligibleSpawnPoints)
-            {
-                quest.AddObjective(new Models.QuestSpawnPointObjective(spawnPoint, spawnPoint.Position));
-            }
-            BotQuestController.AddQuest(quest);
         }
     }
 }

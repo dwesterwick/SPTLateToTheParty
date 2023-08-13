@@ -131,6 +131,12 @@ namespace LateToTheParty.BotLogic
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(allQuests, LocateQuestItems, allItems);
 
+                Quest spawnPointQuest = BotGenerator.CreateSpawnPointQuest();
+                if (spawnPointQuest != null)
+                {
+                    allQuests.Add(spawnPointQuest);
+                }
+
                 LoggingController.LogInfo("Finished loading quest data.");
 
                 HaveTriggersBeenFound = true;
@@ -210,6 +216,11 @@ namespace LateToTheParty.BotLogic
             //LoggingController.LogInfo("Zone ID's for quest \"" + quest.Name + "\": " + string.Join(",", zoneIDs));
             foreach (string zoneID in zoneIDs)
             {
+                if (quest.GetObjectiveForZoneID(zoneID) != null)
+                {
+                    continue;
+                }
+
                 quest.AddObjective(new QuestZoneObjective(zoneID));
             }
 

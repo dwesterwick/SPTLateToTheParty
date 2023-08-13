@@ -28,7 +28,7 @@ namespace LateToTheParty.Models
 
         public override string ToString()
         {
-            return base.ToString();
+            return "Unnamed Quest Objective";
         }
 
         public virtual void Clear()
