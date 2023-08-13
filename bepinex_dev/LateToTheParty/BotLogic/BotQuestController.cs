@@ -84,17 +84,29 @@ namespace LateToTheParty.BotLogic
 
         public static Quest GetRandomQuestForBot(BotOwner bot)
         {
-            IEnumerable<Quest> applicableQuests = allQuests
+            List<Quest> applicableQuests = allQuests
                 .Where(q => q.CanAssignBot(bot))
-                .Where(q => q.Template != null)
-                .Where(q => q.NumberOfValidObjectives > 0);
+                .Where(q => q.NumberOfValidObjectives > 0)
+                .ToList();
             
-            if (applicableQuests.Count() == 0)
+            if (applicableQuests.Count == 0)
             {
                 return null;
             }
 
-            return applicableQuests.Random();
+            System.Random random = new System.Random();
+            IEnumerable<Quest> prioritizedQuests = applicableQuests.OrderBy(q => q.Priority * 100 + random.NextFloat(-1, 1));
+            //LoggingController.LogInfo("Possible quests (in order of priority) for bot " + bot.Profile.Nickname + ": " + string.Join(", ", orderedQuests.Select(q => q.Name)));
+
+            foreach (Quest quest in prioritizedQuests)
+            {
+                if (random.NextFloat(0, 1) < quest.ChanceForSelecting)
+                {
+                    return quest;
+                }
+            }
+
+            return prioritizedQuests.First();
         }
 
         private IEnumerator LoadAllQuests()
@@ -108,7 +120,7 @@ namespace LateToTheParty.BotLogic
                     RawQuestClass[] allQuestTemplates = ConfigController.GetAllQuestTemplates();
                     foreach (RawQuestClass questTemplate in allQuestTemplates)
                     {
-                        allQuests.Add(new Quest(questTemplate));
+                        allQuests.Add(new Quest(5, questTemplate));
                     }
 
                     enumeratorWithTimeLimit.Reset();
@@ -135,6 +147,20 @@ namespace LateToTheParty.BotLogic
                 if (spawnPointQuest != null)
                 {
                     allQuests.Add(spawnPointQuest);
+                }
+                else
+                {
+                    LoggingController.LogError("Could not add quest for going to random spawn points");
+                }
+
+                Quest spawnRushQuest = BotGenerator.CreateSpawnRushQuest();
+                if (spawnRushQuest != null)
+                {
+                    allQuests.Add(spawnRushQuest);
+                }
+                else
+                {
+                    LoggingController.LogError("Could not add quest for rushing your spawn point");
                 }
 
                 LoggingController.LogInfo("Finished loading quest data.");

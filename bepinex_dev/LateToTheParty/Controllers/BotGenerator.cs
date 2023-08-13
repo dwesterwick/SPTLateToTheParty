@@ -15,6 +15,7 @@ using HarmonyLib;
 using LateToTheParty.BotLogic;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
+using static LocationSettingsClass;
 
 namespace LateToTheParty.Controllers
 {
@@ -56,6 +57,16 @@ namespace LateToTheParty.Controllers
         public static bool IsBotFromInitialPMCSpawns(BotOwner bot)
         {
             return InitiallySpawnedPMCBots.Any(b => b.Owner ==  bot);
+        }
+
+        public static Vector3? GetPlayerPosition()
+        {
+            if (Singleton<GameWorld>.Instance == null)
+            {
+                return null;
+            }
+
+            return Singleton<GameWorld>.Instance.MainPlayer.Position;
         }
 
         private void Update()
@@ -116,6 +127,15 @@ namespace LateToTheParty.Controllers
             StartCoroutine(SpawnInitialPMCs(initialPMCBots, botSpawnerClass, LocationSettingsController.LastLocationSelected.SpawnPointParams));
         }
 
+        public static float GetRaidET()
+        {
+            // Get the current number of seconds remaining and elapsed in the raid
+            float escapeTimeSec = GClass1473.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
+
+            return raidTimeElapsed;
+        }
+
         public static Models.Quest CreateSpawnPointQuest(ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All)
         {
             IEnumerable<SpawnPointParams> eligibleSpawnPoints = LocationSettingsController.LastLocationSelected.SpawnPointParams.Where(s => s.Categories.Any(spawnTypes));
@@ -124,12 +144,43 @@ namespace LateToTheParty.Controllers
                 return null;
             }
 
-            Models.Quest quest = new Models.Quest("Spawn Points");
+            Models.Quest quest = new Models.Quest(10, "Spawn Points");
+            quest.ChanceForSelecting = 0.3f;
             foreach (SpawnPointParams spawnPoint in eligibleSpawnPoints)
             {
-                quest.AddObjective(new Models.QuestSpawnPointObjective(spawnPoint, spawnPoint.Position));
+                Models.QuestSpawnPointObjective objective = new Models.QuestSpawnPointObjective(spawnPoint, spawnPoint.Position);
+                quest.AddObjective(objective);
             }
             
+            return quest;
+        }
+
+        public static Models.Quest CreateSpawnRushQuest()
+        {
+            if (GetRaidET() > 999)
+            {
+                return null;
+            }
+
+            SpawnPointParams? playerSpawnPoint = getPlayerSpawnPoint();
+            if (!playerSpawnPoint.HasValue)
+            {
+                LoggingController.LogWarning("Cannot find player spawn point.");
+                return null;
+            }
+
+            Vector3? navMeshPosition = NavMeshController.FindNearestNavMeshPosition(playerSpawnPoint.Value.Position, 10);
+            if (!navMeshPosition.HasValue)
+            {
+                LoggingController.LogWarning("Cannot find NavMesh position for player spawn point.");
+                return null;
+            }
+
+            Models.Quest quest = new Models.Quest(1, "Spawn Rush");
+            //quest.ChanceForSelecting = 1f;
+            Models.QuestSpawnPointObjective objective = new Models.QuestSpawnPointObjective(playerSpawnPoint.Value, navMeshPosition.Value);
+            objective.MaxDistanceFromBot = 75f;
+            quest.AddObjective(objective);
             return quest;
         }
 
@@ -204,6 +255,17 @@ namespace LateToTheParty.Controllers
             }
 
             return nearestSpawnPoint;
+        }
+
+        private static SpawnPointParams? getPlayerSpawnPoint()
+        {
+            Vector3? playerPosition = GetPlayerPosition();
+            if (!playerPosition.HasValue)
+            {
+                return null;
+            }
+
+            return GetNearestSpawnPoint(playerPosition.Value, LocationSettingsController.LastLocationSelected.SpawnPointParams);
         }
 
         private async Task generateBots(WildSpawnType wildSpawnType, EPlayerSide side, BotDifficulty botdifficulty, int count)

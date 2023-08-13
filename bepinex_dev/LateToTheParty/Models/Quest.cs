@@ -19,29 +19,31 @@ namespace LateToTheParty.Models
     {
         public RawQuestClass Template { get; private set; } = null;
         public int MinLevel { get; set; } = 0;
+        public float ChanceForSelecting { get; set; } = 0.5f;
+        public int Priority { get; set; }
 
         private string name = "Unnamed Quest";
         private List<QuestObjective> objectives = new List<QuestObjective>();
         private List<BotOwner> blacklistedBots = new List<BotOwner>();
 
-        public string Name => Template.Name ?? name;
-        public string TemplateId => Template.TemplateId ?? "";
+        public string Name => Template?.Name ?? name;
+        public string TemplateId => Template?.TemplateId ?? "";
         public ReadOnlyCollection<QuestObjective> AllObjectives => new ReadOnlyCollection<QuestObjective>(objectives);
         public IEnumerable<QuestObjective> ValidObjectives => AllObjectives.Where(o => o.Position.HasValue);
         public int NumberOfObjectives => AllObjectives.Count;
         public int NumberOfValidObjectives => ValidObjectives.Count();
 
-        public Quest()
+        public Quest(int priority)
         {
-            
+            Priority = priority;
         }
 
-        public Quest(string _name): this()
+        public Quest(int priority, string _name): this(priority)
         {
             name = _name;
         }
 
-        public Quest(RawQuestClass template) : this()
+        public Quest(int priority, RawQuestClass template) : this(priority)
         {
             Template = template;
         }
@@ -89,21 +91,9 @@ namespace LateToTheParty.Models
 
         public QuestObjective GetRandomNewObjective(BotOwner bot)
         {
-            IEnumerable<QuestObjective> validObjectives = ValidObjectives;
-
-            IEnumerable<QuestObjective> possibleObjectives = validObjectives
-                .OfType<QuestSpawnPointObjective>()
+            IEnumerable<QuestObjective> possibleObjectives = ValidObjectives
+                .Where(o => o.CanAssignBot(bot))
                 .Where(o => o.CanAssignMoreBots);
-
-            possibleObjectives = possibleObjectives.Concat(validObjectives
-                .OfType<QuestZoneObjective>()
-                .Where(o => o.CanAssignBot(bot))
-                .Where(o => o.CanAssignMoreBots));
-
-            possibleObjectives = possibleObjectives.Concat(validObjectives
-                .OfType<QuestItemObjective>()
-                .Where(o => o.CanAssignBot(bot))
-                .Where(o => o.CanAssignMoreBots));
 
             if (!possibleObjectives.Any())
             {

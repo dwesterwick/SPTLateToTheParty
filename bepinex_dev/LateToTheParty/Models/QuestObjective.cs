@@ -1,6 +1,7 @@
 ﻿using EFT;
 using EFT.Game.Spawning;
 using EFT.Interactive;
+using LateToTheParty.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace LateToTheParty.Models
     {
         public Vector3? Position { get; set; } = null;
         public int MaxBots { get; set; } = 2;
+        public float MinDistanceFromBot { get; set; } = 10f;
+        public float MaxDistanceFromBot { get; set; } = 9999f;
 
         private List<BotOwner> assignedBots = new List<BotOwner>();
         private List<BotOwner> successfulBots = new List<BotOwner>();
@@ -85,7 +88,30 @@ namespace LateToTheParty.Models
 
         public bool CanAssignBot(BotOwner bot)
         {
-            return !successfulBots.Contains(bot) && !unsuccessfulBots.Contains(bot);
+            if (successfulBots.Contains(bot) || unsuccessfulBots.Contains(bot))
+            {
+                return false;
+            }
+
+            if (!Position.HasValue)
+            {
+                return false;
+            }
+
+            float distanceFromObjective = Vector3.Distance(bot.Position, Position.Value);
+
+            if (distanceFromObjective > MaxDistanceFromBot)
+            {
+                //LoggingController.LogInfo("Bot is too far from " + this.ToString() + ". Distance: " + distanceFromObjective);
+                return false;
+            }
+            if (distanceFromObjective < MinDistanceFromBot)
+            {
+                //LoggingController.LogInfo("Bot is too close to " + this.ToString() + ". Distance: " + distanceFromObjective);
+                return false;
+            }
+
+            return true;
         }
     }
 }

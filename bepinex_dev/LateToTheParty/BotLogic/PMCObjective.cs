@@ -32,11 +32,6 @@ namespace LateToTheParty.BotLogic
         private Stopwatch timeSinceChangingObjectiveTimer = Stopwatch.StartNew();
         private List<SpawnPointParams> blacklistedSpawnPoints = new List<SpawnPointParams>();
 
-        public Vector3 PlayerPosition
-        {
-            get { return getPlayerPosition(); }
-        }
-
         public double TimeSpentAtObjective
         {
             get { return timeSpentAtObjectiveTimer.ElapsedMilliseconds / 1000.0; }
@@ -101,22 +96,6 @@ namespace LateToTheParty.BotLogic
             //LoggingController.LogWarning("Could not assign quest for bot " + botOwner.Profile.Nickname);
 
             timeSinceChangingObjectiveTimer.Restart();
-            return;
-
-            SpawnPointParams? newSpawnPoint = getNewObjective();
-            if (!newSpawnPoint.HasValue)
-            {
-                LoggingController.LogError("Could not find any valid objectives for bot " + botOwner.Profile.Nickname);
-                IsObjectiveActive = false;
-                return;
-            }
-
-            updateObjective(newSpawnPoint.Value);
-        }
-
-        public float GetDistanceToPlayer()
-        {
-            return Vector3.Distance(PlayerPosition, botOwner.Position);
         }
 
         private void Update()
@@ -144,38 +123,6 @@ namespace LateToTheParty.BotLogic
             {
                 ChangeObjective();
             }
-        }
-
-        public float GetRaidET()
-        {
-            // Get the current number of seconds remaining and elapsed in the raid
-            float escapeTimeSec = GClass1473.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
-            float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
-
-            return raidTimeElapsed;
-        }
-
-        private SpawnPointParams? getNewObjective()
-        {
-            float distanceToPlayer = GetDistanceToPlayer();
-
-            if (CanRushPlayerSpawn && (GetRaidET() < 999) && (distanceToPlayer < 75))
-            {
-                SpawnPointParams playerSpawnPoint = getPlayerSpawnPoint();
-                if (!blacklistedSpawnPoints.Contains(playerSpawnPoint))
-                {
-                    LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " is heading to your spawn point!");
-                    return playerSpawnPoint;
-                }
-            }
-
-            SpawnPointParams? randomSpawnPoint = getRandomSpawnPoint(ESpawnCategoryMask.Bot, ESpawnCategoryMask.Player, 25);
-            if (randomSpawnPoint.HasValue)
-            {
-                return randomSpawnPoint.Value;
-            }
-
-            return null;
         }
 
         private bool TryToGoToRandomQuestObjective()
@@ -217,44 +164,12 @@ namespace LateToTheParty.BotLogic
             return true;
         }
 
-        private void updateObjective(SpawnPointParams newTarget)
-        {
-            targetSpawnPoint = newTarget;
-            updateObjective(targetSpawnPoint.Value.Position);
-        }
-
         private void updateObjective(Vector3 newTargetPosition)
         {
             Position = newTargetPosition;
             IsObjectiveReached = false;
             CanReachObjective = true;
             timeSinceChangingObjectiveTimer.Restart();
-        }
-
-        private Vector3 getPlayerPosition()
-        {
-            return Singleton<GameWorld>.Instance.MainPlayer.Position;
-        }
-
-        private SpawnPointParams? getRandomSpawnPoint(ESpawnCategoryMask spawnTypes = ESpawnCategoryMask.All, ESpawnCategoryMask blacklistedSpawnTypes = ESpawnCategoryMask.None, float minDistance = 0)
-        {
-            IEnumerable<SpawnPointParams> possibleSpawnPoints = location.SpawnPointParams
-                .Where(s => !blacklistedSpawnPoints.Any(b => b.Id == s.Id))
-                .Where(s => s.Categories.Any(spawnTypes))
-                .Where(s => !s.Categories.Any(blacklistedSpawnTypes))
-                .Where(s => Vector3.Distance(s.Position, botOwner.Position) >= minDistance);
-
-            if (possibleSpawnPoints.IsNullOrEmpty())
-            {
-                return null;
-            }
-
-            return possibleSpawnPoints.Random();
-        }
-
-        private SpawnPointParams getPlayerSpawnPoint()
-        {
-            return BotGenerator.GetNearestSpawnPoint(PlayerPosition, location.SpawnPointParams);
         }
     }
 }
