@@ -58,7 +58,7 @@ namespace LateToTheParty.BotLogic
                 return true;
             }
 
-            if (objective.TimeSpentAtObjective > objective.MinTimeAtObjective)
+            if (objective.CanChangeObjective && (objective.TimeSpentAtObjective > objective.MinTimeAtObjective))
             {
                 LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " has spent " + objective.TimeSpentAtObjective + "s at its objective. Setting a new one...");
                 objective.ChangeObjective();

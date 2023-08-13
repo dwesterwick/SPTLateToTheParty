@@ -58,6 +58,11 @@ namespace LateToTheParty.BotLogic
                 return;
             }
 
+            if (!objective.CanReachObjective)
+            {
+                return;
+            }
+
             if (!objective.IsObjectiveReached && Vector3.Distance(objective.Position.Value, botOwner.Position) < 3f)
             {
                 LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " reached its objective (" + objective + ").");
@@ -75,14 +80,38 @@ namespace LateToTheParty.BotLogic
                 {
                     Vector3? lastPathPoint = botOwner.Mover?.CurPathLastPoint;
 
-                    float remainingDistance = float.NaN;
+                    float missingDistance = float.NaN;
+                    float distanceToEndOfPath = float.NaN;
+                    float distanceToObjective = float.NaN;
                     if (lastPathPoint.HasValue)
                     {
-                        remainingDistance = Vector3.Distance(objective.Position.Value, lastPathPoint.Value);
+                        missingDistance = Vector3.Distance(objective.Position.Value, lastPathPoint.Value);
+                        distanceToEndOfPath = Vector3.Distance(botOwner.Position, lastPathPoint.Value);
+                        distanceToObjective = Vector3.Distance(botOwner.Position, objective.Position.Value);
                     }
 
-                    LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objective + "). Remaining distance: " + remainingDistance);
-                    objective.RejectObjective();
+                    if (distanceToEndOfPath < 10f)
+                    {
+                        if (distanceToObjective < 20f)
+                        {
+                            LoggingController.LogInfo("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objective + "). Got close enough. Remaining distance to objective: " + distanceToObjective);
+                            objective.CompleteObjective();
+                        }
+                        else
+                        {
+                            LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objective + "). Giving up. Remaining distance to objective: " + distanceToObjective);
+                            objective.RejectObjective();
+                        }
+
+                        return;
+                    }
+
+                    if (objective.IsObjectivePathComplete)
+                    {
+                        LoggingController.LogWarning("Bot " + botOwner.Profile.Nickname + " cannot find a complete path to its objective (" + objective + "). Trying anyway. Distance from end of path to objective: " + missingDistance);
+                    }
+
+                    objective.IsObjectivePathComplete = false;
                 }
 
                 if (!objective.CanReachObjective && objective.CanChangeObjective)

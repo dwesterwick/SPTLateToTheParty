@@ -19,6 +19,7 @@ namespace LateToTheParty.BotLogic
         public bool CanChangeObjective { get; set; } = true;
         public bool CanRushPlayerSpawn { get; private set; } = false;
         public bool CanReachObjective { get; private set; } = true;
+        public bool IsObjectivePathComplete { get; set; } = true;
         public float MinTimeAtObjective { get; set; } = 10f;
         public Vector3? Position { get; set; } = null;
 
@@ -56,12 +57,14 @@ namespace LateToTheParty.BotLogic
 
         public void CompleteObjective()
         {
+            IsObjectivePathComplete = true;
             IsObjectiveReached = true;
             targetObjective.BotCompletedObjective(botOwner);
         }
 
         public void RejectObjective()
         {
+            IsObjectivePathComplete = true;
             CanReachObjective = false;
             targetObjective.BotFailedObjective(botOwner);
         }
@@ -224,6 +227,7 @@ namespace LateToTheParty.BotLogic
         {
             Position = newTargetPosition;
             IsObjectiveReached = false;
+            CanReachObjective = true;
             timeSinceChangingObjectiveTimer.Restart();
         }
 
