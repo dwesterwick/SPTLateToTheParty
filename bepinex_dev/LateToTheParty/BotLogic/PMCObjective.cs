@@ -106,7 +106,7 @@ namespace LateToTheParty.BotLogic
                 location = LocationSettingsController.LastLocationSelected;
             }
 
-            if (!targetSpawnPoint.HasValue)
+            if (!Position.HasValue && !targetSpawnPoint.HasValue)
             {
                 ChangeObjective();
             }
@@ -151,7 +151,7 @@ namespace LateToTheParty.BotLogic
 
         private bool TryToGoToRandomQuestObjective()
         {
-            RawQuestClass quest = BotQuestController.getRandomQuestWithZoneIDs();
+            Models.Quest quest = BotQuestController.getRandomQuestInCurrentLocation();
             if (quest == null)
             {
                 LoggingController.LogWarning("Could not get a quest for bot " + botOwner.Profile.Nickname);
@@ -165,7 +165,7 @@ namespace LateToTheParty.BotLogic
                 return false;
             }
 
-            Vector3? targetPosition = BotQuestController.getTargetPositionForZoneID(zoneID);
+            Vector3? targetPosition = quest.GetPositionForZoneID(zoneID);
             if (!targetPosition.HasValue)
             {
                 LoggingController.LogWarning("Could not get a position for target zone " + zoneID + " for quest " + quest.Name + " for bot " + botOwner.Profile.Nickname);

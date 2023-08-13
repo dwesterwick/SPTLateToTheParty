@@ -4,6 +4,7 @@ using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using EFT.Quests;
+using EFT.UI;
 using LateToTheParty.Controllers;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
@@ -26,11 +27,8 @@ namespace LateToTheParty.BotLogic
         public static bool HaveTriggersBeenFound = false;
 
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(5);
-        private static RawQuestClass[] allQuestTemplates = new RawQuestClass[0];
-        private static Dictionary<RawQuestClass, int> minLevelForQuests = new Dictionary<RawQuestClass, int>();
-        private static Dictionary<RawQuestClass, string[]> QuestZoneIDs = new Dictionary<RawQuestClass, string[]>();
-        private static Dictionary<string, Vector3> zoneIDPositions = new Dictionary<string, Vector3>();
-        private static Dictionary<string, Vector3> questItemNavMeshPostitions = new Dictionary<string, Vector3>();
+        private static List<Quest> allQuests = new List<Quest>();
+        private static List<string> zoneIDsInLocation = new List<string>();
 
         public void Clear()
         {
@@ -40,8 +38,13 @@ namespace LateToTheParty.BotLogic
                 TaskWithTimeLimit.WaitForCondition(() => !IsFindingTriggers);
             }
 
-            questItemNavMeshPostitions.Clear();
-            zoneIDPositions.Clear();
+            foreach (Quest quest in allQuests)
+            {
+                quest.ClearPositionData();
+            }
+
+            zoneIDsInLocation.Clear();
+
             HaveTriggersBeenFound = false;
         }
 
@@ -61,9 +64,9 @@ namespace LateToTheParty.BotLogic
             StartCoroutine(LoadAllQuests());
         }
 
-        public static RawQuestClass findQuest(string questID)
+        public static Quest findQuest(string questID)
         {
-            IEnumerable<RawQuestClass> matchingQuests = allQuestTemplates.Where(q => q.Id == questID);
+            IEnumerable<Quest> matchingQuests = allQuests.Where(q => q.TemplateId == questID);
             if (matchingQuests.Count() == 0)
             {
                 return null;
@@ -72,9 +75,12 @@ namespace LateToTheParty.BotLogic
             return matchingQuests.First();
         }
 
-        public static RawQuestClass getRandomQuestWithZoneIDs()
+        public static Quest getRandomQuestInCurrentLocation()
         {
-            IEnumerable<RawQuestClass> applicableQuests = QuestZoneIDs.Where(q => q.Value.Length > 0).Select(q => q.Key);
+            IEnumerable<Quest> applicableQuests = allQuests
+                .Where(q => q.ZoneIDs.Length > 0)
+                .Where(q => q.ZoneIDs.Any(z => zoneIDsInLocation.Contains(z)));
+            
             if (applicableQuests.Count() == 0)
             {
                 return null;
@@ -83,40 +89,20 @@ namespace LateToTheParty.BotLogic
             return applicableQuests.Random();
         }
 
-        public static int minLevelForQuest(RawQuestClass quest)
+        public static string getRandomZoneIDForQuest(Quest quest)
         {
-            if (!minLevelForQuests.ContainsKey(quest))
-            {
-                return 0;
-            }
-
-            return minLevelForQuests[quest];
-        }
-
-        public static int minLevelForQuest(string questID)
-        {
-            RawQuestClass quest = findQuest(questID);
-            if (quest == null)
-            {
-                return 0;
-            }
-
-            return minLevelForQuest(quest);
-        }
-
-        public static string getRandomZoneIDForQuest(RawQuestClass quest)
-        {
-            if (!QuestZoneIDs.ContainsKey(quest) || (QuestZoneIDs[quest].Length == 0))
+            string[] zoneIDs = quest.ZoneIDs;
+            if (zoneIDs.Length == 0)
             {
                 return null;
             }
 
-            return QuestZoneIDs[quest].Random();
+            return zoneIDs.Random();
         }
 
         public static string getRandomZoneIDForQuest(string questID)
         {
-            RawQuestClass quest = findQuest(questID);
+            Quest quest = findQuest(questID);
             if (quest == null)
             {
                 return null;
@@ -125,28 +111,22 @@ namespace LateToTheParty.BotLogic
             return getRandomZoneIDForQuest(quest);
         }
 
-        public static Vector3? getTargetPositionForZoneID(string zoneID)
-        {
-            if (!zoneIDPositions.ContainsKey(zoneID))
-            {
-                return null;
-            }
-
-            return zoneIDPositions[zoneID];
-        }
-
         private IEnumerator LoadAllQuests()
         {
             IsFindingTriggers = true;
 
             try
             {
-                if (allQuestTemplates.Length == 0)
+                if (allQuests.Count == 0)
                 {
-                    allQuestTemplates = ConfigController.GetAllQuestTemplates();
+                    RawQuestClass[] allQuestTemplates = ConfigController.GetAllQuestTemplates();
+                    foreach (RawQuestClass questTemplate in allQuestTemplates)
+                    {
+                        allQuests.Add(new Quest(questTemplate));
+                    }
 
                     enumeratorWithTimeLimit.Reset();
-                    yield return enumeratorWithTimeLimit.Run(allQuestTemplates, LoadQuest);
+                    yield return enumeratorWithTimeLimit.Run(allQuests, LoadQuest);
                 }
 
                 IEnumerable<TriggerWithId> allTriggers = FindObjectsOfType<TriggerWithId>();
@@ -163,7 +143,7 @@ namespace LateToTheParty.BotLogic
                 //LoggingController.LogInfo("Quest items: " + string.Join(", ", allQuestItems.Select(l => l.Item.LocalizedName())));
 
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(allQuestTemplates, LocateQuestItems, allItems);
+                yield return enumeratorWithTimeLimit.Run(allQuests, LocateQuestItems, allItems);
 
                 LoggingController.LogInfo("Finished loading quest data.");
 
@@ -175,12 +155,12 @@ namespace LateToTheParty.BotLogic
             }
         }
 
-        private void LocateQuestItems(RawQuestClass quest, IEnumerable<LootItem> allLoot)
+        private void LocateQuestItems(Quest quest, IEnumerable<LootItem> allLoot)
         {
             EQuestStatus eQuestStatus = EQuestStatus.AvailableForFinish;
-            if (quest.Conditions.ContainsKey(eQuestStatus))
+            if (quest.Template.Conditions.ContainsKey(eQuestStatus))
             {
-                foreach (Condition condition in quest.Conditions[eQuestStatus])
+                foreach (Condition condition in quest.Template.Conditions[eQuestStatus])
                 {
                     string target = "";
                     ConditionFindItem conditionFindItem = condition as ConditionFindItem;
@@ -193,7 +173,7 @@ namespace LateToTheParty.BotLogic
                         continue;
                     }
 
-                    if (questItemNavMeshPostitions.ContainsKey(target))
+                    if (quest.FindLootItem(target) != null)
                     {
                         continue;
                     }
@@ -221,41 +201,40 @@ namespace LateToTheParty.BotLogic
                             return;
                         }
 
-                        questItemNavMeshPostitions.Add(item.TemplateId, item.transform.position);
+                        quest.AddItemAndPosition(item, navMeshTargetPoint.Value);
                         LoggingController.LogInfo("Found " + item.Item.LocalizedName() + " for quest " + quest.Name);
                     }
                 }
             }
         }
 
-        private void LoadQuest(RawQuestClass quest)
+        private void LoadQuest(Quest quest)
         {
             List<string> zoneIDs = new List<string>();
             EQuestStatus eQuestStatus = EQuestStatus.AvailableForFinish;
-            if (quest.Conditions.ContainsKey(eQuestStatus))
+            if (quest.Template.Conditions.ContainsKey(eQuestStatus))
             {
-                foreach (Condition condition in quest.Conditions[eQuestStatus])
+                foreach (Condition condition in quest.Template.Conditions[eQuestStatus])
                 {
                     zoneIDs.AddRange(getAllZoneIDsForQuestCondition(condition));
                 }
             }
 
             //LoggingController.LogInfo("Zone ID's for quest \"" + quest.Name + "\": " + string.Join(",", zoneIDs));
-            QuestZoneIDs.Add(quest, zoneIDs.ToArray());
+            quest.AddZonesWithoutPosition(zoneIDs);
 
             int minLevel = getMinLevelForQuest(quest);
-
             //LoggingController.LogInfo("Min level for quest \"" + quest.Name + "\": " + minLevel);
-            minLevelForQuests.Add(quest, minLevel);
+            quest.MinLevel = minLevel;
         }
 
-        private int getMinLevelForQuest(RawQuestClass quest)
+        private int getMinLevelForQuest(Quest quest)
         {
-            int minLevel = quest.Level;
+            int minLevel = quest.Template.Level;
             EQuestStatus eQuestStatus = EQuestStatus.AvailableForStart;
-            if (quest.Conditions.ContainsKey(eQuestStatus))
+            if (quest.Template.Conditions.ContainsKey(eQuestStatus))
             {
-                foreach (Condition condition in quest.Conditions[eQuestStatus])
+                foreach (Condition condition in quest.Template.Conditions[eQuestStatus])
                 {
                     ConditionLevel conditionLevel = condition as ConditionLevel;
                     if (conditionLevel != null)
@@ -273,7 +252,7 @@ namespace LateToTheParty.BotLogic
                     if (conditionQuest != null)
                     {
                         string preReqQuestID = conditionQuest.target;
-                        RawQuestClass preReqQuest = allQuestTemplates.First(q => q.Id == preReqQuestID);
+                        Quest preReqQuest = allQuests.First(q => q.Template.Id == preReqQuestID);
 
                         int minLevelForPreReqQuest = getMinLevelForQuest(preReqQuest);
                         if (minLevelForPreReqQuest > minLevel)
@@ -346,19 +325,13 @@ namespace LateToTheParty.BotLogic
 
         private void ProcessTrigger(TriggerWithId trigger)
         {
-            if (zoneIDPositions.ContainsKey(trigger.Id))
-            {
-                return;
-            }
+            zoneIDsInLocation.Add(trigger.Id);
 
-            RawQuestClass[] matchingQuests = QuestZoneIDs.Where(q => q.Value.Contains(trigger.Id)).Select(q => q.Key).ToArray();
-
+            Quest[] matchingQuests = allQuests.Where(q => q.ZoneIDs.Contains(trigger.Id)).ToArray();
             if (matchingQuests.Length == 0)
             {
                 return;
             }
-
-            LoggingController.LogInfo("Found trigger " + trigger.Id + " for quest(s): " + string.Join(", ", matchingQuests.Select(q => q.Name)));
 
             Collider triggerCollider = trigger.gameObject.GetComponent<Collider>();
             if (triggerCollider == null)
@@ -375,7 +348,11 @@ namespace LateToTheParty.BotLogic
                 return;
             }
 
-            zoneIDPositions.Add(trigger.Id, navMeshTargetPoint.Value);
+            foreach (Quest quest in matchingQuests)
+            {
+                LoggingController.LogInfo("Found trigger " + trigger.Id + " for quest: " + quest);
+                quest.AddZoneAndPosition(trigger.Id, navMeshTargetPoint.Value);
+            }
 
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled)
             {
