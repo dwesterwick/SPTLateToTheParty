@@ -28,7 +28,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Only send the message once, and wait until all initial PMC's have spawned
-            if (EscapeTimeShared || BotGenerator.IsSpawningPMCs || BotGenerator.IsGeneratingPMCs)
+            if (EscapeTimeShared)
             {
                 return;
             }

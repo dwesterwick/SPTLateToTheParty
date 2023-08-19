@@ -4,15 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
-using DrakiaXYZ.BigBrain.Brains;
-using LateToTheParty.BotLogic;
 using LateToTheParty.Controllers;
-using UnityEngine;
 
 namespace LateToTheParty
 {
-    [BepInDependency("xyz.drakia.waypoints", "1.2.0")]
-    [BepInDependency("xyz.drakia.bigbrain", "0.2.0")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "1.3.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
@@ -49,7 +44,6 @@ namespace LateToTheParty
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<DoorController>();
                 this.GetOrAddComponent<NavMeshController>();
-                this.GetOrAddComponent<BotQuestController>();
 
                 if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
                 {
@@ -59,18 +53,11 @@ namespace LateToTheParty
                 if (ConfigController.Config.AdjustBotSpawnChances.Enabled)
                 {
                     this.GetOrAddComponent<BotConversionController>();
-                    this.GetOrAddComponent<BotGenerator>();
-
-                    List<string> botBrainsToChange = BotBrains.AllBots.ToList();
-                    LoggingController.LogInfo("Loading LateToThePartyPlugin...changing bot brains: " + string.Join(", ", botBrainsToChange));
-
-                    BrainManager.AddCustomLayer(typeof(PMCObjectiveLayer), botBrainsToChange, 25);
                 }
 
                 if (ConfigController.Config.Debug.Enabled)
                 {
                     new Patches.DoorInteractionPatch().Enable();
-                    new Patches.BotDoorInteractionPatch().Enable();
                     this.GetOrAddComponent<PathRender>();
                     AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
                 }

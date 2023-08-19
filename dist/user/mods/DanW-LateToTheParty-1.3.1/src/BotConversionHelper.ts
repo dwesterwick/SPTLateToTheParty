@@ -57,7 +57,7 @@ export class BotConversionHelper
         // Reset the PMC-conversion chances to their original settings
         BotConversionHelper.adjustPmcConversionChance(1);
 
-        BotConversionHelper.commonUtils.logInfo("Raid ended");
+        BotConversionHelper.commonUtils.logInfo("Stopped task for adjusting PMC-conversion chances.");
     }
 
     public static adjustPmcConversionChance(timeRemainingFactor: number): void
@@ -70,11 +70,19 @@ export class BotConversionHelper
         for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
         {
             // Do not allow the chances to exceed 100%. Who knows what might happen...
-            BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min = Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].min * adjFactor);
-            BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max = Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].max * adjFactor);
+            let min = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].min * adjFactor));
+            let max = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].max * adjFactor));
+
+            // Overrid to force PMC spawns
+            if (timeRemainingFactor == -1)
+            {
+                min = 100;
+                max = 100;
+            }
             
-            const min = Math.round(BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min);
-            const max = Math.round(BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max);
+            BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min = min;
+            BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max = max;
+
             logMessage += `${pmcType}: ${min}-${max}%, `;
         }
 
