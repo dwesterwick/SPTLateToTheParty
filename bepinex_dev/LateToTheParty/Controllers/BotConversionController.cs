@@ -27,7 +27,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Only send the message once, and wait until all initial PMC's have spawned
+            // Only send the message once
             if (EscapeTimeShared)
             {
                 return;

@@ -4,7 +4,7 @@
 		"enabled": false,
 		"scav_cooldown_time": 1500,
 		"free_labs_access": false,
-		"min_level_for_flea": 1,
+		"min_level_for_flea": 15,
 		"trader_resupply_time_factor": 1,
 		"loot_path_visualization": {
 			"enabled": false,
@@ -35,7 +35,7 @@
 			"min_time_remaining": 0.95
 		},
 		"adjust_vex_chance": true,
-		"adjust_bot_waves": false,
+		"adjust_bot_waves": true,
 		"can_reduce_starting_loot": true
 	},
 	"destroy_loot_during_raid" : {

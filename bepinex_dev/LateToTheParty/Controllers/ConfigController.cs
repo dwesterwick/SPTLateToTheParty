@@ -74,11 +74,6 @@ namespace LateToTheParty.Controllers
             RequestHandler.GetJson("/LateToTheParty/EscapeTime/" + escapeTime + "/" + timeRemaining);
         }
 
-        public static void ForcePMCSpawns()
-        {
-            RequestHandler.GetJson("/LateToTheParty/ForcePMCSpawns");
-        }
-
         public static void ShareQuestStatusChange(string questID, string newStatus)
         {
             RequestHandler.GetJson("/LateToTheParty/QuestStatusChange/" + questID + "/" + newStatus);
@@ -87,15 +82,6 @@ namespace LateToTheParty.Controllers
         public static void ReportError(string errorMessage)
         {
             RequestHandler.GetJson("/LateToTheParty/ReportError/" + errorMessage);
-        }
-
-        public static RawQuestClass[] GetAllQuestTemplates()
-        {
-            string errorMessage = "Cannot read quest templates.";
-            string json = RequestHandler.GetJson("/LateToTheParty/GetAllQuestTemplates");
-
-            TryDeserializeObject(json, errorMessage, out QuestTemplatesConfig _templates);
-            return _templates.Quests;
         }
 
         public static bool TryDeserializeObject<T>(string json, string errorMessage, out T obj)
