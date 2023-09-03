@@ -98,7 +98,7 @@ namespace LateToTheParty.Controllers
 
             foreach (Player player in Singleton<GameWorld>.Instance.AllPlayersEverExisted)
             {
-                if (!player.isActiveAndEnabled)
+                if ((player == null) || (!player.isActiveAndEnabled))
                 {
                     continue;
                 }

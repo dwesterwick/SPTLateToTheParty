@@ -41,6 +41,7 @@
 	"destroy_loot_during_raid" : {
 		"enabled": true,
 		"exclusion_radius": 40,
+		"exclusion_radius_bots": 25,
 		"min_loot_age": 120,
 		"max_destroy_rate": 1,
 		"map_traversal_speed_mps": 2,

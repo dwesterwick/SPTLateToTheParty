@@ -13,7 +13,10 @@ namespace LateToTheParty.Configuration
         public bool Enabled { get; set; } = true;
 
         [JsonProperty("exclusion_radius")]
-        public double ExclusionRadius { get; set; } = 1;
+        public double ExclusionRadius { get; set; } = 10;
+
+        [JsonProperty("exclusion_radius_bots")]
+        public double ExclusionRadiusBots { get; set; } = 10;
 
         [JsonProperty("min_loot_age")]
         public double MinLootAge { get; set; } = 60;

@@ -43,7 +43,7 @@ namespace LateToTheParty.Controllers
 
         public static int RemainingLootItemsCount
         {
-            get { return LootInfo.Where(l => !l.Value.IsDestroyed).Count(); }
+            get { return LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count(); }
         }
 
         public static void Clear()
@@ -100,12 +100,17 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static void RegisterItemDroppedByPlayer(Item item)
+        public static void RegisterItemDroppedByPlayer(Item item, bool preventFromDespawning = false)
         {
             // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
             foreach (Item relevantItem in item.FindAllItemsInContainer(true))
             {
-                if (!ItemsDroppedByMainPlayer.Contains(relevantItem))
+                if (LootInfo.ContainsKey(relevantItem))
+                {
+                    LootInfo[relevantItem].IsInPlayerInventory = false;
+                }
+
+                if (preventFromDespawning && !ItemsDroppedByMainPlayer.Contains(relevantItem))
                 {
                     LoggingController.LogInfo("Preventing dropped item from despawning: " + relevantItem.LocalizedName());
                     ItemsDroppedByMainPlayer.Add(relevantItem);
@@ -122,9 +127,10 @@ namespace LateToTheParty.Controllers
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))
                 {
                     LoggingController.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
+                    LootInfo[relevantItem].IsInPlayerInventory = true;
                     LootInfo[item].PathData.Clear();
                     LootInfo[relevantItem].PathData.Clear();
-                    LootInfo.Remove(relevantItem);
+                    //LootInfo.Remove(relevantItem);
                 }
             }
         }
@@ -151,7 +157,7 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Ensure there is still loot on the map
-                if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed))
+                if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed || l.Value.IsInPlayerInventory))
                 {
                     yield break;
                 }
@@ -177,7 +183,7 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Enumerate loot that hasn't been destroyed and hasn't previously been deemed accessible
-                IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed);
+                IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
 
                 // Check which items are accessible
@@ -252,6 +258,7 @@ namespace LateToTheParty.Controllers
                             GetLootFoundTime(raidET)
                     );
                     LootInfo.Add(item, newLoot);
+                    //LoggingController.LogInfo("Found loose loot item: " + item.LocalizedName());
                 }
             }
         }
@@ -317,7 +324,7 @@ namespace LateToTheParty.Controllers
             IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
 
             // Calculate the fraction of loot that should be removed from the map
-            double currentLootRemainingFraction = (double)accessibleItems.Where(v => !v.Value.IsDestroyed).Count() / accessibleItems.Count();
+            double currentLootRemainingFraction = (double)accessibleItems.Where(v => !v.Value.IsDestroyed && !v.Value.IsInPlayerInventory).Count() / accessibleItems.Count();
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
             //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
 
@@ -365,7 +372,7 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            if (LootInfo[item].IsDestroyed)
+            if (LootInfo[item].IsDestroyed || LootInfo[item].IsInPlayerInventory)
             {
                 return false;
             }
@@ -387,6 +394,14 @@ namespace LateToTheParty.Controllers
             // Ignore loot that's too close to you
             float lootDist = Vector3.Distance(yourPosition, LootInfo[item].Transform.position);
             if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius)
+            {
+                return false;
+            }
+
+            // Ignore loot that's too close to bots
+            Player nearestPlayer = NavMeshController.GetNearestPlayer(LootInfo[item].Transform.position);
+            lootDist = Vector3.Distance(nearestPlayer.Position, LootInfo[item].Transform.position);
+            if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadiusBots)
             {
                 return false;
             }

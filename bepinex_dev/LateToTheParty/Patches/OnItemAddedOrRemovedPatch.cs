@@ -25,31 +25,29 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            if (__instance != Singleton<GameWorld>.Instance.MainPlayer)
-            {
-                return;
-            }
-
-            // If you pick up an item, it needs to be removed from the loot lists to prevent it from being randomly despawned while in your inventory
+            // If a player picked up an item, it needs to be tracked to prevent it from being randomly despawned while in the player's inventory
             if (added)
             {
                 LootManager.RegisterItemPickedUpByPlayer(item);
                 return;
             }
 
-            if (!ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
+            bool preventFromDespawning = false;
+
+            if (__instance == Singleton<GameWorld>.Instance.MainPlayer)
             {
-                Logger.LogInfo("Ignoring item removed by player: " + item.LocalizedName());
-                return;
+                if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
+                {
+                    preventFromDespawning = true;
+                }
+
+                if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.OnlyItemsBroughtIntoRaid && item.SpawnedInSession)
+                {
+                    preventFromDespawning = false;
+                }
             }
 
-            if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.OnlyItemsBroughtIntoRaid && item.SpawnedInSession)
-            {
-                Logger.LogInfo("Ignoring not-FIR item removed by player: " + item.LocalizedName());
-                return;
-            }
-
-            LootManager.RegisterItemDroppedByPlayer(item);
+            LootManager.RegisterItemDroppedByPlayer(item, preventFromDespawning);
         }
     }
 }

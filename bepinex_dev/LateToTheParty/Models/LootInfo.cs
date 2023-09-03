@@ -21,6 +21,7 @@ namespace LateToTheParty.Models
         public PathAccessibilityData PathData = new PathAccessibilityData();
         public ELootType LootType { get; } = ELootType.Invalid;
         public bool IsDestroyed { get; set; } = false;
+        public bool IsInPlayerInventory { get; set; } = false;
         public TraderControllerClass TraderController { get; set; } = null;
         public Transform Transform { get; set; } = null;
         public double DistanceToNearestSpawnPoint { get; set; } = 0;
