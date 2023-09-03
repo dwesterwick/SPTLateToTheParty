@@ -1,8 +1,8 @@
 {
 	"enabled": true,
 	"debug": {
-		"enabled": true,
-		"scav_cooldown_time": 1,
+		"enabled": false,
+		"scav_cooldown_time": 1500,
 		"free_labs_access": false,
 		"min_level_for_flea": 1,
 		"trader_resupply_time_factor": 1,
@@ -159,7 +159,7 @@
 		"max_calc_time_per_frame_ms": 3
 	},
 	"adjust_bot_spawn_chances": {
-		"enabled": true,
+		"enabled": false,
 		"adjust_bosses": true,
 		"update_rate": 10,
 		"excluded_bosses": [ "sptBear", "sptUsec" ]
