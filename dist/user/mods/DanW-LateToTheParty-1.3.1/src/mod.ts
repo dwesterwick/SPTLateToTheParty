@@ -30,7 +30,6 @@ import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
-import { QuestHelper } from "@spt-aki/helpers/QuestHelper";
 import { TraderController } from "@spt-aki/controllers/TraderController";
 import { FenceService } from "@spt-aki/services/FenceService";
 import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
@@ -69,7 +68,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private timeutil: TimeUtil;
     private randomUtil: RandomUtil;
     private profileHelper: ProfileHelper;
-    private questHelper: QuestHelper;
     private httpResponseUtil: HttpResponseUtil;
     private fenceService: FenceService;
     private traderController: TraderController;
@@ -293,17 +291,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 }
             }], "AddRecentlyChangedQuest"
         );
-
-        // Get all quest templates
-        staticRouterModService.registerStaticRouter(`GetAllQuestTemplates${modName}`,
-            [{
-                url: "/LateToTheParty/GetAllQuestTemplates",
-                action: () => 
-                {
-                    return JSON.stringify({ quests: this.questHelper.getQuestsFromDb() });
-                }
-            }], "GetAllQuestTemplates"
-        );
     }
 
     public postDBLoad(container: DependencyContainer): void
@@ -318,7 +305,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.timeutil = container.resolve<TimeUtil>("TimeUtil");
         this.randomUtil = container.resolve<RandomUtil>("RandomUtil");
         this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
-        this.questHelper = container.resolve<QuestHelper>("QuestHelper");
         this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
         this.traderController = container.resolve<TraderController>("TraderController");
         this.fenceService = container.resolve<FenceService>("FenceService");
