@@ -126,7 +126,6 @@
     <Compile Include="CoroutineExtensions\TaskWithTimeLimit.cs" />
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
     <Compile Include="Models\PathVisualizationData.cs" />
-    <Compile Include="Patches\BotDoorInteractionPatch.cs" />
     <Compile Include="Patches\DoorInteractionPatch.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\OnBoxLandPatch.cs" />

@@ -227,20 +227,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }], "GetCarExtractNames"
         );
 
-        // Set PMC conversion to 100%
-        staticRouterModService.registerStaticRouter(`StaticForcePMCSpawns${modName}`,
-            [{
-                url: "/LateToTheParty/ForcePMCSpawns",
-                action: () => 
-                {
-                    BotConversionHelper.stopRaidTimer();
-                    BotConversionHelper.adjustPmcConversionChance(-1);
-
-                    return JSON.stringify({ resp: "OK" });
-                }
-            }], "ForcePMCSpawns"
-        );
-
         // Adjust the static and loose loot multipliers
         dynamicRouterModService.registerDynamicRouter(`DynamicSetLootMultipliers${modName}`,
             [{

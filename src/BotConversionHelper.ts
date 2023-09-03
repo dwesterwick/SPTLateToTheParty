@@ -70,16 +70,9 @@ export class BotConversionHelper
         for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
         {
             // Do not allow the chances to exceed 100%. Who knows what might happen...
-            let min = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].min * adjFactor));
-            let max = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].max * adjFactor));
+            const min = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].min * adjFactor));
+            const max = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].max * adjFactor));
 
-            // Overrid to force PMC spawns
-            if (timeRemainingFactor == -1)
-            {
-                min = 100;
-                max = 100;
-            }
-            
             BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min = min;
             BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max = max;
 
