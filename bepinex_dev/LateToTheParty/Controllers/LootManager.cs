@@ -400,6 +400,10 @@ namespace LateToTheParty.Controllers
 
             // Ignore loot that's too close to bots
             Player nearestPlayer = NavMeshController.GetNearestPlayer(LootInfo[item].Transform.position);
+            if (nearestPlayer == null)
+            {
+                return false;
+            }
             lootDist = Vector3.Distance(nearestPlayer.Position, LootInfo[item].Transform.position);
             if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadiusBots)
             {

@@ -64,7 +64,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure enough time has passed since the last door event
-            if ((updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000) && (eligibleDoors.Count > 0))
+            if (hasToggledInitialDoors && (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000))
             {
                 return;
             }
@@ -79,17 +79,17 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Do not change doors too early or late into the raid
-            if ((eligibleDoors.Count > 0) && ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining)))
-            {
-                return;
-            }
-
             // Only find doors once per raid
             if (ToggleableDoorCount == 0)
             {
                 gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
                 StartCoroutine(FindAllEligibleDoors());
+                return;
+            }
+
+            // Do not change doors too early or late into the raid
+            if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
+            {
                 return;
             }
 
