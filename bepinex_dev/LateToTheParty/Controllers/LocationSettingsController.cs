@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
-using EFT.Interactive;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -211,7 +210,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            LoggingController.LogInfo("Storing original raid settings for " + location.Name + "...");
+            LoggingController.LogInfo("Storing original raid settings for " + location.Name + "... (Escape time: " + location.EscapeTimeLimit + ")");
 
             Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
             

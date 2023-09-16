@@ -104,6 +104,7 @@ namespace LateToTheParty.Controllers
             if (!hasToggledInitialDoors)
             {
                 doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
+                doorsToToggle = Math.Min(doorsToToggle, eligibleDoors.Count);
             }
 
             // Ensure there are doors to toggle
