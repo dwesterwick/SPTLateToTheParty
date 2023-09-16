@@ -19,6 +19,7 @@ namespace LateToTheParty.Controllers
 {
     public class DoorController : MonoBehaviour
     {
+        public static bool IsClearing { get; private set; } = false;
         public static bool IsTogglingDoors { get; private set; } = false;
         public static bool IsFindingDoors { get; private set; } = false;
         public static int InteractiveLayer { get; set; }
@@ -45,6 +46,11 @@ namespace LateToTheParty.Controllers
 
         private void Update()
         {
+            if (IsClearing)
+            {
+                return;
+            }
+
             if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
             {
                 return;
@@ -53,7 +59,7 @@ namespace LateToTheParty.Controllers
             // Clear all arrays if not in a raid to reset them for the next raid
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
-                Clear();
+                StartCoroutine(Clear());
                 return;
             }
 
@@ -111,17 +117,27 @@ namespace LateToTheParty.Controllers
             updateTimer.Restart();
         }
 
-        public static void Clear()
+        public static IEnumerator Clear()
         {
+            IsClearing = true;
+
             if (IsFindingDoors)
             {
                 enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsFindingDoors);
+
+                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
+                yield return conditionWaiter.WaitForCondition(() => !IsFindingDoors, nameof(IsFindingDoors), 3000);
+
+                IsFindingDoors = false;
             }
             if (IsTogglingDoors)
             {
                 enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsTogglingDoors);
+
+                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
+                yield return conditionWaiter.WaitForCondition(() => !IsTogglingDoors, nameof(IsTogglingDoors), 3000);
+
+                IsTogglingDoors = false;
             }
 
             toggleableDoors.Clear();
@@ -130,6 +146,8 @@ namespace LateToTheParty.Controllers
             updateTimer.Restart();
 
             hasToggledInitialDoors = false;
+
+            IsClearing = false;
         }
 
         public static bool IsToggleableDoor(Door door)

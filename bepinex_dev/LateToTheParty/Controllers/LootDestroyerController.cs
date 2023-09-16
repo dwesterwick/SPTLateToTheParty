@@ -15,6 +15,11 @@ namespace LateToTheParty.Controllers
 
         private void Update()
         {
+            if (LootManager.IsClearing)
+            {
+                return;
+            }
+
             if (!ConfigController.Config.DestroyLootDuringRaid.Enabled)
             {
                 return;
@@ -29,7 +34,7 @@ namespace LateToTheParty.Controllers
             // Clear all arrays if not in a raid to reset them for the next raid
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
-                LootManager.Clear();
+                StartCoroutine(LootManager.Clear());
 
                 return;
             }

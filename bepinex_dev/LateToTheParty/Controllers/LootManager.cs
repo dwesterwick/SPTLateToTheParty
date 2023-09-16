@@ -19,6 +19,7 @@ namespace LateToTheParty.Controllers
 {
     public static class LootManager
     {
+        public static bool IsClearing { get; private set; } = false;
         public static bool IsFindingAndDestroyingLoot { get; private set; } = false;
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
@@ -46,12 +47,16 @@ namespace LateToTheParty.Controllers
             get { return LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count(); }
         }
 
-        public static void Clear()
+        public static IEnumerator Clear()
         {
             if (IsFindingAndDestroyingLoot)
             {
                 enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsFindingAndDestroyingLoot);
+
+                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
+                yield return conditionWaiter.WaitForCondition(() => !IsFindingAndDestroyingLoot, nameof(IsFindingAndDestroyingLoot), 3000);
+
+                IsFindingAndDestroyingLoot = false;
             }
 
             if (ConfigController.Config.Debug.Enabled && (LootInfo.Count > 0))

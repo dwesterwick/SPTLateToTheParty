@@ -13,7 +13,7 @@ namespace LateToTheParty.CoroutineExtensions
     {
         public EnumeratorWithTimeLimit(double _maxTimePerIteration) : base(_maxTimePerIteration)
         {
-            
+
         }
 
         public void Reset()
@@ -50,7 +50,7 @@ namespace LateToTheParty.CoroutineExtensions
             yield return Run_Internal(collection, action);
         }
 
-        public IEnumerator Repeat(int repetitions, Action action)
+        public IEnumerator Repeat(int repetitions, System.Action action)
         {
             SetMethodName(action.Method.Name);
             yield return Repeat_Internal(repetitions, action);
@@ -59,15 +59,53 @@ namespace LateToTheParty.CoroutineExtensions
         public IEnumerator Repeat<T1>(int repetitions, Action<T1> action, T1 param1)
         {
             SetMethodName(action.Method.Name);
-            Action actionInternal = () => { action(param1); };
+            System.Action actionInternal = () => { action(param1); };
             yield return Repeat_Internal(repetitions, actionInternal);
         }
 
         public IEnumerator Repeat<T1, T2>(int repetitions, Action<T1, T2> action, T1 param1, T2 param2)
         {
             SetMethodName(action.Method.Name);
-            Action actionInternal = () => { action(param1, param2); };
+            System.Action actionInternal = () => { action(param1, param2); };
             yield return Repeat_Internal(repetitions, actionInternal);
+        }
+
+        public IEnumerator WaitForCondition(Func<bool> conditionCheck, string conditionName, long timeout)
+        {
+            SetMethodName(conditionName);
+            Run_Internal_Init();
+
+            while (jobTimer.ElapsedMilliseconds < timeout)
+            {
+                try
+                {
+                    if (conditionCheck())
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LoggingController.LogError("Cannot perform condition check for \"" + this.MethodName + "\".");
+                    LoggingController.LogError(ex.ToString());
+                }
+
+                yield return base.WaitForNextFrame(false);
+            }
+
+            try
+            {
+                if (!conditionCheck())
+                {
+                    throw new TimeoutException("Condition check for \"" + this.MethodName + "\" was not successful within " + timeout + "ms.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggingController.LogError(ex.ToString());
+            }
+
+            Run_Internal_End(false);
         }
 
         private IEnumerator Run_Internal<TItem>(IEnumerable<TItem> collection, Action<TItem> action)
@@ -101,7 +139,7 @@ namespace LateToTheParty.CoroutineExtensions
             Run_Internal_End();
         }
 
-        private IEnumerator Repeat_Internal(int repetitions, Action action)
+        private IEnumerator Repeat_Internal(int repetitions, System.Action action)
         {
             Run_Internal_Init();
 
@@ -147,12 +185,12 @@ namespace LateToTheParty.CoroutineExtensions
             base.jobTimer.Restart();
         }
 
-        private void Run_Internal_End()
+        private void Run_Internal_End(bool writeConsoleMessage = true)
         {
             base.IsRunning = false;
             base.IsCompleted = true;
 
-            base.FinishedWaitingForFrames();
+            base.FinishedWaitingForFrames(writeConsoleMessage);
         }
 
         public void Abort()

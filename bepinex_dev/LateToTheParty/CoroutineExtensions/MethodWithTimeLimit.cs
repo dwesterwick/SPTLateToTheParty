@@ -40,23 +40,23 @@ namespace LateToTheParty.CoroutineExtensions
             }
         }
 
-        protected IEnumerator WaitForNextFrame(string extraDetail = "")
+        protected IEnumerator WaitForNextFrame(bool writeConsoleMessage = true, string extraDetail = "")
         {
             cycleTimes.Add(cycleTimer.ElapsedMilliseconds);
-            if (!hadToWait)
+            if (writeConsoleMessage && !hadToWait)
             {
                 LoggingController.LogWarning(messageTextPrefix(extraDetail) + messageTextSuffix(), true);
             }
             hadToWait = true;
-            
+
             yield return null;
             cycleTimer.Restart();
         }
 
-        protected void FinishedWaitingForFrames(string extraDetail = "")
+        protected void FinishedWaitingForFrames(bool writeConsoleMessage = true, string extraDetail = "")
         {
             cycleTimes.Add(cycleTimer.ElapsedMilliseconds);
-            if (hadToWait)
+            if (writeConsoleMessage && hadToWait)
             {
                 LoggingController.LogWarning(messageTextPrefix(extraDetail) + "done." + messageTextSuffix(), true);
             }

@@ -17,6 +17,7 @@ namespace LateToTheParty.Controllers
 {
     public class NavMeshController: MonoBehaviour
     {
+        public static bool IsClearing { get; private set; } = false;
         public static bool IsUpdatingDoorsObstacles { get; private set; } = false;
 
         private static Dictionary<Vector3, Vector3> nearestNavMeshPoint = new Dictionary<Vector3, Vector3>();
@@ -31,10 +32,15 @@ namespace LateToTheParty.Controllers
 
         private void LateUpdate()
         {
+            if (IsClearing)
+            {
+                return;
+            }
+
             // Clear all arrays if not in a raid to reset them for the next raid
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
-                Clear();
+                StartCoroutine(Clear());
                 return;
             }
 
@@ -66,12 +72,18 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static void Clear()
+        public static IEnumerator Clear()
         {
+            IsClearing = true;
+
             if (IsUpdatingDoorsObstacles)
             {
                 enumeratorWithTimeLimit.Abort();
-                TaskWithTimeLimit.WaitForCondition(() => !IsUpdatingDoorsObstacles);
+
+                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
+                yield return conditionWaiter.WaitForCondition(() => !IsUpdatingDoorsObstacles, nameof(IsUpdatingDoorsObstacles), 3000);
+
+                IsUpdatingDoorsObstacles = false;
             }
 
             // Make sure the obstacle is removed from the map before deleting that record from the dictionary
@@ -84,6 +96,8 @@ namespace LateToTheParty.Controllers
             nearestNavMeshPoint.Clear();
 
             updateTimer.Restart();
+
+            IsClearing = false;
         }
 
         public static Player GetNearestPlayer(Vector3 position)
