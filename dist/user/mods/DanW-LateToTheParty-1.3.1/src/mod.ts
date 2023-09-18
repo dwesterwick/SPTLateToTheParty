@@ -327,6 +327,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             if (modConfig.debug.free_labs_access)
             {
                 this.databaseTables.locations.laboratory.base.AccessKeys = [];
+                this.databaseTables.locations.laboratory.base.DisabledForScav = false;
             }
 
             this.databaseTables.globals.config.RagFair.minUserLevel = modConfig.debug.min_level_for_flea;
