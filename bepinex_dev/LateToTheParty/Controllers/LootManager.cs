@@ -377,7 +377,7 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            if (LootInfo[item].IsDestroyed || LootInfo[item].IsInPlayerInventory)
+            if (LootInfo[item].IsDestroyed || LootInfo[item].IsInPlayerInventory || ItemsDroppedByMainPlayer.Contains(item))
             {
                 return false;
             }
