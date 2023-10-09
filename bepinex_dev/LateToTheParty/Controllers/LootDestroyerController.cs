@@ -40,7 +40,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
-            float escapeTimeSec = GClass1473.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
+            float escapeTimeSec = GClass1368.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
             float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
             float timeRemainingFraction = escapeTimeSec / (LocationSettingsController.LastOriginalEscapeTime * 60f);
 

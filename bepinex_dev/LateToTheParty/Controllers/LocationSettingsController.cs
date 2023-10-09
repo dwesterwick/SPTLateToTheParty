@@ -19,7 +19,7 @@ namespace LateToTheParty.Controllers
         private static string[] CarExtractNames = new string[0];
         private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
         private static Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>> nearestSpawnPointPositions = new Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>>();
-        private static BackendConfigSettingsClass.GClass1350.GClass1357 matchEndConfig = null;
+        private static BackendConfigSettingsClass.GClass1247.GClass1254 matchEndConfig = null;
         private static int MinimumTimeForSurvived = -1;
 
         public static void ClearOriginalSettings()
@@ -187,7 +187,7 @@ namespace LateToTheParty.Controllers
 
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
-                foreach (GClass1235 exit in location.exits)
+                foreach (GClass1135 exit in location.exits)
                 {
                     if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                     {
@@ -214,7 +214,7 @@ namespace LateToTheParty.Controllers
 
             Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
             
-            foreach (GClass1235 exit in location.exits)
+            foreach (GClass1135 exit in location.exits)
             {
                 if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                 {
@@ -265,7 +265,7 @@ namespace LateToTheParty.Controllers
             int timeReduction = (OriginalSettings[location.Id].EscapeTimeLimit - location.EscapeTimeLimit) * 60;
             int minTimeBeforeActivation = 60;
 
-            foreach (GClass1235 exit in location.exits)
+            foreach (GClass1135 exit in location.exits)
             {
                 if (exit.PassageRequirement != EFT.Interactive.ERequirementState.Train)
                 {
@@ -314,7 +314,7 @@ namespace LateToTheParty.Controllers
             double reductionFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
 
             // Find all VEX extracts and adjust their chances proportionally
-            foreach (GClass1235 exit in location.exits)
+            foreach (GClass1135 exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
