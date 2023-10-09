@@ -17,6 +17,7 @@ import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
 import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
 import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
+import { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
 import { IAirdropConfig } from "@spt-aki/models/spt/config/IAirdropConfig";
 import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
@@ -55,6 +56,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private locationConfig: ILocationConfig;
     private inRaidConfig: IInRaidConfig;
     private iBotConfig: IBotConfig;
+    private iPmcConfig: IPmcConfig;
     private iAirdropConfig: IAirdropConfig;
     private iTraderConfig: ITraderConfig;
     private configServer: ConfigServer;
@@ -302,6 +304,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
         this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
+        this.iPmcConfig = this.configServer.getConfig(ConfigTypes.PMC);
         this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
         this.iTraderConfig = this.configServer.getConfig(ConfigTypes.TRADER);
 

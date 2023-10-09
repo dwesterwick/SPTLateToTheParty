@@ -12,10 +12,10 @@ namespace LateToTheParty.Patches
         protected override MethodBase GetTargetMethod()
         {
             // Method 45 always runs, but sometimes twice. Method 42 runs before pressing "Ready", but won't work if you press "Ready" early.
-            string methodName = "method_45";
+            string methodName = "method_48";
             if (Controllers.ConfigController.Config.Debug.Enabled)
             {
-                methodName = "method_42";
+                methodName = "method_45";
             }
 
             return typeof(MainMenuController).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
