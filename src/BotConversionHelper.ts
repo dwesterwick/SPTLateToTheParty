@@ -2,7 +2,7 @@ import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
 import { MinMax } from "@spt-aki/models/common/MinMax";
-import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
+import { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
 
 export class BotConversionHelper
 {
@@ -11,16 +11,16 @@ export class BotConversionHelper
     private static simulatedTimeRemaining: number
 
     private static commonUtils: CommonUtils
-    private static iBotConfig: IBotConfig
+    private static iPmcConfig: IPmcConfig
 
     private static timerHandle: NodeJS.Timer
     private static timerRunning: boolean
     private static convertIntoPmcChanceOrig: Record<string, MinMax> = {};
 
-    constructor(commonUtils: CommonUtils, iBotConfig: IBotConfig)
+    constructor(commonUtils: CommonUtils, iPmcConfig: IPmcConfig)
     {
         BotConversionHelper.commonUtils = commonUtils;
-        BotConversionHelper.iBotConfig = iBotConfig;
+        BotConversionHelper.iPmcConfig = iPmcConfig;
 
         // Store the values in iBotConfig as default settings
         this.setOriginalData();
@@ -67,14 +67,14 @@ export class BotConversionHelper
 
         // Adjust the chances for each applicable bot type
         let logMessage = "";
-        for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
+        for (const pmcType in BotConversionHelper.iPmcConfig.convertIntoPmcChance)
         {
             // Do not allow the chances to exceed 100%. Who knows what might happen...
             const min = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].min * adjFactor));
             const max = Math.round(Math.min(100, BotConversionHelper.convertIntoPmcChanceOrig[pmcType].max * adjFactor));
 
-            BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min = min;
-            BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max = max;
+            BotConversionHelper.iPmcConfig.convertIntoPmcChance[pmcType].min = min;
+            BotConversionHelper.iPmcConfig.convertIntoPmcChance[pmcType].max = max;
 
             logMessage += `${pmcType}: ${min}-${max}%, `;
         }
@@ -89,7 +89,7 @@ export class BotConversionHelper
             return false;
         }
 
-        if (BotConversionHelper.iBotConfig === undefined)
+        if (BotConversionHelper.iPmcConfig === undefined)
         {
             return false;
         }
@@ -101,7 +101,7 @@ export class BotConversionHelper
     {
         // Store the default PMC-conversion chances for each bot type defined in SPT's configuration file
         let logMessage = "";
-        for (const pmcType in BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance)
+        for (const pmcType in BotConversionHelper.iPmcConfig.convertIntoPmcChance)
         {
             if (BotConversionHelper.convertIntoPmcChanceOrig[pmcType] !== undefined)
             {
@@ -110,8 +110,8 @@ export class BotConversionHelper
             }
 
             const chances: MinMax = {
-                min: BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].min,
-                max: BotConversionHelper.iBotConfig.pmc.convertIntoPmcChance[pmcType].max
+                min: BotConversionHelper.iPmcConfig.convertIntoPmcChance[pmcType].min,
+                max: BotConversionHelper.iPmcConfig.convertIntoPmcChance[pmcType].max
             }
             BotConversionHelper.convertIntoPmcChanceOrig[pmcType] = chances;
 

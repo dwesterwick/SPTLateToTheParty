@@ -144,7 +144,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                         this.traderAssortGenerator.clearLastAssortData();
                     }
 
-                    this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iBotConfig);
+                    this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iPmcConfig);
 
                     this.generateLootRankingData(sessionId);
 
