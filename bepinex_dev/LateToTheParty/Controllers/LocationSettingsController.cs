@@ -202,9 +202,14 @@ namespace LateToTheParty.Controllers
                     }
                 }
 
-                foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
+                if (location.BossLocationSpawn.Length != OriginalSettings[location.Id].BossSpawnChances.Length)
                 {
-                    bossLocation.BossChance = OriginalSettings[location.Id].BossSpawnChances[bossLocation];
+                    throw new InvalidOperationException("Mismatch in length between boss location array and cached array.");
+                }
+
+                for (int i = 0; i < location.BossLocationSpawn.Length; i++)
+                {
+                    location.BossLocationSpawn[i].BossChance = OriginalSettings[location.Id].BossSpawnChances[i];
                 }
 
                 return;
@@ -229,10 +234,7 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
-            {
-                settings.BossSpawnChances.Add(bossLocation, bossLocation.BossChance);
-            }
+            settings.BossSpawnChances = location.BossLocationSpawn.Select(x => x.BossChance).ToArray();
 
             OriginalSettings.Add(location.Id, settings);
         }
