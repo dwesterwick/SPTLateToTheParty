@@ -12,9 +12,10 @@ This mod makes the the following changes to your SPT experience:
 
 This mod is highly customizable by modifying the *config.json* file. Here are the settings you can change:
 
+* **enabled**: Completely enable or disable all featues of this mod. 
 * **debug.enabled**: Enable debug mode.
 * **debug.scav_cooldown_time**: Cooldown timer (in seconds) after a Scav raid ends before you're allowed to start another one. This is **1500** by default, which is the same as the base game.
-* **debug.free_labs_access**: If **true**, Labs cards are no longer required to enter Labs. 
+* **debug.free_labs_access**: If **true**, Labs cards are no longer required to enter Labs, and you're also allowed to do Scav runs in Labs. 
 * **debug.min_level_for_flea**: The minimum player level to be able to access the flea market. 
 * **debug.trader_resupply_time_factor**: A multiplier for trader reset times. For example, if this is 0.5, trader resets occur every 30 min instead of 60 min. **trader_stock_changes.max_ammo_buy_rate** and **trader_stock_changes.max_item_buy_rate** are divided by this value for testing purposes. 
 * **debug.loot_path_visualization.enabled**: Enable visualization of loot items and NavMesh pathing to them to view which ones the mod thinks are accessible. Most visuals require **destroy_loot_during_raid.check_loot_accessibility.enabled=true**.
