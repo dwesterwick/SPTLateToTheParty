@@ -133,6 +133,11 @@ namespace LateToTheParty.Controllers
                 //LoggingController.LogInfo("Checking for picked-up item in eligible loot: " + relevantItem.LocalizedName());
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))
                 {
+                    if (LootInfo[relevantItem].IsInPlayerInventory)
+                    {
+                        continue;
+                    }
+
                     LoggingController.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
                     LootInfo[relevantItem].IsInPlayerInventory = true;
                     LootInfo[item].PathData.Clear();
