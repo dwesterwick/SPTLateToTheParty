@@ -191,7 +191,7 @@ namespace LateToTheParty.Controllers
 
                 // Find amount of loot slots to destroy
                 int targetLootSlotsDestroyed = LocationSettingsController.GetTargetLootSlotsDestroyed(timeRemainingFraction);
-                int targetLootSlotsToDestroy = targetLootSlotsDestroyed - destroyedLootSlots;
+                int targetLootSlotsToDestroy = targetLootSlotsDestroyed - GetTotalDestroyedSlots();
                 if (targetLootSlotsToDestroy <= 0)
                 {
                     yield break;
@@ -355,7 +355,22 @@ namespace LateToTheParty.Controllers
         private static double GetCurrentLootRemainingFraction()
         {
             IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
-            return (double)accessibleItems.Where(v => !v.Value.IsDestroyed && !v.Value.IsInPlayerInventory).Count() / accessibleItems.Count();
+            IEnumerable<KeyValuePair<Item, Models.LootInfo>> remainingItems = accessibleItems
+                .Where(v => !v.Value.IsDestroyed)
+                .Where(v => !v.Value.IsInPlayerInventory)
+                .Where(v => !ItemsDroppedByMainPlayer.Contains(v.Key));
+
+            return (double)remainingItems.Count() / accessibleItems.Count();
+        }
+
+        private static int GetTotalDestroyedSlots()
+        {
+            IEnumerable<Item> collectedItems = LootInfo
+                .Where(i => i.Value.IsInPlayerInventory)
+                .Select(i => i.Key)
+                .Concat(ItemsDroppedByMainPlayer);
+
+            return destroyedLootSlots + collectedItems.Select(i => i.GetItemSlots()).Count();
         }
 
         private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
