@@ -53,6 +53,22 @@ namespace LateToTheParty.Controllers
             return allItems.Distinct();
         }
 
+        public static int GetItemSlots(this Item item)
+        {
+            int itemSlots = 0;
+            if (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId))
+            {
+                itemSlots = (int)ConfigController.LootRanking.Items[item.TemplateId].Size;
+            }
+            else
+            {
+                var itemSize = item.CalculateCellSize();
+                itemSlots = itemSize.X * itemSize.Y;
+            }
+
+            return itemSlots;
+        }
+
         public static IEnumerable<string> GetSecureContainerIDs()
         {
             ItemFactory itemFactory = Singleton<ItemFactory>.Instance;

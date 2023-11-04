@@ -31,6 +31,7 @@ namespace LateToTheParty.Controllers
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
         private static string currentLocationName = "";
+        private static int destroyedLootSlots = 0;
 
         public static int LootableContainerCount
         {
@@ -75,6 +76,7 @@ namespace LateToTheParty.Controllers
             ItemsDroppedByMainPlayer.Clear();
 
             currentLocationName = "";
+            destroyedLootSlots = 0;
 
             lastLootDestroyedTimer.Restart();
         }
@@ -187,6 +189,14 @@ namespace LateToTheParty.Controllers
                     yield break;
                 }
 
+                // Find amount of loot slots to destroy
+                int targetLootSlotsDestroyed = LocationSettingsController.GetTargetLootSlotsDestroyed(timeRemainingFraction);
+                int targetLootSlotsToDestroy = targetLootSlotsDestroyed - destroyedLootSlots;
+                if (targetLootSlotsToDestroy <= 0)
+                {
+                    yield break;
+                }
+
                 // Enumerate loot that hasn't been destroyed and hasn't previously been deemed accessible
                 IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
@@ -206,13 +216,17 @@ namespace LateToTheParty.Controllers
                 // Identify items to destroy
                 List<Item> itemsToDestroy = new List<Item>();
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy, itemsToDestroy);
+                yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy, targetLootSlotsToDestroy, itemsToDestroy);
                 
                 // Show the percentage of accessible loot before destroying any of it
                 if (itemsToDestroy.Count > 0)
                 {
+                    int slotsToDestroy = itemsToDestroy.Sum(i => i.GetItemSlots());
                     double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
-                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. Destroying " + itemsToDestroy.Count + "/" + maxItemsToDestroy + " items.");
+
+                    string slotsDestroyedText = "Destroying " + itemsToDestroy.Count + "/" + maxItemsToDestroy + " items filling " + slotsToDestroy + "/" + targetLootSlotsToDestroy + " slots (Target: " + targetLootSlotsDestroyed + ")";
+                    string lootFractionDestroyedText = "Loot remaining fraction: " + Math.Round(GetCurrentLootRemainingFraction(), 4) + "/" + Math.Round(targetLootRemainingFraction, 4);
+                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. " + slotsDestroyedText + ". " + lootFractionDestroyedText);
                 }
 
                 // Destroy items
@@ -326,17 +340,22 @@ namespace LateToTheParty.Controllers
 
         private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
         {
-            IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
-
             // Calculate the fraction of loot that should be removed from the map
-            double currentLootRemainingFraction = (double)accessibleItems.Where(v => !v.Value.IsDestroyed && !v.Value.IsInPlayerInventory).Count() / accessibleItems.Count();
+            double currentLootRemainingFraction = GetCurrentLootRemainingFraction();
             double lootFractionToDestroy = currentLootRemainingFraction - targetLootRemainingFraction;
-            //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + currentLootRemainingFraction);
+            //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + GetCurrentLootRemainingFraction());
 
             // Calculate the number of loot items to destroy
+            IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
             int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * accessibleItems.Count());
 
             return lootItemsToDestroy;
+        }
+
+        private static double GetCurrentLootRemainingFraction()
+        {
+            IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
+            return (double)accessibleItems.Where(v => !v.Value.IsDestroyed && !v.Value.IsInPlayerInventory).Count() / accessibleItems.Count();
         }
 
         private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
@@ -562,7 +581,7 @@ namespace LateToTheParty.Controllers
             return item.LocalizedName() + "_" + item.Id;
         }
 
-        private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, List<Item> allItemsToDestroy)
+        private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, int lootSlotsToDestroy, List<Item> allItemsToDestroy)
         {
             // Do not search for more items if enough have already been identified
             if (allItemsToDestroy.Count >= totalItemsToDestroy)
@@ -572,6 +591,12 @@ namespace LateToTheParty.Controllers
 
             // Make sure the item isn't already in the queue to be destroyed
             if (allItemsToDestroy.Contains(item))
+            {
+                return;
+            }
+
+            // Do not search for more items if enough slots will be destroyed for the items in the queue
+            if (allItemsToDestroy.Sum(i => i.GetItemSlots()) >= lootSlotsToDestroy)
             {
                 return;
             }
@@ -723,6 +748,7 @@ namespace LateToTheParty.Controllers
                 LootInfo[item].IsDestroyed = true;
                 LootInfo[item].RaidETWhenDestroyed = raidET;
                 lastLootDestroyedTimer.Restart();
+                destroyedLootSlots += item.GetItemSlots();
 
                 LoggingController.LogInfo(
                     "Destroyed " + LootInfo[item].LootType + " loot"

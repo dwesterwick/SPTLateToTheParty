@@ -179,6 +179,22 @@ namespace LateToTheParty.Controllers
             return InterpolateForFirstCol(ConfigController.Config.LootMultipliers, timeRemainingFactor);
         }
 
+        public static double GetTargetPlayersFullOfLoot(double timeRemainingFactor)
+        {
+            return InterpolateForFirstCol(ConfigController.Config.FractionOfPlayersFullOfLoot, timeRemainingFactor);
+        }
+
+        public static int GetTargetLootSlotsDestroyed(double timeRemainingFactor)
+        {
+            if (LastLocationSelected == null)
+            {
+                return 0;
+            }
+
+            double totalSlots = LastLocationSelected.MaxPlayers * ConfigController.Config.DestroyLootDuringRaid.AvgSlotsPerPlayer;
+            return (int)Math.Round(GetTargetPlayersFullOfLoot(timeRemainingFactor) * totalSlots);
+        }
+
         private static void RestoreSettings(LocationSettingsClass.Location location)
         {
             if (OriginalSettings.ContainsKey(location.Id))

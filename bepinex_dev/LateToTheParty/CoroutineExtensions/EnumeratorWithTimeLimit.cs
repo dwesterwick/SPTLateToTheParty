@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LateToTheParty.Controllers;
+using UnityEngine;
 
 namespace LateToTheParty.CoroutineExtensions
 {
@@ -48,6 +49,13 @@ namespace LateToTheParty.CoroutineExtensions
         {
             SetMethodName(collectionItemAction.Method.Name);
             Action<TItem> action = (item) => { collectionItemAction(item, param1, param2); };
+            yield return Run_Internal(collection, action);
+        }
+
+        public IEnumerator Run<TItem, T1, T2, T3>(IEnumerable<TItem> collection, Action<TItem, T1, T2, T3> collectionItemAction, T1 param1, T2 param2, T3 param3)
+        {
+            SetMethodName(collectionItemAction.Method.Name);
+            Action<TItem> action = (item) => { collectionItemAction(item, param1, param2, param3); };
             yield return Run_Internal(collection, action);
         }
 

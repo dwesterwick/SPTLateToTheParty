@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("exclusion_radius_bots")]
         public double ExclusionRadiusBots { get; set; } = 10;
 
+        [JsonProperty("avg_slots_per_player")]
+        public double AvgSlotsPerPlayer { get; set; } = 80;
+
         [JsonProperty("min_loot_age")]
         public double MinLootAge { get; set; } = 60;
 

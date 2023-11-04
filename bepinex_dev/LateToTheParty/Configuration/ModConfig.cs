@@ -33,6 +33,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
 
+        [JsonProperty("fraction_of_players_full_of_loot")]
+        public double[][] FractionOfPlayersFullOfLoot { get; set; } = new double[0][];
+
         [JsonProperty("vex_chance_reduction")]
         public double[][] VExChanceReductions { get; set; } = new double[0][];
 
