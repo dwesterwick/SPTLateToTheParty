@@ -34,6 +34,7 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
         private static string currentLocationName = "";
         private static int destroyedLootSlots = 0;
+        private static double lootValueRandomFactor = 0;
 
         public static int LootableContainerCount
         {
@@ -80,6 +81,7 @@ namespace LateToTheParty.Controllers
             HasInitialLootBeenDestroyed = false;
             currentLocationName = "";
             destroyedLootSlots = 0;
+            lootValueRandomFactor = 0;
 
             lastLootDestroyedTimer.Restart();
         }
@@ -425,19 +427,23 @@ namespace LateToTheParty.Controllers
             }
 
             // Determine how much randomness to apply to loot sorting
-            MinMaxConfig lootValueRangeData = getLootValueRange(loot);
-            double lootValueRange = lootValueRangeData.Max - lootValueRangeData.Min;
-            double lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
+            if (lootValueRandomFactor == 0)
+            {
+                double lootValueRange = getLootValueRange(loot);
+                lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
+            }
+
+            LoggingController.LogInfo("Randomness factor: " + lootValueRandomFactor);
 
             // Return loot sorted by value but with randomness applied
-            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + random.Range(-1, 1) * lootValueRandomFactor);
+            IEnumerable<KeyValuePair<Item, Models.LootInfo>> sortedLoot = loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + (random.Range(-1, 1) * lootValueRandomFactor));
+            return sortedLoot.Skip(ConfigController.Config.DestroyLootDuringRaid.LootRanking.TopValueRetainCount);
         }
 
-        private static MinMaxConfig getLootValueRange(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
+        private static double getLootValueRange(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
         {
-            double min = double.MaxValue;
-            double max = double.MinValue;
-
+            // Calculate the values of all of the loot on the map
+            List<double> lootValues = new List<double>();
             foreach (KeyValuePair<Item, Models.LootInfo> lootItem in loot)
             {
                 if (!ConfigController.LootRanking.Items.ContainsKey(lootItem.Key.TemplateId))
@@ -453,18 +459,20 @@ namespace LateToTheParty.Controllers
                     continue;
                 }
 
-                if (min > value.Value)
-                {
-                    min = value.Value;
-                }
-
-                if (max < value.Value)
-                {
-                    max = value.Value;
-                }
+                lootValues.Add(value.Value);
             }
 
-            return new MinMaxConfig(min, max);
+            // Calculate the standard deviation of the loot values on the map
+            double lootValueAvg = lootValues.Average();
+            double lootValueStdev = 0;
+            foreach (double val in lootValues)
+            {
+                lootValueStdev += Math.Pow(val - lootValueAvg, 2);
+            }
+            lootValueStdev = Math.Sqrt(lootValueStdev / lootValues.Count);
+
+            // Return the range of 2*sigma of the loot values on the map
+            return lootValueStdev * 4;
         }
 
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
@@ -874,10 +882,10 @@ namespace LateToTheParty.Controllers
             sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed,Accessible");
             foreach(Item item in LootInfo.Keys)
             {
-                sb.Append(item.LocalizedName() + ",");
+                sb.Append(item.LocalizedName().Replace(",", "") + ",");
                 sb.Append(item.TemplateId + ",");
                 sb.Append(ConfigController.LootRanking.Items[item.TemplateId].Value + ",");
-                sb.Append(LootInfo[item].RaidETWhenFound + ",");
+                sb.Append((LootInfo[item].RaidETWhenFound >= 0 ? LootInfo[item].RaidETWhenFound : 0) + ",");
                 sb.Append(LootInfo[item].RaidETWhenDestroyed >= 0 ? LootInfo[item].RaidETWhenDestroyed.ToString() : "");
                 sb.AppendLine("," + LootInfo[item].PathData.IsAccessible.ToString());
             }

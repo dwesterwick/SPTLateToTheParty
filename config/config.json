@@ -84,6 +84,7 @@
 		"loot_ranking": {
 			"enabled": true,
 			"randomness": 30,
+			"top_value_retain_count": 1,
 			"alwaysRegenerate": true,
 			"child_item_limits": {
 				"count": 5,

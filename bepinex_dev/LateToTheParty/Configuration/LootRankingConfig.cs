@@ -15,6 +15,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("randomness")]
         public double Randomness { get; set; } = 0;
 
+        [JsonProperty("top_value_retain_count")]
+        public int TopValueRetainCount { get; set; } = 0;
+
         [JsonProperty("alwaysRegenerate")]
         public bool AlwaysRegenerate { get; set; } = true;
 

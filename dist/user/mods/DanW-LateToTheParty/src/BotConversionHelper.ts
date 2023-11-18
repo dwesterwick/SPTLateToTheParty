@@ -50,6 +50,11 @@ export class BotConversionHelper
 
     public static stopRaidTimer(): void
     {
+        if (!modConfig.adjust_bot_spawn_chances.adjust_pmc_conversion_chances)
+        {
+            return;
+        }
+
         // Stop the recurring task
         clearInterval(BotConversionHelper.timerHandle);
         BotConversionHelper.timerRunning = false;
