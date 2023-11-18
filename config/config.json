@@ -48,7 +48,11 @@
 		"exclusion_radius_bots": 25,
 		"avg_slots_per_player": 60,
 		"min_loot_age": 120,
-		"max_destroy_rate": 1,
+		"destruction_event_limits": {
+			"rate": 1,
+			"items": 30,
+			"slots": 50
+		},
 		"map_traversal_speed_mps": 2,
 		"min_distance_traveled_for_update": 1,
 		"min_time_before_update_ms": 30,

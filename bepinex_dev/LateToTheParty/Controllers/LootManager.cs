@@ -21,6 +21,7 @@ namespace LateToTheParty.Controllers
     {
         public static bool IsClearing { get; private set; } = false;
         public static bool IsFindingAndDestroyingLoot { get; private set; } = false;
+        public static bool HasInitialLootBeenDestroyed { get; private set; } = false;
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
         private static object lootableContainerLock = new object();
@@ -75,6 +76,7 @@ namespace LateToTheParty.Controllers
             LootInfo.Clear();
             ItemsDroppedByMainPlayer.Clear();
 
+            HasInitialLootBeenDestroyed = false;
             currentLocationName = "";
             destroyedLootSlots = 0;
 
@@ -176,14 +178,19 @@ namespace LateToTheParty.Controllers
 
                 // After loot has initially been destroyed, limit the destruction rate
                 double maxItemsToDestroy = 99999;
-                if (LootInfo.Any(l => l.Value.IsDestroyed))
+                if (HasInitialLootBeenDestroyed)
                 {
-                    maxItemsToDestroy = Math.Floor(ConfigController.Config.DestroyLootDuringRaid.MaxDestroyRate * lastLootDestroyedTimer.ElapsedMilliseconds / 1000.0);
+                    maxItemsToDestroy = Math.Floor(ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Rate * lastLootDestroyedTimer.ElapsedMilliseconds / 1000.0);
                 }
 
                 // Find amount of loot to destroy
                 double targetLootRemainingFraction = LocationSettingsController.GetLootRemainingFactor(timeRemainingFraction);
                 int lootItemsToDestroy = (int)Math.Min(GetNumberOfLootItemsToDestroy(targetLootRemainingFraction), maxItemsToDestroy);
+                if (lootItemsToDestroy > ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items)
+                {
+                    LoggingController.LogInfo("Limiting the number of items to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items);
+                    lootItemsToDestroy = ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items;
+                }
                 if ((lootItemsToDestroy == 0) && (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0))
                 {
                     LoggingController.LogInfo("Max time of " + ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot + "s elapsed since destroying loot. Forcing at least 1 item to be removed...");
@@ -191,14 +198,31 @@ namespace LateToTheParty.Controllers
                 }
                 if (lootItemsToDestroy == 0)
                 {
+                    if (!HasInitialLootBeenDestroyed)
+                    {
+                        LoggingController.LogInfo("Initial loot has been destroyed");
+                        HasInitialLootBeenDestroyed = true;
+                    }
+
                     yield break;
                 }
 
                 // Find amount of loot slots to destroy
                 int targetLootSlotsDestroyed = LocationSettingsController.GetTargetLootSlotsDestroyed(timeRemainingFraction);
                 int targetLootSlotsToDestroy = targetLootSlotsDestroyed - GetTotalDestroyedSlots();
+                if (targetLootSlotsToDestroy > ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots)
+                {
+                    LoggingController.LogInfo("Limiting the number of item slots to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots);
+                    targetLootSlotsToDestroy = ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots;
+                }
                 if (targetLootSlotsToDestroy <= 0)
                 {
+                    if (!HasInitialLootBeenDestroyed)
+                    {
+                        LoggingController.LogInfo("Initial loot has been destroyed");
+                        HasInitialLootBeenDestroyed = true;
+                    }
+
                     yield break;
                 }
 

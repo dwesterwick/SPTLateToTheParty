@@ -91,6 +91,7 @@
     <Compile Include="Configuration\CheckLootAccessibilityConfig.cs" />
     <Compile Include="Configuration\DebugConfig.cs" />
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
+    <Compile Include="Configuration\DestructionEventLimitsConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\FenceStockChangesConfig.cs" />
     <Compile Include="Configuration\MinMaxConfig.cs" />
