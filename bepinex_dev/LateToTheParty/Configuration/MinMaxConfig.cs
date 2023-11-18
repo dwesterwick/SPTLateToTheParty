@@ -19,5 +19,11 @@ namespace LateToTheParty.Configuration
         {
 
         }
+
+        public MinMaxConfig(double min, double max)
+        {
+            Min = min;
+            Max = max;
+        }
     }
 }

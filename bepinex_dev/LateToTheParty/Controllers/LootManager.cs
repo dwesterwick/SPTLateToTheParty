@@ -11,6 +11,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using LateToTheParty.Configuration;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
 using UnityEngine;
@@ -404,7 +405,7 @@ namespace LateToTheParty.Controllers
 
         private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
         {
-            System.Random randomGen = new System.Random();
+            System.Random random = new System.Random();
 
             // Get the loot ranking data from the server, but this only needs to be done once
             if (ConfigController.LootRanking == null)
@@ -420,17 +421,50 @@ namespace LateToTheParty.Controllers
                 || (ConfigController.LootRanking.Items.Count == 0)
             )
             {
-                return loot.OrderBy(i => randomGen.NextDouble());
+                return loot.OrderBy(i => random.NextDouble());
             }
 
             // Determine how much randomness to apply to loot sorting
-            double maxValue = ConfigController.LootRanking.Items.Max(i => i.Value.Value.HasValue ? i.Value.Value.Value : 0);
-            double minValue = ConfigController.LootRanking.Items.Min(i => i.Value.Value.HasValue ? i.Value.Value.Value : 0);
-            double lootValueRange = maxValue - minValue;
+            MinMaxConfig lootValueRangeData = getLootValueRange(loot);
+            double lootValueRange = lootValueRangeData.Max - lootValueRangeData.Min;
             double lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
 
             // Return loot sorted by value but with randomness applied
-            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + randomGen.Range(-1, 1) * lootValueRandomFactor);
+            return loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + random.Range(-1, 1) * lootValueRandomFactor);
+        }
+
+        private static MinMaxConfig getLootValueRange(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
+        {
+            double min = double.MaxValue;
+            double max = double.MinValue;
+
+            foreach (KeyValuePair<Item, Models.LootInfo> lootItem in loot)
+            {
+                if (!ConfigController.LootRanking.Items.ContainsKey(lootItem.Key.TemplateId))
+                {
+                    LoggingController.LogWarning("Cannot find " + lootItem.Key.LocalizedName() + " in loot-ranking data.");
+                    continue;
+                }
+
+                double? value = ConfigController.LootRanking.Items[lootItem.Key.TemplateId].Value;
+                if (!value.HasValue)
+                {
+                    LoggingController.LogWarning("The value of " + lootItem.Key.LocalizedName() + " is null in the loot-ranking data.");
+                    continue;
+                }
+
+                if (min > value.Value)
+                {
+                    min = value.Value;
+                }
+
+                if (max < value.Value)
+                {
+                    max = value.Value;
+                }
+            }
+
+            return new MinMaxConfig(min, max);
         }
 
         private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
