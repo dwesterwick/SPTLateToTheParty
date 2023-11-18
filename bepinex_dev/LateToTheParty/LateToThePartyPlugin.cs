@@ -50,7 +50,7 @@ namespace LateToTheParty
                     this.GetOrAddComponent<LootDestroyerController>();
                 }
 
-                if (ConfigController.Config.AdjustBotSpawnChances.Enabled)
+                if (ConfigController.Config.AdjustBotSpawnChances.Enabled && ConfigController.Config.AdjustBotSpawnChances.AdjustPMCConversionChances)
                 {
                     this.GetOrAddComponent<BotConversionController>();
                 }

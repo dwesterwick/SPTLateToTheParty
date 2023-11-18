@@ -22,6 +22,7 @@ namespace LateToTheParty.Controllers
         public static bool IsClearing { get; private set; } = false;
         public static bool IsTogglingDoors { get; private set; } = false;
         public static bool IsFindingDoors { get; private set; } = false;
+        public static bool HasToggledInitialDoors { get; private set; } = false;
         public static int InteractiveLayer { get; set; }
 
         private static List<Door> toggleableDoors = new List<Door>();
@@ -30,10 +31,10 @@ namespace LateToTheParty.Controllers
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static Stopwatch doorOpeningsTimer = new Stopwatch();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
-        private static bool hasToggledInitialDoors = false;
-
+        
         public static int ToggleableDoorCount
         {
             get { return IsFindingDoors ? 0 : toggleableDoors.Count; }
@@ -60,6 +61,18 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 StartCoroutine(Clear());
+                doorOpeningsTimer.Reset();
+
+                return;
+            }
+
+            // If the setting is enabled, only allow loot to be destroyed for a certain time after spawning
+            if
+            (
+                ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
+                && (doorOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit)
+            )
+            {
                 return;
             }
 
@@ -70,7 +83,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure enough time has passed since the last door event
-            if (hasToggledInitialDoors && (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000))
+            if (HasToggledInitialDoors && (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000))
             {
                 return;
             }
@@ -93,18 +106,24 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Do not change doors too early or late into the raid
-            if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
-            {
-                return;
-            }
-
             // Determine how many doors to toggled accounting for the raid time elapsed when the player spawns in
             doorsToToggle = (int)Math.Max(1, Math.Round(eligibleDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
-            if (!hasToggledInitialDoors)
+            if (!HasToggledInitialDoors)
             {
                 doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
                 doorsToToggle = Math.Min(doorsToToggle, eligibleDoors.Count);
+            }
+
+            // Do not change doors too early or late into the raid
+            if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
+            {
+                if (!HasToggledInitialDoors)
+                {
+                    LoggingController.LogInfo("Doors cannot be opened at this time in the raid");
+                    HasToggledInitialDoors = true;
+                }
+
+                return;
             }
 
             // Ensure there are doors to toggle
@@ -116,6 +135,7 @@ namespace LateToTheParty.Controllers
             // Try to change the state of doors
             StartCoroutine(ToggleRandomDoors(doorsToToggle));
             updateTimer.Restart();
+            doorOpeningsTimer.Start();
         }
 
         public static IEnumerator Clear()
@@ -146,7 +166,7 @@ namespace LateToTheParty.Controllers
             allowedToToggleDoor.Clear();
             updateTimer.Restart();
 
-            hasToggledInitialDoors = false;
+            HasToggledInitialDoors = false;
 
             IsClearing = false;
         }
@@ -248,7 +268,7 @@ namespace LateToTheParty.Controllers
             finally
             {
                 IsTogglingDoors = false;
-                hasToggledInitialDoors = true;
+                HasToggledInitialDoors = true;
             }
         }
 

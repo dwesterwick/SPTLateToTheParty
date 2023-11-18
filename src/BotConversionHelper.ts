@@ -39,10 +39,10 @@ export class BotConversionHelper
         BotConversionHelper.simulatedTimeRemaining = timeRemaining;
 
         // Ensure there isn't already a timer running
-        if (!BotConversionHelper.timerRunning)
+        if (!BotConversionHelper.timerRunning && modConfig.adjust_bot_spawn_chances.adjust_pmc_conversion_chances)
         {
             // Start a recurring task to update bot spawn settings
-            BotConversionHelper.timerHandle = setInterval(BotConversionHelper.simulateRaidTime, 1000 * modConfig.adjust_bot_spawn_chances.update_rate);
+            BotConversionHelper.timerHandle = setInterval(BotConversionHelper.simulateRaidTime, 1000 * modConfig.adjust_bot_spawn_chances.pmc_conversion_update_rate);
         }
         
         BotConversionHelper.commonUtils.logInfo("Updated escape time");
@@ -130,6 +130,6 @@ export class BotConversionHelper
         BotConversionHelper.adjustPmcConversionChance(timeFactor);
 
         // Decrement the simulated raid time to prepare for the next cycle
-        BotConversionHelper.simulatedTimeRemaining -= modConfig.adjust_bot_spawn_chances.update_rate;
+        BotConversionHelper.simulatedTimeRemaining -= modConfig.adjust_bot_spawn_chances.pmc_conversion_update_rate;
     }
 }

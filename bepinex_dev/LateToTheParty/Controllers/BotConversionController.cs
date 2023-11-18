@@ -15,11 +15,6 @@ namespace LateToTheParty.Controllers
 
         private void Update()
         {
-            if (!ConfigController.Config.AdjustBotSpawnChances.Enabled)
-            {
-                return;
-            }
-
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 EscapeTimeShared = false;

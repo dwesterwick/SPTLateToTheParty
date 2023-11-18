@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("adjust_raid_times")]
         public AdjustRaidTimesConfig AdjustRaidTimes { get; set; } = new AdjustRaidTimesConfig();
 
+        [JsonProperty("only_make_changes_just_after_spawning")]
+        public OnlyMakeChangesJustAfterSpawningConfig OnlyMakeChangesJustAfterSpawning { get; set; } = new OnlyMakeChangesJustAfterSpawningConfig();
+
         [JsonProperty("destroy_loot_during_raid")]
         public DestroyLootDuringRaidConfig DestroyLootDuringRaid { get; set; } = new DestroyLootDuringRaidConfig();
 

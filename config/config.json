@@ -38,6 +38,10 @@
 		"adjust_bot_waves": true,
 		"can_reduce_starting_loot": true
 	},
+	"only_make_changes_just_after_spawning": {
+		"enabled": false,
+		"time_limit": 30
+	},
 	"destroy_loot_during_raid" : {
 		"enabled": true,
 		"exclusion_radius": 40,
@@ -160,9 +164,10 @@
 		"max_calc_time_per_frame_ms": 3
 	},
 	"adjust_bot_spawn_chances": {
-		"enabled": false,
+		"enabled": true,
 		"adjust_bosses": true,
-		"update_rate": 10,
+		"adjust_pmc_conversion_chances": false,
+		"pmc_conversion_update_rate": 10,
 		"excluded_bosses": [ "sptBear", "sptUsec" ]
 	},
 	"trader_stock_changes": {

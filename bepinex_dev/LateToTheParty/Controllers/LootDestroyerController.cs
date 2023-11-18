@@ -10,7 +10,8 @@ namespace LateToTheParty.Controllers
 {
     public class LootDestroyerController : MonoBehaviour
     {
-        private static Vector3 lastUpdatePosition = Vector3.zero;        
+        private static Vector3 lastUpdatePosition = Vector3.zero;
+        private static Stopwatch lootDestructionTimer = new Stopwatch();
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
         private void Update()
@@ -35,7 +36,18 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 StartCoroutine(LootManager.Clear());
+                lootDestructionTimer.Reset();
 
+                return;
+            }
+
+            // If the setting is enabled, only allow loot to be destroyed for a certain time after spawning
+            if
+            (
+                ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
+                && (lootDestructionTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit)
+            )
+            {
                 return;
             }
 
@@ -69,10 +81,17 @@ namespace LateToTheParty.Controllers
                 LootManager.FindAllLootableContainers(LocationSettingsController.LastLocationSelected.Name);
             }
 
+            // Wait until doors have been opened to ensure loot will be destroyed behind previously locked doors
+            if (!DoorController.HasToggledInitialDoors)
+            {
+                return;
+            }
+
             // Spread the work out across multiple frames to avoid stuttering
             StartCoroutine(LootManager.FindAndDestroyLoot(yourPosition, timeRemainingFraction, raidTimeElapsed));
             lastUpdatePosition = yourPosition;
             updateTimer.Restart();
+            lootDestructionTimer.Start();
         }
     }
 }
