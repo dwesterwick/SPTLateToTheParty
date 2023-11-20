@@ -46,6 +46,7 @@ namespace LateToTheParty.Controllers
             (
                 ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
                 && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.LootDestruction
+                && LootManager.HasInitialLootBeenDestroyed
                 && (lootDestructionTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit)
             )
             {

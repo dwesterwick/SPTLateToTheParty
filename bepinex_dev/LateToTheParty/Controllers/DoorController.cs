@@ -35,8 +35,6 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
 
-        private static bool shouldlimitEvents => ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled && (doorOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit);
-
         public static int ToggleableDoorCount
         {
             get { return IsFindingDoors ? 0 : toggleableDoors.Count; }
@@ -189,7 +187,7 @@ namespace LateToTheParty.Controllers
                 if (door.KeyId.Length > 0)
                 {
                     // Skip the event if changes need to be limited after a certain time has elapsed after spawning
-                    if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningLockedDoors)
+                    if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningLockedDoors)
                     {
                         return true;
                     }
@@ -206,7 +204,7 @@ namespace LateToTheParty.Controllers
                 else
                 {
                     // Skip the event if changes need to be limited after a certain time has elapsed after spawning
-                    if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
+                    if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
                     {
                         return true;
                     }
@@ -230,7 +228,7 @@ namespace LateToTheParty.Controllers
             if ((door.DoorState != EDoorState.Open) && (door.DoorState != EDoorState.Locked) && (newState == EDoorState.Open))
             {
                 // Skip the event if changes need to be limited after a certain time has elapsed after spawning
-                if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
+                if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
                 {
                     return true;
                 }
@@ -247,7 +245,7 @@ namespace LateToTheParty.Controllers
             if ((door.DoorState == EDoorState.Open) && (newState == EDoorState.Shut))
             {
                 // Skip the event if changes need to be limited after a certain time has elapsed after spawning
-                if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.ClosingDoors)
+                if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.ClosingDoors)
                 {
                     return true;
                 }
@@ -453,5 +451,15 @@ namespace LateToTheParty.Controllers
                 }
             }
         }
+
+        private static bool shouldlimitEvents()
+        {
+            bool shouldLimit = HasToggledInitialDoors
+                && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
+                && (doorOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit);
+
+            return shouldLimit;
+        }
+
     }
 }
