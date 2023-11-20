@@ -15,6 +15,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("time_limit")]
         public double TimeLimit { get; set; } = 30;
 
+        [JsonProperty("affected_systems")]
+        public OnlyMakeChangesAfterSpawningAffectedSystemsConfig AffectedSystems { get; set; } = new OnlyMakeChangesAfterSpawningAffectedSystemsConfig();
+
         public OnlyMakeChangesJustAfterSpawningConfig()
         {
 

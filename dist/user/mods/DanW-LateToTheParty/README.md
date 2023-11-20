@@ -40,6 +40,13 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **adjust_raid_times.adjust_bot_waves**: If "missed" bot waves should spawn in within the first minute of the raid if you spawn into the raid late. If you notice more stuttering when bots spawn into the map, you may want to disable this. 
 * **adjust_raid_times.can_reduce_starting_loot**: If the initial loot on the map should be reduced if you spawn in late. This setting is ignored if **destroy_loot_during_raid.enabled=true**.
 
+* **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
+* **only_make_changes_just_after_spawning.time_limit**: The number of seconds that changes are allowed to be made by **only_make_changes_just_after_spawning.affected_systems** after you spawn into the raid. 
+**only_make_changes_just_after_spawning.affected_systems.loot_destruction**: If loot destruction should only occur for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
+**only_make_changes_just_after_spawning.affected_systems.opening_unlocked_doors**: If unlocked doors should only be opened for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
+**only_make_changes_just_after_spawning.affected_systems.opening_locked_doors**: If locked doors should only be opened for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
+**only_make_changes_just_after_spawning.affected_systems.closing_doors**: If doors should only be closed for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
+
 * **destroy_loot_during_raid.enabled**: If the mod is allowed to remove loot throughout the raid. If you spawn into the raid late, loot will be immediately removed from the map until it reaches the target amount for the fraction of time remaining in the raid. This is **true** by default. 
 * **destroy_loot_during_raid.exclusion_radius**: The radius (in meters) from you within which loot is not allowed to be despawned. By default, this is set to 40 meters. 
 * **destroy_loot_during_raid.exclusion_radius_bots**: The radius (in meters) from any bot within which loot is not allowed to be despawned. By default, this is set to 25 meters. 

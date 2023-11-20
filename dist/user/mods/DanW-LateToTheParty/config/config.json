@@ -40,7 +40,13 @@
 	},
 	"only_make_changes_just_after_spawning": {
 		"enabled": false,
-		"time_limit": 30
+		"time_limit": 30,
+		"affected_systems" : {
+			"loot_destruction": true,
+			"opening_unlocked_doors": true,
+			"opening_locked_doors": false,
+			"closing_doors": true
+		}
 	},
 	"destroy_loot_during_raid" : {
 		"enabled": true,

@@ -95,6 +95,7 @@
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
     <Compile Include="Configuration\FenceStockChangesConfig.cs" />
     <Compile Include="Configuration\MinMaxConfig.cs" />
+    <Compile Include="Configuration\OnlyMakeChangesAfterSpawningAffectedSystemsConfig.cs" />
     <Compile Include="Configuration\OnlyMakeChangesJustAfterSpawningConfig.cs" />
     <Compile Include="Configuration\TraderStockChangesConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />

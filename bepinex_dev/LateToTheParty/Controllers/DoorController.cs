@@ -34,7 +34,9 @@ namespace LateToTheParty.Controllers
         private static Stopwatch doorOpeningsTimer = new Stopwatch();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int doorsToToggle = 1;
-        
+
+        private static bool shouldlimitEvents => ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled && (doorOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit);
+
         public static int ToggleableDoorCount
         {
             get { return IsFindingDoors ? 0 : toggleableDoors.Count; }
@@ -54,6 +56,9 @@ namespace LateToTheParty.Controllers
 
             if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
             {
+                // Need to do this or it will prevent loot from being despawned
+                HasToggledInitialDoors = true;
+
                 return;
             }
 
@@ -63,16 +68,6 @@ namespace LateToTheParty.Controllers
                 StartCoroutine(Clear());
                 doorOpeningsTimer.Reset();
 
-                return;
-            }
-
-            // If the setting is enabled, only allow loot to be destroyed for a certain time after spawning
-            if
-            (
-                ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
-                && (doorOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit)
-            )
-            {
                 return;
             }
 
@@ -176,7 +171,7 @@ namespace LateToTheParty.Controllers
             return toggleableDoors.Any(d => d.Id == door.Id);
         }
 
-        public bool ToggleDoor(Door door, EDoorState newState, bool canUnlock = true)
+        public bool ToggleDoor(Door door, EDoorState newState)
         {
             // Check if the door is already in the desired state
             if (newState == EDoorState.Shut && (door.DoorState == EDoorState.Shut || door.DoorState == EDoorState.Locked))
@@ -191,13 +186,14 @@ namespace LateToTheParty.Controllers
             // Unlock or "breach" the door if necessary
             if ((door.DoorState == EDoorState.Locked) && (newState == EDoorState.Open))
             {
-                if (!canUnlock)
-                {
-                    return false;
-                }
-
                 if (door.KeyId.Length > 0)
                 {
+                    // Skip the event if changes need to be limited after a certain time has elapsed after spawning
+                    if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningLockedDoors)
+                    {
+                        return true;
+                    }
+
                     // Check if the door can be unlocked based on chance
                     System.Random randomObj = new System.Random();
                     if (randomObj.Next(0, 100) > ConfigController.Config.OpenDoorsDuringRaid.ChanceOfUnlockingDoors)
@@ -209,6 +205,12 @@ namespace LateToTheParty.Controllers
                 }
                 else
                 {
+                    // Skip the event if changes need to be limited after a certain time has elapsed after spawning
+                    if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
+                    {
+                        return true;
+                    }
+
                     LoggingController.LogInfo("Preparing to breach door: " + door.Id);
                 }
 
@@ -227,6 +229,12 @@ namespace LateToTheParty.Controllers
 
             if ((door.DoorState != EDoorState.Open) && (door.DoorState != EDoorState.Locked) && (newState == EDoorState.Open))
             {
+                // Skip the event if changes need to be limited after a certain time has elapsed after spawning
+                if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
+                {
+                    return true;
+                }
+
                 LoggingController.LogInfo("Opening door: " + door.Id);
                 //door.DoorState = EDoorState.Open;
                 //door.OnEnable();
@@ -238,6 +246,12 @@ namespace LateToTheParty.Controllers
 
             if ((door.DoorState == EDoorState.Open) && (newState == EDoorState.Shut))
             {
+                // Skip the event if changes need to be limited after a certain time has elapsed after spawning
+                if (shouldlimitEvents && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.ClosingDoors)
+                {
+                    return true;
+                }
+
                 LoggingController.LogInfo("Closing door: " + door.Id);
                 //door.DoorState = EDoorState.Open;
                 //door.OnEnable();
