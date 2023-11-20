@@ -433,7 +433,7 @@ namespace LateToTheParty.Controllers
                 lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
             }
 
-            LoggingController.LogInfo("Randomness factor: " + lootValueRandomFactor);
+            //LoggingController.LogInfo("Randomness factor: " + lootValueRandomFactor);
 
             // Return loot sorted by value but with randomness applied
             IEnumerable<KeyValuePair<Item, Models.LootInfo>> sortedLoot = loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + (random.Range(-1, 1) * lootValueRandomFactor));
