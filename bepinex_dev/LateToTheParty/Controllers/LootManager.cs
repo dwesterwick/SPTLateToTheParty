@@ -257,8 +257,9 @@ namespace LateToTheParty.Controllers
                     double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
 
                     string slotsDestroyedText = "Destroying " + itemsToDestroy.Count + "/" + maxItemsToDestroy + " items filling " + slotsToDestroy + "/" + targetLootSlotsToDestroy + " slots";
-                    string lootFractionDestroyedText = "Loot remaining fraction: " + Math.Round(GetCurrentLootRemainingFraction(), 4) + "/" + Math.Round(targetLootRemainingFraction, 4);
-                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. " + slotsDestroyedText + ". " + lootFractionDestroyedText);
+                    string lootFractionDestroyedText = Math.Round(GetCurrentLootRemainingFraction()  * 100.0, 2) + "%/" + Math.Round(targetLootRemainingFraction * 100.0, 2) + "%";
+                    string lootSlotsDestroyedText = GetTotalDestroyedSlots() + "/" + targetTotalLootSlotsDestroyed + " slots.";
+                    LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. " + slotsDestroyedText + ". Loot remaining: " + lootFractionDestroyedText + ", " + lootSlotsDestroyedText);
                 }
 
                 // Destroy items
