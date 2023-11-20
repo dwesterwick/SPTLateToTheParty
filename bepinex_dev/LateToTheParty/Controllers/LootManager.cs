@@ -211,8 +211,8 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Find amount of loot slots to destroy
-                int targetLootSlotsDestroyed = LocationSettingsController.GetTargetLootSlotsDestroyed(timeRemainingFraction);
-                int targetLootSlotsToDestroy = targetLootSlotsDestroyed - GetTotalDestroyedSlots();
+                int targetTotalLootSlotsDestroyed = LocationSettingsController.GetTargetLootSlotsDestroyed(timeRemainingFraction);
+                int targetLootSlotsToDestroy = targetTotalLootSlotsDestroyed - GetTotalDestroyedSlots();
                 if (targetLootSlotsToDestroy > ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots)
                 {
                     LoggingController.LogInfo("Limiting the number of item slots to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots);
@@ -256,7 +256,7 @@ namespace LateToTheParty.Controllers
                     int slotsToDestroy = itemsToDestroy.Sum(i => i.GetItemSlots());
                     double percentAccessible = Math.Round(100.0 * remainingItems.Where(i => i.Value.PathData.IsAccessible).Count() / remainingItems.Count(), 1);
 
-                    string slotsDestroyedText = "Destroying " + itemsToDestroy.Count + "/" + maxItemsToDestroy + " items filling " + slotsToDestroy + "/" + targetLootSlotsToDestroy + " slots (Target: " + targetLootSlotsDestroyed + ")";
+                    string slotsDestroyedText = "Destroying " + itemsToDestroy.Count + "/" + maxItemsToDestroy + " items filling " + slotsToDestroy + "/" + targetLootSlotsToDestroy + " slots";
                     string lootFractionDestroyedText = "Loot remaining fraction: " + Math.Round(GetCurrentLootRemainingFraction(), 4) + "/" + Math.Round(targetLootRemainingFraction, 4);
                     LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. " + slotsDestroyedText + ". " + lootFractionDestroyedText);
                 }
