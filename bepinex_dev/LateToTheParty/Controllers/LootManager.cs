@@ -114,6 +114,12 @@ namespace LateToTheParty.Controllers
 
         public static void RegisterItemDroppedByPlayer(Item item, bool preventFromDespawning = false)
         {
+            if (item == null)
+            {
+                LoggingController.LogError("Cannot register a null item dropped by a player or bot");
+                return;
+            }
+
             // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
             foreach (Item relevantItem in item.FindAllItemsInContainer(true))
             {
@@ -132,9 +138,22 @@ namespace LateToTheParty.Controllers
 
         public static void RegisterItemPickedUpByPlayer(Item item)
         {
+            if (item == null)
+            {
+                LoggingController.LogError("Cannot register a null item picked up by a player or bot");
+                return;
+            }
+
             // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
             foreach (Item relevantItem in item.ToEnumerable().FindAllRelatedItems())
             {
+                if (!LootInfo.ContainsKey(relevantItem))
+                {
+                    LoggingController.LogWarning("Item " + relevantItem.LocalizedName() + " has not been discovered in the loot pool. Adding to dropped-item list instead.");
+                    ItemsDroppedByMainPlayer.Add(relevantItem);
+                    continue;
+                }
+
                 //LoggingController.LogInfo("Checking for picked-up item in eligible loot: " + relevantItem.LocalizedName());
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))
                 {
@@ -147,7 +166,6 @@ namespace LateToTheParty.Controllers
                     LootInfo[relevantItem].IsInPlayerInventory = true;
                     LootInfo[item].PathData.Clear();
                     LootInfo[relevantItem].PathData.Clear();
-                    //LootInfo.Remove(relevantItem);
                 }
             }
         }
