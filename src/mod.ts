@@ -401,6 +401,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private disableSPTRaidTimeReductions(): void
     {
         this.commonUtils.logInfo("Disabling SPT raid-time reduction system...");
+
+        for (const map in this.locationConfig.scavRaidTimeSettings.maps)
+        {
+            this.locationConfig.scavRaidTimeSettings.maps[map].reducedChancePercent = 0;
+        }
     }
 
     private updateScavTimer(sessionId: string): void
