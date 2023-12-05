@@ -15,8 +15,8 @@ namespace LateToTheParty.Configuration
         [JsonProperty("debug")]
         public DebugConfig Debug { get; set; } = new DebugConfig();
 
-        [JsonProperty("adjust_raid_times")]
-        public AdjustRaidTimesConfig AdjustRaidTimes { get; set; } = new AdjustRaidTimesConfig();
+        [JsonProperty("scav_raid_adjustments")]
+        public ScavRaidAdjustmentsConfig ScavRaidAdjustments { get; set; } = new ScavRaidAdjustmentsConfig();
 
         [JsonProperty("only_make_changes_just_after_spawning")]
         public OnlyMakeChangesJustAfterSpawningConfig OnlyMakeChangesJustAfterSpawning { get; set; } = new OnlyMakeChangesJustAfterSpawningConfig();

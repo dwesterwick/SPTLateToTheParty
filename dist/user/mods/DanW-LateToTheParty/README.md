@@ -1,10 +1,9 @@
-Make your SPT experience closer to live Tarkov with loot disappearing and doors opening throughout the raid. You will now spawn in late as a Scav, PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
+Make your SPT experience closer to live Tarkov with loot disappearing and doors opening throughout the raid. PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
 * Doors will randomly open and close throughout the raid to simulate players moving through the map (thanks to help from DrakiaXYZ!). If you're lucky, locked doors may be opened for you...
 * Compared to vanilla SPT, PMC's are more likely to spawn toward the beginning of the raid and less likely to spawn toward the end of it. 
-* Your Scav will spawn into the raid with an unknown amount of time remaining in it. However, that also means you may be able to run directly to extract and get a "Survived" status if enough time has passed in the raid. There is also a small chance that your PMC will spawn into the raid slightly late. 
 * If you spawn into the map late as a Scav, bosses are less likely to spawn. 
 * If you spawn into the map late as a Scav, vehicle extracts are less likely to be available. 
 * Trader stock reduces over time (until it resets), and desirable items (like MP-133's) can sell out
@@ -31,14 +30,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **debug.loot_path_visualization.collision_point_radius**: The radius (in meters) for the circles used in **debug.loot_path_visualization.show_obstacle_collision_points**.
 * **debug.loot_path_visualization.show_door_obstacles**: Draw an ellipsoidal outline around doors that should block NavMesh pathing either because they're locked or something is currently interacting with them. Outlines are updated every **destroy_loot_during_raid.check_loot_accessibility.door_obstacle_update_time** seconds. The outline color will be yellow.
 * **debug.loot_path_visualization.door_obstacle_min_radius**: Ensures the radii for ellipsoids drawn for **debug.loot_path_visualization.show_door_obstacles** are at least this value (in meters). Otherwise, the outlines may be hard to see. 
-* **adjust_raid_times.enabled**: If the mod is allowed to make you spawn into a raid late (namely as a Scav). This is **true** by default. 
-* **adjust_raid_times.scav.modification_chance**: The probability (0-1) of spawning into the raid late as a Scav.
-* **adjust_raid_times.scav.max_time_remaining**: The maximum time remaining in the raid (as a fraction of the original raid time) if you spawn in late as a Scav. 
-* **adjust_raid_times.scav.min_time_remaining**: The minimum time remaining in the raid (as a fraction of the original raid time) if you spawn in late as a Scav. 
-* **adjust_raid_times.pmc.***: Same as above but for your PMC character. 
-* **adjust_raid_times.adjust_vex_chance**: If the probability that a vehicle extraction is available can be changed if you spawn in late.
-* **adjust_raid_times.adjust_bot_waves**: If "missed" bot waves should spawn in within the first minute of the raid if you spawn into the raid late. If you notice more stuttering when bots spawn into the map, you may want to disable this. 
-* **adjust_raid_times.can_reduce_starting_loot**: If the initial loot on the map should be reduced if you spawn in late. This setting is ignored if **destroy_loot_during_raid.enabled=true**.
+* **scav_raid_adjustments.adjust_vex_chance**: If the probability that a vehicle extraction is available can be changed if you spawn in late.
 
 * **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
 * **only_make_changes_just_after_spawning.time_limit**: The number of seconds that changes are allowed to be made by **only_make_changes_just_after_spawning.affected_systems** after you spawn into the raid. 
@@ -172,11 +164,9 @@ The loot-ranking system uses the following logic to determine the "value" of eac
 After the loot-ranking data is generated, it's saved in *user\mods\DanW-LateToTheParty-#.#.#\db*. The ranking data can then be viewed using *user\mods\DanW-LateToTheParty-#.#.#\db\LootRankingDataReader.exe*. The program requires .NET 6.0 to run. 
 
 If you're using this mod along with Kobrakon's Immersive Raids mod, please change the following in *config.json*:
-* **adjust_raid_times.enabled** to false
 * **destroy_loot_during_raid.max_time_without_destroying_any_loot** to any value you want. This is the frequency (in seconds) at which an item is removed from the map. If this value is small and you stay in the raid for a long time, you'll eventually have no more loot on the map.
 
 Known issues:
-* If **debug.enabled=true**, you cannot press the "Ready" button early when loading into a map or the script that changes the raid time (and related settings) won't run. However, if **debug.enabled=false**, the script is called twice unless you press "Ready" early. 
 * Any locked door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.

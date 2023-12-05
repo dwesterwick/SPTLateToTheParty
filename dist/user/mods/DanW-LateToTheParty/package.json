@@ -1,10 +1,10 @@
 {
     "name": "LateToTheParty",
-    "version": "1.4.1",
+    "version": "2.0.0",
     "main": "src/mod.js",
     "license": "MIT",
     "author": "DanW",
-    "akiVersion": ">=3.7.1",
+    "akiVersion": ">=3.7.4",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"

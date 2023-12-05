@@ -69,6 +69,11 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            if (!LocationSettingsController.HasRaidStarted)
+            {
+                return;
+            }
+
             // Wait until the previous task completes
             if (IsTogglingDoors || IsFindingDoors)
             {

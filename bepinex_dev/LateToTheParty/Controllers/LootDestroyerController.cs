@@ -41,6 +41,11 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            if (!LocationSettingsController.HasRaidStarted)
+            {
+                return;
+            }
+
             // If the setting is enabled, only allow loot to be destroyed for a certain time after spawning
             if
             (
@@ -83,7 +88,7 @@ namespace LateToTheParty.Controllers
             // This should only be run once to generate the list of lootable containers in the map
             if (LootManager.LootableContainerCount == 0)
             {
-                LootManager.FindAllLootableContainers(LocationSettingsController.LastLocationSelected.Name);
+                LootManager.FindAllLootableContainers(LocationSettingsController.CurrentLocation.Name);
             }
 
             // Wait until doors have been opened to ensure loot will be destroyed behind previously locked doors

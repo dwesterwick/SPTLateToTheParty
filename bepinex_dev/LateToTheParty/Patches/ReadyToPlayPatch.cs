@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
 using EFT;
+using EFT.UI.Matchmaker;
 
 namespace LateToTheParty.Patches
 {
@@ -11,28 +12,13 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            // Method 45 always runs, but sometimes twice. Method 42 runs before pressing "Ready", but won't work if you press "Ready" early.
-            string methodName = "method_48";
-            if (Controllers.ConfigController.Config.Debug.Enabled)
-            {
-                methodName = "method_45";
-            }
-
-            return typeof(MainMenuController).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            return typeof(MatchmakerTimeHasCome).GetMethod("Show", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(bool __result, RaidSettings ___raidSettings_0)
+        private static void PatchPostfix(ISession session, RaidSettings raidSettings)
         {
-            // Don't bother running the code if the game wouldn't allow you into a raid anyway
-            if (!__result)
-            {
-                return;
-            }
-
-            Controllers.LocationSettingsController.RestoreSettings(___raidSettings_0.SelectedLocation);
-
-            //Controllers.LocationSettingsController.ModifyLocationSettings(___raidSettings_0.SelectedLocation, ___raidSettings_0.IsScav);
+            Controllers.LocationSettingsController.CacheLocationSettings(raidSettings.SelectedLocation);
         }
     }
 }
