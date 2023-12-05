@@ -317,6 +317,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             return;
         }
 
+        if (modConfig.adjust_raid_times.enabled)
+        {
+            this.disableSPTRaidTimeReductions();
+        }
+
         // Adjust parameters to make debugging easier
         if (modConfig.debug.enabled)
         {
@@ -391,6 +396,11 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         }
 
         
+    }
+
+    private disableSPTRaidTimeReductions(): void
+    {
+        this.commonUtils.logInfo("Disabling SPT raid-time reduction system...");
     }
 
     private updateScavTimer(sessionId: string): void
