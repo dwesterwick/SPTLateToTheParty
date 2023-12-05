@@ -23,7 +23,7 @@ namespace LateToTheParty.Controllers
         public static bool IsTogglingDoors { get; private set; } = false;
         public static bool IsFindingDoors { get; private set; } = false;
         public static bool HasToggledInitialDoors { get; private set; } = false;
-        public static int InteractiveLayer { get; set; }
+        public static int InteractiveLayer { get; set; } = LayerMask.NameToLayer("Interactive");
 
         private static List<Door> toggleableDoors = new List<Door>();
         private static List<Door> eligibleDoors = new List<Door>();
@@ -81,9 +81,13 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
-            float escapeTimeSec = GClass1368.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
-            float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
+            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
+            {
+                return;
+            }
+
+            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+            float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
 
             // Don't run the script before the raid begins
             if (raidTimeElapsed < 3)
@@ -108,7 +112,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Do not change doors too early or late into the raid
-            if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (escapeTimeSec < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
+            if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (raidTimeRemaining < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
             {
                 if (!HasToggledInitialDoors)
                 {

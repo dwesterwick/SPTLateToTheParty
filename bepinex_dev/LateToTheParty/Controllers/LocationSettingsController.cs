@@ -32,6 +32,12 @@ namespace LateToTheParty.Controllers
             HasRaidStarted = false;
         }
 
+        public static void SetCurrentLocation(LocationSettingsClass.Location location)
+        {
+            LastLocationSelected = location;
+            LastOriginalEscapeTime = LastLocationSelected.EscapeTimeLimit;
+        }
+
         public static void ModifyLocationSettings(LocationSettingsClass.Location location, bool isScavRun)
         {
             HasRaidStarted = false;
@@ -195,26 +201,82 @@ namespace LateToTheParty.Controllers
             return (int)Math.Round(GetTargetPlayersFullOfLoot(timeRemainingFactor) * totalSlots);
         }
 
-        private static void RestoreSettings(LocationSettingsClass.Location location)
+        public static void AdjustVExChance(LocationSettingsClass.Location location, double timeReductionFactor)
+        {
+            if (!ConfigController.Config.AdjustRaidTimes.AdjustVexChance)
+            {
+                return;
+            }
+
+            // Ensure at least one pair exists in the array
+            if (ConfigController.Config.VExChanceReductions.Length == 0)
+            {
+                return;
+            }
+
+            if (CarExtractNames.Length == 0)
+            {
+                LoggingController.Logger.LogInfo("Getting car extract names...");
+                CarExtractNames = ConfigController.GetCarExtractNames();
+            }
+
+            // Calculate the reduction in VEX chance
+            double reductionFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
+
+            // Find all VEX extracts and adjust their chances proportionally
+            foreach (GClass1135 exit in location.exits)
+            {
+                if (CarExtractNames.Contains(exit.Name))
+                {
+                    exit.Chance *= (float)reductionFactor;
+                    LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + Math.Round(exit.Chance, 1) + "%");
+                }
+            }
+        }
+
+        public static void AdjustBossSpawnChances(LocationSettingsClass.Location location, double timeReductionFactor)
+        {
+            if (!ConfigController.Config.AdjustBotSpawnChances.Enabled || !ConfigController.Config.AdjustBotSpawnChances.AdjustBosses)
+            {
+                return;
+            }
+
+            // Calculate the reduction in boss spawn chances
+            float reductionFactor = (float)InterpolateForFirstCol(ConfigController.Config.BossSpawnChanceMultipliers, timeReductionFactor);
+
+            foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
+            {
+                if (ConfigController.Config.AdjustBotSpawnChances.ExcludedBosses.Contains(bossLocation.BossName))
+                {
+                    continue;
+                }
+
+                bossLocation.BossChance *= reductionFactor;
+                LoggingController.LogInfo("Boss " + bossLocation.BossName + " spawn adjusted to " + Math.Round(bossLocation.BossChance, 1) + "%");
+            }
+        }
+
+        public static void RestoreSettings(LocationSettingsClass.Location location)
         {
             if (OriginalSettings.ContainsKey(location.Id))
             {
                 LoggingController.LogInfo("Recalling original raid settings for " + location.Name + "...");
 
-                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+                //location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
                 foreach (GClass1135 exit in location.exits)
                 {
-                    if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
+                    /*if (exit.PassageRequirement == EFT.Interactive.ERequirementState.Train)
                     {
                         exit.Count = OriginalSettings[location.Id].TrainWaitTime;
                         exit.MinTime = OriginalSettings[location.Id].TrainMinTime;
                         exit.MaxTime = OriginalSettings[location.Id].TrainMaxTime;
-                    }
+                    }*/
 
                     if (CarExtractNames.Contains(exit.Name))
                     {
                         exit.Chance = OriginalSettings[location.Id].VExChance;
+                        LoggingController.LogInfo("Recalling original raid settings for " + location.Name + "...Restored VEX chance to " + exit.Chance);
                     }
                 }
 
@@ -226,6 +288,7 @@ namespace LateToTheParty.Controllers
                 for (int i = 0; i < location.BossLocationSpawn.Length; i++)
                 {
                     location.BossLocationSpawn[i].BossChance = OriginalSettings[location.Id].BossSpawnChances[i];
+                    LoggingController.LogInfo("Recalling original raid settings for " + location.Name + "...Restored " + location.BossLocationSpawn[i].BossName + " spawn chance to " + location.BossLocationSpawn[i].BossChance);
                 }
 
                 return;
@@ -253,6 +316,16 @@ namespace LateToTheParty.Controllers
             settings.BossSpawnChances = location.BossLocationSpawn.Select(x => x.BossChance).ToArray();
 
             OriginalSettings.Add(location.Id, settings);
+        }
+
+        public static int GetOriginalEscapeTime(LocationSettingsClass.Location location)
+        {
+            if (OriginalSettings.ContainsKey(location.Id))
+            {
+                return OriginalSettings[location.Id].EscapeTimeLimit;
+            }
+
+            throw new InvalidOperationException("The original settings for " + location.Id + " were never stored");
         }
 
         private static double GenerateTimeReductionFactor(bool isScav)
@@ -315,33 +388,6 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private static void AdjustVExChance(LocationSettingsClass.Location location, double timeReductionFactor)
-        {
-            if (!ConfigController.Config.AdjustRaidTimes.AdjustVexChance)
-            {
-                return;
-            }
-
-            // Ensure at least one pair exists in the array
-            if (ConfigController.Config.VExChanceReductions.Length == 0)
-            {
-                return;
-            }
-
-            // Calculate the reduction in VEX chance
-            double reductionFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
-
-            // Find all VEX extracts and adjust their chances proportionally
-            foreach (GClass1135 exit in location.exits)
-            {
-                if (CarExtractNames.Contains(exit.Name))
-                {
-                    exit.Chance *= (float)reductionFactor;
-                    LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + Math.Round(exit.Chance, 1) + "%");
-                }
-            }
-        }
-
         private static void AdjustBotWaveTimes(LocationSettingsClass.Location location)
         {
             if (!ConfigController.Config.AdjustRaidTimes.AdjustBotWaves)
@@ -373,28 +419,6 @@ namespace LateToTheParty.Controllers
             }
 
             LoggingController.LogInfo("Adjusting " + location.waves.Length + " bot-wave times...done.");
-        }
-
-        private static void AdjustBossSpawnChances(LocationSettingsClass.Location location, double timeReductionFactor)
-        {
-            if (!ConfigController.Config.AdjustBotSpawnChances.Enabled || !ConfigController.Config.AdjustBotSpawnChances.AdjustBosses)
-            {
-                return;
-            }
-
-            // Calculate the reduction in boss spawn chances
-            float reductionFactor = (float)InterpolateForFirstCol(ConfigController.Config.BossSpawnChanceMultipliers, timeReductionFactor);
-
-            foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
-            {
-                if (ConfigController.Config.AdjustBotSpawnChances.ExcludedBosses.Contains(bossLocation.BossName))
-                {
-                    continue;
-                }
-
-                bossLocation.BossChance *= reductionFactor;
-                LoggingController.LogInfo("Boss " + bossLocation.BossName + " spawn adjusted to " + Math.Round(bossLocation.BossChance, 1) + "%");
-            }
         }
     }
 }

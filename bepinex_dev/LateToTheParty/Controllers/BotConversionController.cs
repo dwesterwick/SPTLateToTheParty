@@ -28,19 +28,19 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
-            int totalEscapeTime = LocationSettingsController.LastOriginalEscapeTime * 60;
-            float escapeTimeSec = GClass1368.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
-            float raidTimeElapsed = totalEscapeTime - escapeTimeSec;
-
+            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+            
             // Don't run the script before the raid begins
             if (raidTimeElapsed < 3)
             {
                 return;
             }
 
+            float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+            int totalRaidTime = (int)Math.Ceiling(raidTimeRemaining + raidTimeElapsed);
+
             // Share the escape time and current time remaining with the server
-            ConfigController.ShareEscapeTime(totalEscapeTime, escapeTimeSec);
+            ConfigController.ShareEscapeTime(totalRaidTime, raidTimeRemaining);
             EscapeTimeShared = true;
         }
     }

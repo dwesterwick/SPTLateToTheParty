@@ -21,7 +21,6 @@ namespace LateToTheParty.Patches
         private static void PatchPostfix()
         {
             Controllers.LocationSettingsController.HasRaidStarted = true;
-            Controllers.DoorController.InteractiveLayer = LayerMask.NameToLayer("Interactive");
         }
     }
 }

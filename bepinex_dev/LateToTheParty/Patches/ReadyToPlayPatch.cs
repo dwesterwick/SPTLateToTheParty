@@ -30,7 +30,9 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            Controllers.LocationSettingsController.ModifyLocationSettings(___raidSettings_0.SelectedLocation, ___raidSettings_0.IsScav);
+            Controllers.LocationSettingsController.RestoreSettings(___raidSettings_0.SelectedLocation);
+
+            //Controllers.LocationSettingsController.ModifyLocationSettings(___raidSettings_0.SelectedLocation, ___raidSettings_0.IsScav);
         }
     }
 }

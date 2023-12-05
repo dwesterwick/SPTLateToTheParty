@@ -53,10 +53,13 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Get the current number of seconds remaining in the raid and calculate the fraction of total raid time remaining
-            float escapeTimeSec = GClass1368.EscapeTimeSeconds(Singleton<AbstractGame>.Instance.GameTimer);
-            float raidTimeElapsed = (LocationSettingsController.LastOriginalEscapeTime * 60f) - escapeTimeSec;
-            float timeRemainingFraction = escapeTimeSec / (LocationSettingsController.LastOriginalEscapeTime * 60f);
+            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
+            {
+                return;
+            }
+
+            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+            float timeRemainingFraction = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRaidTimeRemainingFraction();
 
             // Ensure the raid is progressing before running anything
             if (raidTimeElapsed < 10)
