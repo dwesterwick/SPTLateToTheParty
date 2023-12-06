@@ -4,13 +4,12 @@ import { CommonUtils } from "./CommonUtils";
 import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
 import { VFS } from "@spt-aki/utils/VFS";
 import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
-import { EquipmentSlots } from "@spt-aki/models/enums/EquipmentSlots";
 import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
 import { Item } from "@spt-aki/models/eft/common/tables/IItem";
 import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponResult";
 import { HashUtil } from "@spt-aki/utils/HashUtil";
-import { Preset } from "@spt-aki/models/eft/common/IGlobals";
+import { IPreset } from "@spt-aki/models/eft/common/IGlobals";
 
 const verboseLogging = false;
 const lootFilePath = __dirname + "/../db/lootRanking.json";
@@ -231,9 +230,9 @@ export class LootRankingGenerator
         const iterations = 5;
         const botType = "assault";
         const possibleSlots: string[] = [
-            EquipmentSlots.FIRST_PRIMARY_WEAPON,
-            EquipmentSlots.SECOND_PRIMARY_WEAPON,
-            EquipmentSlots.HOLSTER
+            "FirstPrimaryWeapon",
+            "SecondPrimaryWeapon",
+            "Holster"
         ];
         
         let weapon: Item[] = [];
@@ -330,7 +329,7 @@ export class LootRankingGenerator
         return false;
     }
 
-    private generateWeaponPreset(item: ITemplateItem): Preset
+    private generateWeaponPreset(item: ITemplateItem): IPreset
     {
         const baseWeapon: Item = {
             _id: this.hashUtil.generate(),
@@ -344,7 +343,7 @@ export class LootRankingGenerator
             if (verboseLogging) this.commonUtils.logInfo(`Creating preset for ${this.commonUtils.getItemName(item._id)}...found ${this.commonUtils.getItemName(weapon[weaponPart]._tpl)}`);
         }
 
-        const preset: Preset = {
+        const preset: IPreset = {
             _id: this.hashUtil.generate(),
             _type: "Preset",
             _changeWeaponName: false,
