@@ -11,7 +11,6 @@ import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import { TimeUtil } from "@spt-aki/utils/TimeUtil";
-import { MemberCategory } from "@spt-aki/models/enums/MemberCategory"
 import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
 import { Item } from "@spt-aki/models/eft/common/tables/IItem";
@@ -78,7 +77,8 @@ export class TraderAssortGenerator
         for (const offer in offersResult.offers)
         {
             // Only modify trader offers
-            if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType != MemberCategory.TRADER))
+            const traderEnumValue = 4;
+            if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType != traderEnumValue))
             {
                 continue;
             }
