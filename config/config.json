@@ -23,7 +23,15 @@
 		}
 	},
 	"scav_raid_adjustments": {
+		"always_spawn_late": true,
 		"adjust_vex_chance": true
+	},
+	"adjust_bot_spawn_chances": {
+		"enabled": true,
+		"adjust_bosses": true,
+		"adjust_pmc_conversion_chances": false,
+		"pmc_conversion_update_rate": 10,
+		"excluded_bosses": [ "sptBear", "sptUsec" ]
 	},
 	"only_make_changes_just_after_spawning": {
 		"enabled": false,
@@ -160,13 +168,6 @@
 		"chance_of_unlocking_doors": 50,
 		"chance_of_closing_doors": 15,
 		"max_calc_time_per_frame_ms": 3
-	},
-	"adjust_bot_spawn_chances": {
-		"enabled": true,
-		"adjust_bosses": true,
-		"adjust_pmc_conversion_chances": false,
-		"pmc_conversion_update_rate": 10,
-		"excluded_bosses": [ "sptBear", "sptUsec" ]
 	},
 	"trader_stock_changes": {
 		"enabled": true,

@@ -59,13 +59,14 @@ namespace LateToTheParty.Controllers
             }
 
             if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
+            //if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
             {
                 return;
             }
 
-            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
             float timeRemainingFraction = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRaidTimeRemainingFraction();
-
+            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+            
             // Ensure the raid is progressing before running anything
             if (raidTimeElapsed < 10)
             {

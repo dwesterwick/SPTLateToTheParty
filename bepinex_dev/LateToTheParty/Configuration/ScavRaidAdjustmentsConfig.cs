@@ -9,6 +9,9 @@ namespace LateToTheParty.Configuration
 {
     public class ScavRaidAdjustmentsConfig
     {
+        [JsonProperty("always_spawn_late")]
+        public bool AlwaysSpawnLate { get; set; } = true;
+
         [JsonProperty("adjust_vex_chance")]
         public bool AdjustVexChance { get; set; } = true;
 

@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("scav_raid_adjustments")]
         public ScavRaidAdjustmentsConfig ScavRaidAdjustments { get; set; } = new ScavRaidAdjustmentsConfig();
 
+        [JsonProperty("adjust_bot_spawn_chances")]
+        public AdjustBotSpawnChancesConfig AdjustBotSpawnChances { get; set; } = new AdjustBotSpawnChancesConfig();
+
         [JsonProperty("only_make_changes_just_after_spawning")]
         public OnlyMakeChangesJustAfterSpawningConfig OnlyMakeChangesJustAfterSpawning { get; set; } = new OnlyMakeChangesJustAfterSpawningConfig();
 
@@ -26,9 +29,6 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("open_doors_during_raid")]
         public OpenDoorsDuringRaidConfig OpenDoorsDuringRaid { get; set; } = new OpenDoorsDuringRaidConfig();
-
-        [JsonProperty("adjust_bot_spawn_chances")]
-        public AdjustBotSpawnChancesConfig AdjustBotSpawnChances { get; set; } = new AdjustBotSpawnChancesConfig();
 
         [JsonProperty("trader_stock_changes")]
         public TraderStockChangesConfig TraderStockChanges { get; set; } = new TraderStockChangesConfig();

@@ -317,11 +317,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             return;
         }
 
-        if (modConfig.destroy_loot_during_raid.enabled)
-        {
-            this.disableSPTLootChanges();
-        }
-
+        this.adjustSPTScavRaidChanges();
+        
         // Adjust parameters to make debugging easier
         if (modConfig.debug.enabled)
         {
@@ -398,13 +395,21 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         
     }
 
-    private disableSPTLootChanges(): void
+    private adjustSPTScavRaidChanges(): void
     {
-        this.commonUtils.logInfo("Disabling SPT loot changes during Scav raids...");
+        this.commonUtils.logInfo("Adjusting SPT Scav-raid changes...");
 
         for (const map in this.locationConfig.scavRaidTimeSettings.maps)
         {
-            this.locationConfig.scavRaidTimeSettings.maps[map].reduceLootByPercent = false;
+            if (modConfig.scav_raid_adjustments.always_spawn_late)
+            {
+                this.locationConfig.scavRaidTimeSettings.maps[map].reducedChancePercent = 100;
+            }
+
+            if (modConfig.destroy_loot_during_raid.enabled)
+            {
+                this.locationConfig.scavRaidTimeSettings.maps[map].reduceLootByPercent = false;
+            }
         }
     }
 

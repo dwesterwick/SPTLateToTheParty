@@ -30,6 +30,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **debug.loot_path_visualization.collision_point_radius**: The radius (in meters) for the circles used in **debug.loot_path_visualization.show_obstacle_collision_points**.
 * **debug.loot_path_visualization.show_door_obstacles**: Draw an ellipsoidal outline around doors that should block NavMesh pathing either because they're locked or something is currently interacting with them. Outlines are updated every **destroy_loot_during_raid.check_loot_accessibility.door_obstacle_update_time** seconds. The outline color will be yellow.
 * **debug.loot_path_visualization.door_obstacle_min_radius**: Ensures the radii for ellipsoids drawn for **debug.loot_path_visualization.show_door_obstacles** are at least this value (in meters). Otherwise, the outlines may be hard to see. 
+* **scav_raid_adjustments.always_spawn_late**: If there should be a 100% chance that you spawn into the raid late as a Scav for all maps. 
 * **scav_raid_adjustments.adjust_vex_chance**: If the probability that a vehicle extraction is available can be changed if you spawn in late.
 
 * **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
