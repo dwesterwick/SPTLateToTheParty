@@ -28,6 +28,12 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
+            //if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
+            {
+                return;
+            }
+
             float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
             
             // Don't run the script before the raid begins
