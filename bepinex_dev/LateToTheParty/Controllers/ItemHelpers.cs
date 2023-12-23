@@ -56,7 +56,7 @@ namespace LateToTheParty.Controllers
         public static int GetItemSlots(this Item item)
         {
             int itemSlots = 0;
-            if (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId))
+            if (ConfigController.LootRanking?.Items?.ContainsKey(item.TemplateId) == true)
             {
                 itemSlots = (int)ConfigController.LootRanking.Items[item.TemplateId].Size;
             }
