@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("exclusion_radius_bots")]
         public double ExclusionRadiusBots { get; set; } = 10;
 
+        [JsonProperty("chance_of_opening_trunks")]
+        public ChanceOfOpeningConfig ChanceOfOpeningTrunks { get; set; } = new ChanceOfOpeningConfig();
+
         [JsonProperty("avg_slots_per_player")]
         public double AvgSlotsPerPlayer { get; set; } = 80;
 

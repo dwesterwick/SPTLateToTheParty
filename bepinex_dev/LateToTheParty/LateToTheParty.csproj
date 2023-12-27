@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\AdjustBotSpawnChancesConfig.cs" />
+    <Compile Include="Configuration\ChanceOfOpeningConfig.cs" />
     <Compile Include="Configuration\ScavRaidAdjustmentsConfig.cs" />
     <Compile Include="Configuration\CheckLootAccessibilityConfig.cs" />
     <Compile Include="Configuration\DebugConfig.cs" />

@@ -47,6 +47,10 @@
 		"enabled": true,
 		"exclusion_radius": 40,
 		"exclusion_radius_bots": 25,
+		"chance_of_opening_trunks": {
+			"unlocked": 100,
+			"locked": 50
+		},
 		"avg_slots_per_player": 60,
 		"min_loot_age": 120,
 		"destruction_event_limits": {

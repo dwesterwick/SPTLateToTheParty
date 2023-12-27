@@ -15,6 +15,7 @@ using LateToTheParty.Configuration;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
 using UnityEngine;
+using static Streamer;
 
 namespace LateToTheParty.Controllers
 {
@@ -25,6 +26,7 @@ namespace LateToTheParty.Controllers
         public static bool HasInitialLootBeenDestroyed { get; private set; } = false;
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
+        private static Trunk[] AllTrunks = new Trunk[0];
         private static object lootableContainerLock = new object();
 
         private static Dictionary<Item, Models.LootInfo> LootInfo = new Dictionary<Item, Models.LootInfo>();
@@ -96,6 +98,7 @@ namespace LateToTheParty.Controllers
 
             LoggingController.LogInfo("Searching for lootable containers in the map...");
             AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
+            AllTrunks = GameWorld.FindObjectsOfType<Trunk>();
             LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
 
             currentLocationName = _currentMapName;
@@ -320,6 +323,18 @@ namespace LateToTheParty.Controllers
                             distanceToNearestSpawnPoint,
                             GetLootFoundTime(raidET)
                     );
+
+                    if (isInsideOfATrunk(newLoot))
+                    {
+                        if (!canOpenFromChance(newLoot.SurroundingTrunk, ConfigController.Config.DestroyLootDuringRaid.ChanceOfOpeningTrunks))
+                        {
+                            LoggingController.LogInfo("Cannot destroy " + item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
+                            continue;
+                        }
+
+                        LoggingController.LogInfo(item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
+                    }
+
                     LootInfo.Add(item, newLoot);
                     //LoggingController.LogInfo("Found loose loot item: " + item.LocalizedName());
                 }
@@ -361,15 +376,53 @@ namespace LateToTheParty.Controllers
                             distanceToNearestSpawnPoint,
                             GetLootFoundTime(raidET)
                         );
-                        LootInfo.Add(item, newLoot);
+
+                        if (isInsideOfATrunk(newLoot))
+                        {
+                            if (!canOpenFromChance(newLoot.SurroundingTrunk, ConfigController.Config.DestroyLootDuringRaid.ChanceOfOpeningTrunks))
+                            {
+                                LoggingController.LogInfo("Cannot destroy " + item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
+                                continue;
+                            }
+
+                            LoggingController.LogInfo(item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
+                        }
 
                         if (lootableContainer.DoorState == EDoorState.Locked)
                         {
                             LootInfo[item].ParentContainer = lootableContainer;
                         }
+
+                        LootInfo.Add(item, newLoot);
+
+                        
                     }
                 }
             }
+        }
+
+        private static bool isInsideOfATrunk(Models.LootInfo lootInfo)
+        {
+            foreach (Trunk trunk in AllTrunks)
+            {
+                if (Vector3.Distance(trunk.transform.position, lootInfo.Transform.position) > 0.75f)
+                {
+                    continue;
+                }
+
+                lootInfo.SurroundingTrunk = trunk;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool canOpenFromChance(WorldInteractiveObject worldInteractiveObject, ChanceOfOpeningConfig chanceOfOpeningConfig)
+        {
+            System.Random random = new System.Random();
+            float chanceOfOpening = worldInteractiveObject.DoorState == EDoorState.Locked ? chanceOfOpeningConfig.Locked : chanceOfOpeningConfig.Unlocked;
+            return random.Next(0, 100) < chanceOfOpening;
         }
 
         private static double GetLootFoundTime(double raidET)
@@ -842,6 +895,18 @@ namespace LateToTheParty.Controllers
         {
             try
             {
+                // If the item is inside of a trunk, open the trunk first
+                if (LootInfo[item].SurroundingTrunk != null)
+                {
+                    if (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Locked)
+                    {
+                        LootInfo[item].SurroundingTrunk.DoorState = EDoorState.Shut;
+                        LootInfo[item].SurroundingTrunk.OnEnable();
+                    }
+
+                    LootInfo[item].SurroundingTrunk.Interact(new InteractionResult(EInteractionType.Open));
+                }
+
                 LootInfo[item].TraderController.DestroyItem(item);
                 LootInfo[item].IsDestroyed = true;
                 LootInfo[item].RaidETWhenDestroyed = raidET;

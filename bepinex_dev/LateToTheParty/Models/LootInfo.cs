@@ -30,6 +30,7 @@ namespace LateToTheParty.Models
         public bool CanDestroy { get; set; } = false;
         public Item parentItem { get; set; } = null;
         public WorldInteractiveObject ParentContainer = null;
+        public Trunk SurroundingTrunk { get; set; } = null;
 
         public LootInfo(ELootType lootType)
         {

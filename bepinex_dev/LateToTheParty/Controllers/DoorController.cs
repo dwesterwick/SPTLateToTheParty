@@ -302,8 +302,10 @@ namespace LateToTheParty.Controllers
                 eligibleDoors.Clear();
 
                 LoggingController.LogInfo("Searching for valid doors...");
-                Door[] allDoors = UnityEngine.Object.FindObjectsOfType<Door>();
-                LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Length + " possible doors.");
+                Door[] allNormalDoors = FindObjectsOfType<Door>();
+                Door[] allKaycardDoors = FindObjectsOfType<KeycardDoor>();
+                IEnumerable<Door> allDoors = allNormalDoors.Concat(allKaycardDoors);
+                LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Count() + " possible doors.");
 
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(allDoors, CheckIfDoorIsEligible);
