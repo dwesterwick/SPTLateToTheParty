@@ -18,6 +18,12 @@ namespace LateToTheParty.Configuration
         [JsonProperty("exclusion_radius_bots")]
         public double ExclusionRadiusBots { get; set; } = 10;
 
+        [JsonProperty("nearby_interactive_object_search_distance")]
+        public float NearbyInteractiveObjectSearchDistance { get; set; } = 0.75f;
+
+        [JsonProperty("only_search_for_nearby_trunks")]
+        public bool OnlySearchForNearbyTrunks { get; set; } = true;
+
         [JsonProperty("avg_slots_per_player")]
         public double AvgSlotsPerPlayer { get; set; } = 80;
 

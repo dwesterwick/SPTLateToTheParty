@@ -60,7 +60,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Wait until DoorController is done finding doors
-            if (DoorController.ToggleableDoorCount == 0)
+            if (InteractiveObjectController.ToggleableInteractiveObjectCount == 0)
             {
                 return;
             }
@@ -164,7 +164,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            bool isToggleable = DoorController.IsToggleableDoor(door);
+            bool isToggleable = InteractiveObjectController.IsToggleableInteractiveObject(door);
             doorObstacles.Add(door, new DoorObstacle(collider, door, isToggleable));
         }
 

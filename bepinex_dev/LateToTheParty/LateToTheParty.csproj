@@ -114,7 +114,7 @@
     <Compile Include="Configuration\OpenDoorsDuringRaidConfig.cs" />
     <Compile Include="Controllers\BotConversionController.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
-    <Compile Include="Controllers\DoorController.cs" />
+    <Compile Include="Controllers\InteractiveObjectController.cs" />
     <Compile Include="Controllers\LocationSettingsController.cs" />
     <Compile Include="Controllers\LoggingController.cs" />
     <Compile Include="Controllers\LootDestroyerController.cs" />

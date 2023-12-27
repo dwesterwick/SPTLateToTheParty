@@ -93,7 +93,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Wait until doors have been opened to ensure loot will be destroyed behind previously locked doors
-            if (!DoorController.HasToggledInitialDoors)
+            if (!InteractiveObjectController.HasToggledInitialInteractiveObjects)
             {
                 return;
             }

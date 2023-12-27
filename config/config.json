@@ -47,6 +47,8 @@
 		"enabled": true,
 		"exclusion_radius": 40,
 		"exclusion_radius_bots": 25,
+		"nearby_interactive_object_search_distance": 0.75,
+		"only_search_for_nearby_trunks": true,
 		"avg_slots_per_player": 60,
 		"min_loot_age": 120,
 		"destruction_event_limits": {

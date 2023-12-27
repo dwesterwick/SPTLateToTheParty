@@ -383,8 +383,10 @@ namespace LateToTheParty.Controllers
 
         private static void findNearbyContainters(Item lootItem, Models.LootInfo lootInfo)
         {
-            IEnumerable<WorldInteractiveObject> nearbyInteractiveObjects = DoorController
-                .FindNearbyInteractiveObjects(lootInfo.Transform.position, 0.75f, typeof(Trunk))
+            Type typeToSearch = ConfigController.Config.DestroyLootDuringRaid.OnlySearchForNearbyTrunks ? typeof(Trunk) : typeof(WorldInteractiveObject);
+
+            IEnumerable <WorldInteractiveObject> nearbyInteractiveObjects = InteractiveObjectController
+                .FindNearbyInteractiveObjects(lootInfo.Transform.position, ConfigController.Config.DestroyLootDuringRaid.NearbyInteractiveObjectSearchDistance, typeToSearch)
                 .OrderBy(o => Vector3.Distance(lootInfo.Transform.position, o.transform.position));
 
             if (nearbyInteractiveObjects.Any())

@@ -16,27 +16,26 @@ using UnityEngine;
 
 namespace LateToTheParty.Controllers
 {
-    public class DoorController : MonoBehaviour
+    public class InteractiveObjectController : MonoBehaviour
     {
         public static bool IsClearing { get; private set; } = false;
-        public static bool IsTogglingDoors { get; private set; } = false;
-        public static bool IsFindingDoors { get; private set; } = false;
-        public static bool HasToggledInitialDoors { get; private set; } = false;
-        public static int InteractiveLayer { get; set; } = LayerMask.NameToLayer("Interactive");
+        public static bool IsTogglingInteractiveObjescts { get; private set; } = false;
+        public static bool IsFindingInteractiveObjects { get; private set; } = false;
+        public static bool HasToggledInitialInteractiveObjects { get; private set; } = false;
 
-        private static List<WorldInteractiveObject> toggleableDoors = new List<WorldInteractiveObject>();
-        private static List<WorldInteractiveObject> eligibleDoors = new List<WorldInteractiveObject>();
-        private static Dictionary<WorldInteractiveObject, bool> allowedToToggleDoor = new Dictionary<WorldInteractiveObject, bool>();
+        private static List<WorldInteractiveObject> toggleableInteractiveObjects = new List<WorldInteractiveObject>();
+        private static List<WorldInteractiveObject> eligibleInteractiveObjects = new List<WorldInteractiveObject>();
+        private static Dictionary<WorldInteractiveObject, bool> allowedToToggleInteractiveObject = new Dictionary<WorldInteractiveObject, bool>();
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
-        private static Stopwatch doorOpeningsTimer = new Stopwatch();
+        private static Stopwatch interactiveObjectOpeningsTimer = new Stopwatch();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-        private static int doorsToToggle = 1;
+        private static int InteractiveObjectsToToggle = 1;
 
-        public static int ToggleableDoorCount
+        public static int ToggleableInteractiveObjectCount
         {
-            get { return IsFindingDoors ? 0 : toggleableDoors.Count; }
+            get { return IsFindingInteractiveObjects ? 0 : toggleableInteractiveObjects.Count; }
         }
 
         private void OnDisable()
@@ -54,7 +53,7 @@ namespace LateToTheParty.Controllers
             if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
             {
                 // Need to do this or it will prevent loot from being despawned
-                HasToggledInitialDoors = true;
+                HasToggledInitialInteractiveObjects = true;
 
                 return;
             }
@@ -63,7 +62,7 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 StartCoroutine(Clear());
-                doorOpeningsTimer.Reset();
+                interactiveObjectOpeningsTimer.Reset();
 
                 return;
             }
@@ -74,13 +73,13 @@ namespace LateToTheParty.Controllers
             }
 
             // Wait until the previous task completes
-            if (IsTogglingDoors || IsFindingDoors)
+            if (IsTogglingInteractiveObjescts || IsFindingInteractiveObjects)
             {
                 return;
             }
 
             // Ensure enough time has passed since the last door event
-            if (HasToggledInitialDoors && (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000))
+            if (HasToggledInitialInteractiveObjects && (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000))
             {
                 return;
             }
@@ -101,99 +100,99 @@ namespace LateToTheParty.Controllers
             }
 
             // Only find doors once per raid
-            if (ToggleableDoorCount == 0)
+            if (ToggleableInteractiveObjectCount == 0)
             {
                 gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
-                StartCoroutine(FindAllEligibleDoors());
+                StartCoroutine(FindAllEligibleInteractiveObjects());
                 return;
             }
 
             // Determine how many doors to toggled accounting for the raid time elapsed when the player spawns in
-            doorsToToggle = (int)Math.Max(1, Math.Round(eligibleDoors.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
-            if (!HasToggledInitialDoors)
+            InteractiveObjectsToToggle = (int)Math.Max(1, Math.Round(eligibleInteractiveObjects.Count * ConfigController.Config.OpenDoorsDuringRaid.PercentageOfDoorsPerEvent / 100.0));
+            if (!HasToggledInitialInteractiveObjects)
             {
-                doorsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
-                doorsToToggle = Math.Min(doorsToToggle, eligibleDoors.Count);
+                InteractiveObjectsToToggle *= (int)Math.Ceiling(Math.Max(raidTimeElapsed - ConfigController.Config.OpenDoorsDuringRaid.MinRaidET, 0) / ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents);
+                InteractiveObjectsToToggle = Math.Min(InteractiveObjectsToToggle, eligibleInteractiveObjects.Count);
             }
 
             // Do not change doors too early or late into the raid
             if ((raidTimeElapsed < ConfigController.Config.OpenDoorsDuringRaid.MinRaidET) || (raidTimeRemaining < ConfigController.Config.OpenDoorsDuringRaid.MinRaidTimeRemaining))
             {
-                if (!HasToggledInitialDoors)
+                if (!HasToggledInitialInteractiveObjects)
                 {
-                    LoggingController.LogInfo("Doors cannot be opened at this time in the raid");
-                    HasToggledInitialDoors = true;
+                    LoggingController.LogInfo("Interactive objects cannot be opened at this time in the raid");
+                    HasToggledInitialInteractiveObjects = true;
                 }
 
                 return;
             }
 
             // Ensure there are doors to toggle
-            if (doorsToToggle == 0)
+            if (InteractiveObjectsToToggle == 0)
             {
                 return;
             }
 
             // Try to change the state of doors
-            StartCoroutine(ToggleRandomDoors(doorsToToggle));
+            StartCoroutine(ToggleRandomInteractiveObjects(InteractiveObjectsToToggle));
             updateTimer.Restart();
-            doorOpeningsTimer.Start();
+            interactiveObjectOpeningsTimer.Start();
         }
 
         public static IEnumerator Clear()
         {
             IsClearing = true;
 
-            if (IsFindingDoors)
+            if (IsFindingInteractiveObjects)
             {
                 enumeratorWithTimeLimit.Abort();
 
                 EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsFindingDoors, nameof(IsFindingDoors), 3000);
+                yield return conditionWaiter.WaitForCondition(() => !IsFindingInteractiveObjects, nameof(IsFindingInteractiveObjects), 3000);
 
-                IsFindingDoors = false;
+                IsFindingInteractiveObjects = false;
             }
-            if (IsTogglingDoors)
+            if (IsTogglingInteractiveObjescts)
             {
                 enumeratorWithTimeLimit.Abort();
 
                 EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsTogglingDoors, nameof(IsTogglingDoors), 3000);
+                yield return conditionWaiter.WaitForCondition(() => !IsTogglingInteractiveObjescts, nameof(IsTogglingInteractiveObjescts), 3000);
 
-                IsTogglingDoors = false;
+                IsTogglingInteractiveObjescts = false;
             }
 
-            toggleableDoors.Clear();
-            eligibleDoors.Clear();
-            allowedToToggleDoor.Clear();
+            toggleableInteractiveObjects.Clear();
+            eligibleInteractiveObjects.Clear();
+            allowedToToggleInteractiveObject.Clear();
             updateTimer.Restart();
 
-            HasToggledInitialDoors = false;
+            HasToggledInitialInteractiveObjects = false;
 
             IsClearing = false;
         }
 
-        public static bool IsToggleableDoor(WorldInteractiveObject door)
+        public static bool IsToggleableInteractiveObject(WorldInteractiveObject interactiveObject)
         {
-            return toggleableDoors.Any(d => d.Id == door.Id);
+            return toggleableInteractiveObjects.Any(d => d.Id == interactiveObject.Id);
         }
 
-        public bool ToggleDoor(WorldInteractiveObject door, EDoorState newState)
+        public bool ToggleInteractiveObject(WorldInteractiveObject interactiveObject, EDoorState newState)
         {
             // Check if the door is already in the desired state
-            if (newState == EDoorState.Shut && (door.DoorState == EDoorState.Shut || door.DoorState == EDoorState.Locked))
+            if (newState == EDoorState.Shut && (interactiveObject.DoorState == EDoorState.Shut || interactiveObject.DoorState == EDoorState.Locked))
             {
                 return false;
             }
-            if (newState == EDoorState.Open && door.DoorState == EDoorState.Open)
+            if (newState == EDoorState.Open && interactiveObject.DoorState == EDoorState.Open)
             {
                 return false;
             }
 
             // Unlock or "breach" the door if necessary
-            if ((door.DoorState == EDoorState.Locked) && (newState == EDoorState.Open))
+            if ((interactiveObject.DoorState == EDoorState.Locked) && (newState == EDoorState.Open))
             {
-                if (door.KeyId.Length > 0)
+                if (interactiveObject.KeyId.Length > 0)
                 {
                     // Skip the event if changes need to be limited after a certain time has elapsed after spawning
                     if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningLockedDoors)
@@ -208,7 +207,7 @@ namespace LateToTheParty.Controllers
                         return false;
                     }
 
-                    LoggingController.LogInfo("Unlocking door: " + door.Id + " (Key ID: " + door.KeyId + ")");
+                    LoggingController.LogInfo("Unlocking interactive object: " + interactiveObject.Id + " (Key ID: " + interactiveObject.KeyId + ")");
                 }
                 else
                 {
@@ -218,23 +217,27 @@ namespace LateToTheParty.Controllers
                         return true;
                     }
 
-                    LoggingController.LogInfo("Preparing to breach door: " + door.Id);
+                    LoggingController.LogInfo("Preparing to breach door: " + interactiveObject.Id);
+                }
+
+                // Do not "breach" the interactive object unless it is a door (or keycard door)
+                Door door = interactiveObject as Door;
+                if (door == null)
+                {
+                    throw new InvalidOperationException("Cannot breach interactive object " + interactiveObject.Id + " because it is not a door");
                 }
 
                 door.DoorState = EDoorState.Shut;
                 door.OnEnable();
-
-                // This doesn't work
-                //door.Interact(new GClass2600(EInteractionType.Unlock));
             }
 
             // Ignore doors that are currently being opened/closed                    
-            if (!(bool)canStartInteractionMethodInfo.Invoke(door, new object[] { newState, true }))
+            if (!(bool)canStartInteractionMethodInfo.Invoke(interactiveObject, new object[] { newState, true }))
             {
                 return false;
             }
 
-            if ((door.DoorState != EDoorState.Open) && (door.DoorState != EDoorState.Locked) && (newState == EDoorState.Open))
+            if ((interactiveObject.DoorState != EDoorState.Open) && (interactiveObject.DoorState != EDoorState.Locked) && (newState == EDoorState.Open))
             {
                 // Skip the event if changes need to be limited after a certain time has elapsed after spawning
                 if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.OpeningUnlockedDoors)
@@ -242,16 +245,14 @@ namespace LateToTheParty.Controllers
                     return true;
                 }
 
-                LoggingController.LogInfo("Opening door: " + door.Id);
-                //door.DoorState = EDoorState.Open;
-                //door.OnEnable();
+                LoggingController.LogInfo("Opening interactive object: " + interactiveObject.Id);
 
                 // This plays the opening noise and animation
-                door.Interact(new InteractionResult(EInteractionType.Open));
+                interactiveObject.Interact(new InteractionResult(EInteractionType.Open));
                 return true;
             }
 
-            if ((door.DoorState == EDoorState.Open) && (newState == EDoorState.Shut))
+            if ((interactiveObject.DoorState == EDoorState.Open) && (newState == EDoorState.Shut))
             {
                 // Skip the event if changes need to be limited after a certain time has elapsed after spawning
                 if (shouldlimitEvents() && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.ClosingDoors)
@@ -259,12 +260,10 @@ namespace LateToTheParty.Controllers
                     return true;
                 }
 
-                LoggingController.LogInfo("Closing door: " + door.Id);
-                //door.DoorState = EDoorState.Open;
-                //door.OnEnable();
+                LoggingController.LogInfo("Closing interactive object: " + interactiveObject.Id);
 
                 // This plays the opening noise and animation
-                door.Interact(new InteractionResult(EInteractionType.Close));
+                interactiveObject.Interact(new InteractionResult(EInteractionType.Close));
                 return true;
             }
 
@@ -280,7 +279,7 @@ namespace LateToTheParty.Controllers
         {
             List<WorldInteractiveObject> nearbyInteractiveObjects = new List<WorldInteractiveObject>();
 
-            foreach (WorldInteractiveObject obj in eligibleDoors)
+            foreach (WorldInteractiveObject obj in eligibleInteractiveObjects)
             {
                 // Check if the interactive object is too far away
                 if (Vector3.Distance(obj.transform.position, position) > maxDistance)
@@ -308,95 +307,97 @@ namespace LateToTheParty.Controllers
             return nearbyInteractiveObjects;
         }
 
-        private IEnumerator ToggleRandomDoors(int doorsToToggle)
+        private IEnumerator ToggleRandomInteractiveObjects(int interactiveObjectsToToggle)
         {
             try
             {
-                IsTogglingDoors = true;
+                IsTogglingInteractiveObjescts = true;
 
                 // Check which doors are eligible to be toggled
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(eligibleDoors.AsEnumerable(), UpdateIfDoorIsAllowedToBeToggle);
-                IEnumerable<WorldInteractiveObject> doorsThatCanBeToggled = allowedToToggleDoor.Where(d => d.Value).Select(d => d.Key);
+                yield return enumeratorWithTimeLimit.Run(eligibleInteractiveObjects.AsEnumerable(), UpdateIfInteractiveObjectIsAllowedToBeToggle);
+                IEnumerable<WorldInteractiveObject> doorsThatCanBeToggled = allowedToToggleInteractiveObject.Where(d => d.Value).Select(d => d.Key);
 
                 // Toggle requested number of doors
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Repeat(doorsToToggle, ToggleRandomDoor, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+                yield return enumeratorWithTimeLimit.Repeat(interactiveObjectsToToggle, ToggleRandomInteractiveObject, doorsThatCanBeToggled, ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
             }
             finally
             {
-                IsTogglingDoors = false;
-                HasToggledInitialDoors = true;
+                IsTogglingInteractiveObjescts = false;
+                HasToggledInitialInteractiveObjects = true;
             }
         }
 
-        private IEnumerator FindAllEligibleDoors()
+        private IEnumerator FindAllEligibleInteractiveObjects()
         {
             try
             {
-                IsFindingDoors = true;
-                eligibleDoors.Clear();
+                IsFindingInteractiveObjects = true;
+                eligibleInteractiveObjects.Clear();
 
-                LoggingController.LogInfo("Searching for valid doors...");
+                LoggingController.LogInfo("Searching for valid interactive objects...");
+
                 WorldInteractiveObject[] allNormalDoors = FindObjectsOfType<Door>();
                 WorldInteractiveObject[] allKaycardDoors = FindObjectsOfType<KeycardDoor>();
                 WorldInteractiveObject[] allTrunks = FindObjectsOfType<Trunk>();
                 IEnumerable<WorldInteractiveObject> allDoors = allNormalDoors.Concat(allKaycardDoors).Concat(allTrunks);
-                LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Count() + " possible doors.");
+
+                LoggingController.LogInfo("Searching for valid interactive objects...found " + allDoors.Count() + " possible interactive objects.");
 
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(allDoors, CheckIfDoorIsEligible);
+                yield return enumeratorWithTimeLimit.Run(allDoors, CheckIfInteractiveObjectIsEligible);
 
-                LoggingController.LogInfo("Searching for valid doors...found " + eligibleDoors.Count + " doors.");
+                LoggingController.LogInfo("Searching for valid interactive objects...found " + eligibleInteractiveObjects.Count + " interactive objects.");
             }
             finally
             {
-                IsFindingDoors = false;
+                IsFindingInteractiveObjects = false;
             }
         }
 
-        private void CheckIfDoorIsEligible(WorldInteractiveObject door)
+        private void CheckIfInteractiveObjectIsEligible(WorldInteractiveObject interactiveObject)
         {
             // If the door can be toggled, add it to the dictionary
-            if (!CheckIfDoorCanBeToggled(door, true))
+            if (!CheckIfInteractiveObjectCanBeToggled(interactiveObject, true))
             {
                 return;
             }
-            toggleableDoors.Add(door);
+            toggleableInteractiveObjects.Add(interactiveObject);
 
             // If the door is eligible for toggling during the raid, add it to the dictionary
-            if (!IsEligibleDoor(door, true))
+            if (!IsEligibleInteractiveObject(interactiveObject, true))
             {
                 return;
             }
-            eligibleDoors.Add(door);
+            eligibleInteractiveObjects.Add(interactiveObject);
         }
 
-        private void UpdateIfDoorIsAllowedToBeToggle(WorldInteractiveObject door)
+        private void UpdateIfInteractiveObjectIsAllowedToBeToggle(WorldInteractiveObject interactiveObject)
         {
-            bool isAllowedToBeToggled = IsDoorAllowedToBeToggled(door);
+            bool isAllowedToBeToggled = IsInteractiveObjectAllowedToBeToggled(interactiveObject);
 
-            if (allowedToToggleDoor.ContainsKey(door))
+            if (allowedToToggleInteractiveObject.ContainsKey(interactiveObject))
             {
-                allowedToToggleDoor[door] = isAllowedToBeToggled;
+                allowedToToggleInteractiveObject[interactiveObject] = isAllowedToBeToggled;
             }
             else
             {
-                allowedToToggleDoor.Add(door, isAllowedToBeToggled);
+                allowedToToggleInteractiveObject.Add(interactiveObject, isAllowedToBeToggled);
             }
         }
 
-        private bool IsDoorAllowedToBeToggled(WorldInteractiveObject door)
+        private bool IsInteractiveObjectAllowedToBeToggled(WorldInteractiveObject interactiveObject)
         {
             // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((Camera.main == null) || (door.transform == null))
+            if ((Camera.main == null) || (interactiveObject.transform == null))
             {
                 return false;
             }
 
             // Ignore doors that are too close to you
             Vector3 yourPosition = Camera.main.transform.position;
-            float doorDist = Vector3.Distance(yourPosition, door.transform.position);
+            float doorDist = Vector3.Distance(yourPosition, interactiveObject.transform.position);
             if (doorDist < ConfigController.Config.OpenDoorsDuringRaid.ExclusionRadius)
             {
                 return false;
@@ -405,23 +406,23 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool IsEligibleDoor(WorldInteractiveObject door, bool logResult = false)
+        private bool IsEligibleInteractiveObject(WorldInteractiveObject interactiveObject, bool logResult = false)
         {
             // Get all items to search for key ID's
             Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
 
-            if (door.DoorState == EDoorState.Locked)
+            if (interactiveObject.DoorState == EDoorState.Locked)
             {
-                if (allItems.ContainsKey(door.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
+                if (allItems.ContainsKey(interactiveObject.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
                 {
-                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and not allowed to be opened.");
+                    if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is locked and not allowed to be opened.");
                     return false;
                 }
 
-                Door doorCast = door as Door;
-                if ((doorCast?.CanBeBreached == true) && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
+                Door door = interactiveObject as Door;
+                if ((door?.CanBeBreached == true) && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
                 {
-                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is not allowed to be breached.");
+                    if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...door " + door.Id + " is not allowed to be breached.");
                     return false;
                 }
             }
@@ -429,44 +430,44 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool CheckIfDoorCanBeToggled(WorldInteractiveObject door, bool logResult = false)
+        private bool CheckIfInteractiveObjectCanBeToggled(WorldInteractiveObject interactiveObject, bool logResult = false)
         {
-            if (!door.Operatable)
+            if (!interactiveObject.Operatable)
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable.");
+                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is inoperable.");
                 return false;
             }
 
-            if (door.gameObject.layer != InteractiveLayer)
+            if (interactiveObject.gameObject.layer != LayerMask.NameToLayer("Interactive"))
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is inoperable (wrong layer).");
+                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is inoperable (wrong layer).");
                 return false;
             }
 
             // Ensure there are context menu options for the door
-            GClass2805 availableActions = GClass1726.GetAvailableActions(gamePlayerOwner, door);
+            GClass2805 availableActions = GClass1726.GetAvailableActions(gamePlayerOwner, interactiveObject);
             if ((availableActions == null) || (availableActions.Actions.Count == 0))
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has no interaction options.");
+                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has no interaction options.");
                 return false;
             }
 
             // This is a sanity check but never seems to actually happen
-            if (door.DoorState != EDoorState.Open && door.DoorState != EDoorState.Shut && door.DoorState != EDoorState.Locked)
+            if (interactiveObject.DoorState != EDoorState.Open && interactiveObject.DoorState != EDoorState.Shut && interactiveObject.DoorState != EDoorState.Locked)
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " has an invalid state: " + door.DoorState);
+                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has an invalid state: " + interactiveObject.DoorState);
                 return false;
             }
 
             // Get all items to search for key ID's
             Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
 
-            if (door.DoorState == EDoorState.Locked)
+            if (interactiveObject.DoorState == EDoorState.Locked)
             {
-                Door doorCast = door as Door;
-                if (!allItems.ContainsKey(door.KeyId) && (doorCast?.CanBeBreached == false))
+                Door door = interactiveObject as Door;
+                if (!allItems.ContainsKey(door.KeyId) && (door?.CanBeBreached == false))
                 {
-                    if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and has no valid key.");
+                    if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...door " + door.Id + " is locked and has no valid key.");
                     return false;
                 }
             }
@@ -474,11 +475,11 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private void ToggleRandomDoor(IEnumerable<WorldInteractiveObject> eligibleDoors, int maxCalcTime_ms)
+        private void ToggleRandomInteractiveObject(IEnumerable<WorldInteractiveObject> eligibleInteractiveObjects, int maxCalcTime_ms)
         {
             // Randomly sort eligible doors
             System.Random randomObj = new System.Random();
-            IEnumerable<WorldInteractiveObject> randomlyOrderedKeys = eligibleDoors.OrderBy(e => randomObj.NextDouble());
+            IEnumerable<WorldInteractiveObject> randomlyOrderedKeys = eligibleInteractiveObjects.OrderBy(e => randomObj.NextDouble());
 
             // Try to find a door to toggle, but do not wait too long
             Stopwatch calcTimer = Stopwatch.StartNew();
@@ -492,10 +493,10 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Try to make the desired change to each door in the randomly-sorted enumerator
-                foreach (WorldInteractiveObject door in randomlyOrderedKeys)
+                foreach (WorldInteractiveObject obj in randomlyOrderedKeys)
                 {
-                    //LoggingController.LogInfo("Attempting to change door " + door.Id + " to " + newState + "...");
-                    if (ToggleDoor(door, newState))
+                    //LoggingController.LogInfo("Attempting to change interactive object " + door.Id + " to " + newState + "...");
+                    if (ToggleInteractiveObject(obj, newState))
                     {
                         return;
                     }
@@ -505,9 +506,9 @@ namespace LateToTheParty.Controllers
 
         private static bool shouldlimitEvents()
         {
-            bool shouldLimit = HasToggledInitialDoors
+            bool shouldLimit = HasToggledInitialInteractiveObjects
                 && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
-                && (doorOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit);
+                && (interactiveObjectOpeningsTimer.ElapsedMilliseconds / 1000.0 > ConfigController.Config.OnlyMakeChangesJustAfterSpawning.TimeLimit);
 
             return shouldLimit;
         }
