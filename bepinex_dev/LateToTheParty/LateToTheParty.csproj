@@ -90,7 +90,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\AdjustBotSpawnChancesConfig.cs" />
-    <Compile Include="Configuration\ChanceOfOpeningConfig.cs" />
     <Compile Include="Configuration\ScavRaidAdjustmentsConfig.cs" />
     <Compile Include="Configuration\CheckLootAccessibilityConfig.cs" />
     <Compile Include="Configuration\DebugConfig.cs" />
@@ -131,7 +130,6 @@
     <Compile Include="Controllers\LootManager.cs" />
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
     <Compile Include="Models\PathVisualizationData.cs" />
-    <Compile Include="Patches\DoorInteractionPatch.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\OnBoxLandPatch.cs" />
     <Compile Include="Patches\OnGameStartedPatch.cs" />

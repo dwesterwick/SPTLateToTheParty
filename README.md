@@ -30,8 +30,15 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **debug.loot_path_visualization.collision_point_radius**: The radius (in meters) for the circles used in **debug.loot_path_visualization.show_obstacle_collision_points**.
 * **debug.loot_path_visualization.show_door_obstacles**: Draw an ellipsoidal outline around doors that should block NavMesh pathing either because they're locked or something is currently interacting with them. Outlines are updated every **destroy_loot_during_raid.check_loot_accessibility.door_obstacle_update_time** seconds. The outline color will be yellow.
 * **debug.loot_path_visualization.door_obstacle_min_radius**: Ensures the radii for ellipsoids drawn for **debug.loot_path_visualization.show_door_obstacles** are at least this value (in meters). Otherwise, the outlines may be hard to see. 
+
 * **scav_raid_adjustments.always_spawn_late**: If there should be a 100% chance that you spawn into the raid late as a Scav for all maps. 
 * **scav_raid_adjustments.adjust_vex_chance**: If the probability that a vehicle extraction is available can be changed if you spawn in late.
+
+* **adjust_bot_spawn_chances.enabled**: If the mod is allowed to change bot spawn-chance settings. This is **true** by default. 
+* **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to change boss spawn chances. This is **true** by default. 
+* **adjust_bot_spawn_chances.adjust_pmc_conversion_chances**: If the mod is allowed to change PMC-conversion chances. This is **false** by default. 
+* **adjust_bot_spawn_chances.pmc_conversion_update_rate**: The time (in seconds) that must elapse after the mod updates PMC conversion-rate chances before it updates them again.  
+* **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
 * **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
 * **only_make_changes_just_after_spawning.time_limit**: The number of seconds that changes are allowed to be made by **only_make_changes_just_after_spawning.affected_systems** after you spawn into the raid. 
@@ -99,12 +106,6 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **open_doors_during_raid.chance_of_unlocking_doors**: The chance (in percent) that the mod will be able to unlock a door when trying to open it. By default, this is set to **50%**. 
 * **open_doors_during_raid.chance_of_closing_doors**: The chance (in percent) that the mod will close a door instead of opening a door. By default, this is set to **15%**. 
 * **open_doors_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run door-event procedures per frame. By default this is set to **3ms**, and delays of <15ms are basically imperceptible. 
-
-* **adjust_bot_spawn_chances.enabled**: If the mod is allowed to change bot spawn-chance settings. This is **true** by default. 
-* **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to change boss spawn chances. This is **true** by default. 
-* **adjust_bot_spawn_chances.adjust_pmc_conversion_chances**: If the mod is allowed to change PMC-conversion chances. This is **false** by default. 
-* **adjust_bot_spawn_chances.pmc_conversion_update_rate**: The time (in seconds) that must elapse after the mod updates PMC conversion-rate chances before it updates them again.  
-* **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
 * **trader_stock_changes.enabled**: If the mod should allow trader stock to deplete as well as change the number and variety of items sold by Fence.
 * **trader_stock_changes.max_ammo_buy_rate**: The maximum rate at which a trader's ammo supply (for each type) can be reduced in rounds/second.

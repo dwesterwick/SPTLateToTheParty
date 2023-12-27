@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -25,9 +24,9 @@ namespace LateToTheParty.Controllers
         public static bool HasToggledInitialDoors { get; private set; } = false;
         public static int InteractiveLayer { get; set; } = LayerMask.NameToLayer("Interactive");
 
-        private static List<Door> toggleableDoors = new List<Door>();
-        private static List<Door> eligibleDoors = new List<Door>();
-        private static Dictionary<Door, bool> allowedToToggleDoor = new Dictionary<Door, bool>();
+        private static List<WorldInteractiveObject> toggleableDoors = new List<WorldInteractiveObject>();
+        private static List<WorldInteractiveObject> eligibleDoors = new List<WorldInteractiveObject>();
+        private static Dictionary<WorldInteractiveObject, bool> allowedToToggleDoor = new Dictionary<WorldInteractiveObject, bool>();
         private GamePlayerOwner gamePlayerOwner = null;
         private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
@@ -174,12 +173,12 @@ namespace LateToTheParty.Controllers
             IsClearing = false;
         }
 
-        public static bool IsToggleableDoor(Door door)
+        public static bool IsToggleableDoor(WorldInteractiveObject door)
         {
             return toggleableDoors.Any(d => d.Id == door.Id);
         }
 
-        public bool ToggleDoor(Door door, EDoorState newState)
+        public bool ToggleDoor(WorldInteractiveObject door, EDoorState newState)
         {
             // Check if the door is already in the desired state
             if (newState == EDoorState.Shut && (door.DoorState == EDoorState.Shut || door.DoorState == EDoorState.Locked))
@@ -281,7 +280,7 @@ namespace LateToTheParty.Controllers
                 // Check which doors are eligible to be toggled
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(eligibleDoors.AsEnumerable(), UpdateIfDoorIsAllowedToBeToggle);
-                IEnumerable<Door> doorsThatCanBeToggled = allowedToToggleDoor.Where(d => d.Value).Select(d => d.Key);
+                IEnumerable<WorldInteractiveObject> doorsThatCanBeToggled = allowedToToggleDoor.Where(d => d.Value).Select(d => d.Key);
 
                 // Toggle requested number of doors
                 enumeratorWithTimeLimit.Reset();
@@ -302,9 +301,10 @@ namespace LateToTheParty.Controllers
                 eligibleDoors.Clear();
 
                 LoggingController.LogInfo("Searching for valid doors...");
-                Door[] allNormalDoors = FindObjectsOfType<Door>();
-                Door[] allKaycardDoors = FindObjectsOfType<KeycardDoor>();
-                IEnumerable<Door> allDoors = allNormalDoors.Concat(allKaycardDoors);
+                WorldInteractiveObject[] allNormalDoors = FindObjectsOfType<Door>();
+                WorldInteractiveObject[] allKaycardDoors = FindObjectsOfType<KeycardDoor>();
+                WorldInteractiveObject[] allTrunks = FindObjectsOfType<Trunk>();
+                IEnumerable<WorldInteractiveObject> allDoors = allNormalDoors.Concat(allKaycardDoors).Concat(allTrunks);
                 LoggingController.LogInfo("Searching for valid doors...found " + allDoors.Count() + " possible doors.");
 
                 enumeratorWithTimeLimit.Reset();
@@ -318,7 +318,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private void CheckIfDoorIsEligible(Door door)
+        private void CheckIfDoorIsEligible(WorldInteractiveObject door)
         {
             // If the door can be toggled, add it to the dictionary
             if (!CheckIfDoorCanBeToggled(door, true))
@@ -335,7 +335,7 @@ namespace LateToTheParty.Controllers
             eligibleDoors.Add(door);
         }
 
-        private void UpdateIfDoorIsAllowedToBeToggle(Door door)
+        private void UpdateIfDoorIsAllowedToBeToggle(WorldInteractiveObject door)
         {
             bool isAllowedToBeToggled = IsDoorAllowedToBeToggled(door);
 
@@ -349,7 +349,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private bool IsDoorAllowedToBeToggled(Door door)
+        private bool IsDoorAllowedToBeToggled(WorldInteractiveObject door)
         {
             // Ensure you're still in the raid to avoid NRE's when it ends
             if ((Camera.main == null) || (door.transform == null))
@@ -368,7 +368,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool IsEligibleDoor(Door door, bool logResult = false)
+        private bool IsEligibleDoor(WorldInteractiveObject door, bool logResult = false)
         {
             // Get all items to search for key ID's
             Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
@@ -381,7 +381,8 @@ namespace LateToTheParty.Controllers
                     return false;
                 }
 
-                if (door.CanBeBreached && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
+                Door doorCast = door as Door;
+                if ((doorCast?.CanBeBreached == true) && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
                 {
                     if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is not allowed to be breached.");
                     return false;
@@ -391,7 +392,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private bool CheckIfDoorCanBeToggled(Door door, bool logResult = false)
+        private bool CheckIfDoorCanBeToggled(WorldInteractiveObject door, bool logResult = false)
         {
             if (!door.Operatable)
             {
@@ -425,7 +426,8 @@ namespace LateToTheParty.Controllers
 
             if (door.DoorState == EDoorState.Locked)
             {
-                if (!allItems.ContainsKey(door.KeyId) && !door.CanBeBreached)
+                Door doorCast = door as Door;
+                if (!allItems.ContainsKey(door.KeyId) && (doorCast?.CanBeBreached == false))
                 {
                     if (logResult) LoggingController.LogInfo("Searching for valid doors...door " + door.Id + " is locked and has no valid key.");
                     return false;
@@ -435,11 +437,11 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private void ToggleRandomDoor(IEnumerable<Door> eligibleDoors, int maxCalcTime_ms)
+        private void ToggleRandomDoor(IEnumerable<WorldInteractiveObject> eligibleDoors, int maxCalcTime_ms)
         {
             // Randomly sort eligible doors
             System.Random randomObj = new System.Random();
-            IEnumerable<Door> randomlyOrderedKeys = eligibleDoors.OrderBy(e => randomObj.NextDouble());
+            IEnumerable<WorldInteractiveObject> randomlyOrderedKeys = eligibleDoors.OrderBy(e => randomObj.NextDouble());
 
             // Try to find a door to toggle, but do not wait too long
             Stopwatch calcTimer = Stopwatch.StartNew();
@@ -453,7 +455,7 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Try to make the desired change to each door in the randomly-sorted enumerator
-                foreach (Door door in randomlyOrderedKeys)
+                foreach (WorldInteractiveObject door in randomlyOrderedKeys)
                 {
                     //LoggingController.LogInfo("Attempting to change door " + door.Id + " to " + newState + "...");
                     if (ToggleDoor(door, newState))

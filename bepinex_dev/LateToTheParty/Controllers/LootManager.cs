@@ -326,12 +326,6 @@ namespace LateToTheParty.Controllers
 
                     if (isInsideOfATrunk(newLoot))
                     {
-                        if (!canOpenFromChance(newLoot.SurroundingTrunk, ConfigController.Config.DestroyLootDuringRaid.ChanceOfOpeningTrunks))
-                        {
-                            LoggingController.LogInfo("Cannot destroy " + item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
-                            continue;
-                        }
-
                         LoggingController.LogInfo(item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
                     }
 
@@ -379,12 +373,6 @@ namespace LateToTheParty.Controllers
 
                         if (isInsideOfATrunk(newLoot))
                         {
-                            if (!canOpenFromChance(newLoot.SurroundingTrunk, ConfigController.Config.DestroyLootDuringRaid.ChanceOfOpeningTrunks))
-                            {
-                                LoggingController.LogInfo("Cannot destroy " + item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
-                                continue;
-                            }
-
                             LoggingController.LogInfo(item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
                         }
 
@@ -416,13 +404,6 @@ namespace LateToTheParty.Controllers
             }
 
             return false;
-        }
-
-        private static bool canOpenFromChance(WorldInteractiveObject worldInteractiveObject, ChanceOfOpeningConfig chanceOfOpeningConfig)
-        {
-            System.Random random = new System.Random();
-            float chanceOfOpening = worldInteractiveObject.DoorState == EDoorState.Locked ? chanceOfOpeningConfig.Locked : chanceOfOpeningConfig.Unlocked;
-            return random.Next(0, 100) < chanceOfOpening;
         }
 
         private static double GetLootFoundTime(double raidET)
@@ -629,6 +610,21 @@ namespace LateToTheParty.Controllers
 
             // Mark the loot as inaccessible if it is inside a locked container
             if ((LootInfo[item].ParentContainer != null) && (LootInfo[item].ParentContainer.DoorState == EDoorState.Locked))
+            {
+                LootInfo[item].PathData.IsAccessible = false;
+
+                if (LootInfo[item].PathData.LootOutlineData != null)
+                {
+                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
+                }
+                LootInfo[item].PathData.Clear(true);
+                LootInfo[item].PathData.Update();
+
+                return;
+            }
+
+            // Mark the loot as inaccessible if it is inside a locked trunk
+            if ((LootInfo[item].SurroundingTrunk != null) && (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Locked))
             {
                 LootInfo[item].PathData.IsAccessible = false;
 
@@ -900,11 +896,13 @@ namespace LateToTheParty.Controllers
                 {
                     if (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Locked)
                     {
-                        LootInfo[item].SurroundingTrunk.DoorState = EDoorState.Shut;
-                        LootInfo[item].SurroundingTrunk.OnEnable();
+                        throw new InvalidOperationException("Cannot destroy loot inside of a locked trunk");
                     }
 
-                    LootInfo[item].SurroundingTrunk.Interact(new InteractionResult(EInteractionType.Open));
+                    if (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Shut)
+                    {
+                        LootInfo[item].SurroundingTrunk.Interact(new InteractionResult(EInteractionType.Open));
+                    }
                 }
 
                 LootInfo[item].TraderController.DestroyItem(item);
