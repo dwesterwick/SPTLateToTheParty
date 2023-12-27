@@ -465,7 +465,7 @@ namespace LateToTheParty.Controllers
             if (interactiveObject.DoorState == EDoorState.Locked)
             {
                 Door door = interactiveObject as Door;
-                if (!allItems.ContainsKey(door.KeyId) && (door?.CanBeBreached == false))
+                if ((door?.CanBeBreached == false) && !allItems.ContainsKey(door.KeyId))
                 {
                     if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...door " + door.Id + " is locked and has no valid key.");
                     return false;

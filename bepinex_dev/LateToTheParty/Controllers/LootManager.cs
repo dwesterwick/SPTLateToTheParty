@@ -11,11 +11,9 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using LateToTheParty.Configuration;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
 using UnityEngine;
-using static Streamer;
 
 namespace LateToTheParty.Controllers
 {
@@ -127,6 +125,7 @@ namespace LateToTheParty.Controllers
                 if (LootInfo.ContainsKey(relevantItem))
                 {
                     LootInfo[relevantItem].IsInPlayerInventory = false;
+                    LootInfo[relevantItem].NearbyInteractiveObject = null;
                 }
 
                 if (preventFromDespawning && !ItemsDroppedByMainPlayer.Contains(relevantItem))
@@ -158,6 +157,7 @@ namespace LateToTheParty.Controllers
 
                     LoggingController.LogInfo("Removing picked-up item from eligible loot: " + relevantItem.LocalizedName());
                     LootInfo[relevantItem].IsInPlayerInventory = true;
+                    LootInfo[relevantItem].NearbyInteractiveObject = null;
                     LootInfo[item].PathData.Clear();
                     LootInfo[relevantItem].PathData.Clear();
                 }
