@@ -26,7 +26,6 @@ namespace LateToTheParty.Controllers
         public static bool HasInitialLootBeenDestroyed { get; private set; } = false;
 
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
-        private static Trunk[] AllTrunks = new Trunk[0];
         private static object lootableContainerLock = new object();
 
         private static Dictionary<Item, Models.LootInfo> LootInfo = new Dictionary<Item, Models.LootInfo>();
@@ -98,7 +97,6 @@ namespace LateToTheParty.Controllers
 
             LoggingController.LogInfo("Searching for lootable containers in the map...");
             AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
-            AllTrunks = GameWorld.FindObjectsOfType<Trunk>();
             LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
 
             currentLocationName = _currentMapName;
@@ -324,10 +322,7 @@ namespace LateToTheParty.Controllers
                             GetLootFoundTime(raidET)
                     );
 
-                    if (isInsideOfATrunk(newLoot))
-                    {
-                        LoggingController.LogInfo(item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
-                    }
+                    findNearbyContainters(item, newLoot);
 
                     LootInfo.Add(item, newLoot);
                     //LoggingController.LogInfo("Found loose loot item: " + item.LocalizedName());
@@ -371,15 +366,12 @@ namespace LateToTheParty.Controllers
                             GetLootFoundTime(raidET)
                         );
 
-                        if (isInsideOfATrunk(newLoot))
-                        {
-                            LoggingController.LogInfo(item.LocalizedName() + " is inside trunk " + newLoot.SurroundingTrunk.Id);
-                        }
-
                         if (lootableContainer.DoorState == EDoorState.Locked)
                         {
                             LootInfo[item].ParentContainer = lootableContainer;
                         }
+
+                        findNearbyContainters(item, newLoot);
 
                         LootInfo.Add(item, newLoot);
 
@@ -389,21 +381,17 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private static bool isInsideOfATrunk(Models.LootInfo lootInfo)
+        private static void findNearbyContainters(Item lootItem, Models.LootInfo lootInfo)
         {
-            foreach (Trunk trunk in AllTrunks)
+            IEnumerable<WorldInteractiveObject> nearbyInteractiveObjects = DoorController
+                .FindNearbyInteractiveObjects(lootInfo.Transform.position, 0.75f, typeof(Trunk))
+                .OrderBy(o => Vector3.Distance(lootInfo.Transform.position, o.transform.position));
+
+            if (nearbyInteractiveObjects.Any())
             {
-                if (Vector3.Distance(trunk.transform.position, lootInfo.Transform.position) > 0.75f)
-                {
-                    continue;
-                }
-
-                lootInfo.SurroundingTrunk = trunk;
-
-                return true;
+                lootInfo.NearbyInteractiveObject = nearbyInteractiveObjects.First();
+                LoggingController.LogInfo(lootItem.LocalizedName() + " is nearby " + lootInfo.NearbyInteractiveObject.Id);
             }
-
-            return false;
         }
 
         private static double GetLootFoundTime(double raidET)
@@ -623,8 +611,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            // Mark the loot as inaccessible if it is inside a locked trunk
-            if ((LootInfo[item].SurroundingTrunk != null) && (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Locked))
+            // Mark the loot as inaccessible if it is likely behind a locked interactive object
+            if ((LootInfo[item].NearbyInteractiveObject != null) && (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Locked))
             {
                 LootInfo[item].PathData.IsAccessible = false;
 
@@ -874,7 +862,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure child items are destroyed before parent items
-            LootInfo[item].parentItem = parentItem;
+            LootInfo[item].ParentItem = parentItem;
             if ((item.Parent.Item != null) && allItemsToDestroy.Contains(item.Parent.Item))
             {
                 allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(item.Parent.Item), item);
@@ -891,17 +879,17 @@ namespace LateToTheParty.Controllers
         {
             try
             {
-                // If the item is inside of a trunk, open the trunk first
-                if (LootInfo[item].SurroundingTrunk != null)
+                // If the item is likely behind an interactive object, open it first
+                if (LootInfo[item].NearbyInteractiveObject != null)
                 {
-                    if (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Locked)
+                    if (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Locked)
                     {
-                        throw new InvalidOperationException("Cannot destroy loot inside of a locked trunk");
+                        throw new InvalidOperationException("Cannot destroy loot behind a locked interactive object");
                     }
 
-                    if (LootInfo[item].SurroundingTrunk.DoorState == EDoorState.Shut)
+                    if (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Shut)
                     {
-                        LootInfo[item].SurroundingTrunk.Interact(new InteractionResult(EInteractionType.Open));
+                        LootInfo[item].NearbyInteractiveObject.Interact(new InteractionResult(EInteractionType.Open));
                     }
                 }
 
@@ -913,7 +901,7 @@ namespace LateToTheParty.Controllers
 
                 LoggingController.LogInfo(
                     "Destroyed " + LootInfo[item].LootType + " loot"
-                    + (((LootInfo[item].parentItem != null) && (LootInfo[item].parentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].parentItem.LocalizedName() : "")
+                    + (((LootInfo[item].ParentItem != null) && (LootInfo[item].ParentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].ParentItem.LocalizedName() : "")
                     + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
                     + ": " + item.LocalizedName()
                 );

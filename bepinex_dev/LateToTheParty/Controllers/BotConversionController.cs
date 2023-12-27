@@ -28,8 +28,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            //if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
-            if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
+            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
+            //if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
             {
                 return;
             }

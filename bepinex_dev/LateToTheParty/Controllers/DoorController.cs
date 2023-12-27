@@ -85,8 +85,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            //if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
-            if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
+            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
+            //if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
             {
                 return;
             }
@@ -269,6 +269,43 @@ namespace LateToTheParty.Controllers
             }
 
             return false;
+        }
+
+        public static IEnumerable<WorldInteractiveObject> FindNearbyInteractiveObjects(Vector3 position, float maxDistance)
+        {
+            return FindNearbyInteractiveObjects(position, maxDistance, typeof(WorldInteractiveObject));
+        }
+
+        public static IEnumerable<WorldInteractiveObject> FindNearbyInteractiveObjects(Vector3 position, float maxDistance, Type interactiveObjectType)
+        {
+            List<WorldInteractiveObject> nearbyInteractiveObjects = new List<WorldInteractiveObject>();
+
+            foreach (WorldInteractiveObject obj in eligibleDoors)
+            {
+                // Check if the interactive object is too far away
+                if (Vector3.Distance(obj.transform.position, position) > maxDistance)
+                {
+                    continue;
+                }
+
+                // Check if the interactive object is the correct type
+                try
+                {
+                    object objConverted = Convert.ChangeType(obj, interactiveObjectType);
+                    if (objConverted == null)
+                    {
+                        throw new InvalidCastException("Could not convert " + obj.Id + " to type " + interactiveObjectType.FullName);
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    continue;
+                }
+
+                nearbyInteractiveObjects.Add(obj);
+            }
+
+            return nearbyInteractiveObjects;
         }
 
         private IEnumerator ToggleRandomDoors(int doorsToToggle)

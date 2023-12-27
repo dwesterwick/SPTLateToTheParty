@@ -28,9 +28,9 @@ namespace LateToTheParty.Models
         public double RaidETWhenFound { get; set; } = -999;
         public double RaidETWhenDestroyed { get; set; } = -999;
         public bool CanDestroy { get; set; } = false;
-        public Item parentItem { get; set; } = null;
+        public Item ParentItem { get; set; } = null;
         public WorldInteractiveObject ParentContainer = null;
-        public Trunk SurroundingTrunk { get; set; } = null;
+        public WorldInteractiveObject NearbyInteractiveObject { get; set; } = null;
 
         public LootInfo(ELootType lootType)
         {
