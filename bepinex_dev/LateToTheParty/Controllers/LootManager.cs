@@ -390,7 +390,7 @@ namespace LateToTheParty.Controllers
             if (nearbyInteractiveObjects.Any())
             {
                 lootInfo.NearbyInteractiveObject = nearbyInteractiveObjects.First();
-                LoggingController.LogInfo(lootItem.LocalizedName() + " is nearby " + lootInfo.NearbyInteractiveObject.Id);
+                LoggingController.LogInfo(lootItem.LocalizedName() + " is nearby " + lootInfo.NearbyInteractiveObject.GetType().Name + " " + lootInfo.NearbyInteractiveObject.Id);
             }
         }
 

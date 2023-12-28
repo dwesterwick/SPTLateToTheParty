@@ -290,15 +290,7 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Check if the interactive object is the correct type
-                try
-                {
-                    object objConverted = Convert.ChangeType(obj, interactiveObjectType);
-                    if (objConverted == null)
-                    {
-                        throw new InvalidCastException("Could not convert " + obj.Id + " to type " + interactiveObjectType.FullName);
-                    }
-                }
-                catch (InvalidCastException)
+                if (!checkIfObjectIsSubclassOfType(obj, interactiveObjectType))
                 {
                     continue;
                 }
@@ -307,6 +299,23 @@ namespace LateToTheParty.Controllers
             }
 
             return nearbyInteractiveObjects;
+        }
+
+        private static bool checkIfObjectIsSubclassOfType(object obj, Type type)
+        {
+            Type objType = obj.GetType();
+
+            if (objType == type)
+            {
+                return true;
+            }
+
+            if (objType.IsSubclassOf(type))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private IEnumerator ToggleRandomInteractiveObjects(int interactiveObjectsToToggle)
