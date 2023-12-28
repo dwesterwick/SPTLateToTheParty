@@ -368,14 +368,12 @@ namespace LateToTheParty.Controllers
 
                         if (lootableContainer.DoorState == EDoorState.Locked)
                         {
-                            LootInfo[item].ParentContainer = lootableContainer;
+                            newLoot.ParentContainer = lootableContainer;
                         }
 
                         findNearbyContainters(item, newLoot);
 
                         LootInfo.Add(item, newLoot);
-
-                        
                     }
                 }
             }
@@ -891,6 +889,7 @@ namespace LateToTheParty.Controllers
 
                     if (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Shut)
                     {
+                        LoggingController.LogInfo("Opening interactive object: " + LootInfo[item].NearbyInteractiveObject.Id + "...");
                         LootInfo[item].NearbyInteractiveObject.Interact(new InteractionResult(EInteractionType.Open));
                     }
                 }

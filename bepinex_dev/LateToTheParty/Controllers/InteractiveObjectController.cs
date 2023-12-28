@@ -217,18 +217,20 @@ namespace LateToTheParty.Controllers
                         return true;
                     }
 
-                    LoggingController.LogInfo("Preparing to breach door: " + interactiveObject.Id);
+                    Door door = interactiveObject as Door;
+                    if (door?.CanBeBreached == true)
+                    {
+                        LoggingController.LogInfo("Preparing to breach door: " + door.Id);
+                    }
+                    else
+                    {
+                        LoggingController.LogInfo("Cannot breach interactive object: " + interactiveObject.Id);
+                        return false;
+                    }
                 }
 
-                // Do not "breach" the interactive object unless it is a door (or keycard door)
-                Door door = interactiveObject as Door;
-                if (door == null)
-                {
-                    throw new InvalidOperationException("Cannot breach interactive object " + interactiveObject.Id + " because it is not a door");
-                }
-
-                door.DoorState = EDoorState.Shut;
-                door.OnEnable();
+                interactiveObject.DoorState = EDoorState.Shut;
+                interactiveObject.OnEnable();
             }
 
             // Ignore doors that are currently being opened/closed                    
