@@ -18,6 +18,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("scav_raid_adjustments")]
         public ScavRaidAdjustmentsConfig ScavRaidAdjustments { get; set; } = new ScavRaidAdjustmentsConfig();
 
+        [JsonProperty("car_extract_departures")]
+        public CarExtractDeparturesConfig CarExtractDepartures { get; set; } = new CarExtractDeparturesConfig();
+
         [JsonProperty("adjust_bot_spawn_chances")]
         public AdjustBotSpawnChancesConfig AdjustBotSpawnChances { get; set; } = new AdjustBotSpawnChancesConfig();
 
@@ -38,9 +41,6 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("fraction_of_players_full_of_loot")]
         public double[][] FractionOfPlayersFullOfLoot { get; set; } = new double[0][];
-
-        [JsonProperty("vex_chance_reduction")]
-        public double[][] VExChanceReductions { get; set; } = new double[0][];
 
         [JsonProperty("pmc_spawn_chance_multipliers")]
         public double[][] PMCSpawnChanceMultipliers { get; set; } = new double[0][];

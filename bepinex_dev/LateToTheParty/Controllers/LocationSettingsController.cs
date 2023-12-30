@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
+using EFT.Interactive;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -129,35 +131,20 @@ namespace LateToTheParty.Controllers
             return (int)Math.Round(GetTargetPlayersFullOfLoot(timeRemainingFactor) * totalSlots);
         }
 
-        public static void AdjustVExChance(LocationSettingsClass.Location location, double timeReductionFactor)
+        public static void AdjustVExChance(LocationSettingsClass.Location location, float chance)
         {
-            if (!ConfigController.Config.ScavRaidAdjustments.AdjustVexChance)
-            {
-                return;
-            }
-
-            // Ensure at least one pair exists in the array
-            if (ConfigController.Config.VExChanceReductions.Length == 0)
-            {
-                return;
-            }
-
             if (CarExtractNames.Length == 0)
             {
                 LoggingController.Logger.LogInfo("Getting car extract names...");
                 CarExtractNames = ConfigController.GetCarExtractNames();
             }
 
-            // Calculate the reduction in VEX chance
-            double reductionFactor = InterpolateForFirstCol(ConfigController.Config.VExChanceReductions, timeReductionFactor);
-
-            // Find all VEX extracts and adjust their chances proportionally
             foreach (GClass1135 exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
-                    exit.Chance *= (float)reductionFactor;
-                    LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance reduced to " + Math.Round(exit.Chance, 1) + "%");
+                    exit.Chance = chance;
+                    LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance adjusted to " + Math.Round(exit.Chance, 1) + "%");
                 }
             }
         }
@@ -240,6 +227,66 @@ namespace LateToTheParty.Controllers
             }
 
             throw new InvalidOperationException("The original settings for " + location.Id + " were never stored");
+        }
+
+        public static ExfiltrationPoint FindVEX()
+        {
+            return FindVEX(Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints);
+        }
+
+        public static ExfiltrationPoint FindVEX(ExfiltrationPoint[] allExfils)
+        {
+            if (CarExtractNames.Length == 0)
+            {
+                LoggingController.Logger.LogInfo("Getting car extract names...");
+                CarExtractNames = ConfigController.GetCarExtractNames();
+            }
+
+            foreach (ExfiltrationPoint exfil in allExfils)
+            {
+                if (CarExtractNames.Contains(exfil.Settings.Name))
+                {
+                    return exfil;
+                }
+
+                /*if (exfil.Settings.ExfiltrationType != EExfiltrationType.SharedTimer)
+                {
+                    continue;
+                }
+
+                if (!exfil.Requirements.Any(r => r.Requirement == ERequirementState.TransferItem))
+                {
+                    continue;
+                }
+
+                return exfil;*/
+            }
+
+            return null;
+        }
+
+        public static void ActivateExfil(ExfiltrationPoint exfil, IPlayer player)
+        {
+            // Needed to start the car extract
+            exfil.OnItemTransferred(player);
+
+            // Copied from the end of ExfiltrationPoint.Proceed()
+            if (exfil.Status == EExfiltrationStatus.UncompleteRequirements)
+            {
+                switch (exfil.Settings.ExfiltrationType)
+                {
+                    case EExfiltrationType.Individual:
+                        exfil.SetStatusLogged(EExfiltrationStatus.RegularMode, "Proceed-3");
+                        break;
+                    case EExfiltrationType.SharedTimer:
+                        exfil.SetStatusLogged(EExfiltrationStatus.Countdown, "Proceed-1");
+                        LoggingController.LogInfo("VEX activated");
+                        break;
+                    case EExfiltrationType.Manual:
+                        exfil.SetStatusLogged(EExfiltrationStatus.AwaitsManualActivation, "Proceed-2");
+                        break;
+                }
+            }
         }
     }
 }

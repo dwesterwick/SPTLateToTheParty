@@ -1,11 +1,10 @@
-﻿using Aki.Reflection.Patching;
-using EFT;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Aki.Reflection.Patching;
 
 namespace LateToTheParty.Patches
 {
@@ -26,7 +25,8 @@ namespace LateToTheParty.Patches
             Controllers.LoggingController.LogInfo("Time remaining fraction: " + raidTimeRemainingFraction);
 
             Controllers.LocationSettingsController.AdjustBossSpawnChances(location, raidTimeRemainingFraction);
-            Controllers.LocationSettingsController.AdjustVExChance(location, raidTimeRemainingFraction);
+
+            Controllers.LocationSettingsController.AdjustVExChance(location, 100);
         }
     }
 }

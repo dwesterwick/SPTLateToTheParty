@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
 using EFT;
-using UnityEngine;
 
 namespace LateToTheParty.Patches
 {
@@ -18,7 +17,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPostfix]
-        private static void PatchPostfix()
+        private static void PatchPostfix(GameWorld __instance)
         {
             Controllers.LocationSettingsController.HasRaidStarted = true;
         }

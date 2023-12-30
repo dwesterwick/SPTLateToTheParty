@@ -58,6 +58,10 @@
     <Reference Include="Comfort.Unity">
       <HintPath>..\..\..\SPTHardcoreRules\bepinex_dev\Libraries\Managed\Comfort.Unity.dll</HintPath>
     </Reference>
+    <Reference Include="DissonanceVoip, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libraries\Managed\DissonanceVoip.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -90,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\AdjustBotSpawnChancesConfig.cs" />
+    <Compile Include="Configuration\CarExtractDeparturesConfig.cs" />
     <Compile Include="Configuration\ScavRaidAdjustmentsConfig.cs" />
     <Compile Include="Configuration\CheckLootAccessibilityConfig.cs" />
     <Compile Include="Configuration\DebugConfig.cs" />
@@ -113,6 +118,7 @@
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\OpenDoorsDuringRaidConfig.cs" />
     <Compile Include="Controllers\BotConversionController.cs" />
+    <Compile Include="Controllers\CarExtractController.cs" />
     <Compile Include="Controllers\ConfigController.cs" />
     <Compile Include="Controllers\InteractiveObjectController.cs" />
     <Compile Include="Controllers\LocationSettingsController.cs" />
