@@ -15,8 +15,14 @@ namespace LateToTheParty.Configuration
         [JsonProperty("countdown_time")]
         public float CountdownTime { get; set; } = 60;
 
+        [JsonProperty("delay_after_countdown_reset")]
+        public double DelayAfterCountdownReset { get; set; } = 120;
+
         [JsonProperty("exclusion_radius")]
         public double ExclusionRadius { get; set; } = 150;
+
+        [JsonProperty("chance_of_leaving")]
+        public float ChanceOfLeaving { get; set; } = 50;
 
         [JsonProperty("raid_fraction_when_leaving")]
         public MinMaxConfig RaidFractionWhenLeaving { get; set; } = new MinMaxConfig();

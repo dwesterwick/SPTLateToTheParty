@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
 using EFT.Interactive;
+using HarmonyLib;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -248,24 +250,12 @@ namespace LateToTheParty.Controllers
                 {
                     return exfil;
                 }
-
-                /*if (exfil.Settings.ExfiltrationType != EExfiltrationType.SharedTimer)
-                {
-                    continue;
-                }
-
-                if (!exfil.Requirements.Any(r => r.Requirement == ERequirementState.TransferItem))
-                {
-                    continue;
-                }
-
-                return exfil;*/
             }
 
             return null;
         }
 
-        public static void ActivateExfil(ExfiltrationPoint exfil, IPlayer player)
+        public static void ActivateExfilForPlayer(ExfiltrationPoint exfil, IPlayer player)
         {
             // Needed to start the car extract
             exfil.OnItemTransferred(player);
@@ -280,13 +270,28 @@ namespace LateToTheParty.Controllers
                         break;
                     case EExfiltrationType.SharedTimer:
                         exfil.SetStatusLogged(EExfiltrationStatus.Countdown, "Proceed-1");
-                        LoggingController.LogInfo("VEX activated");
                         break;
                     case EExfiltrationType.Manual:
                         exfil.SetStatusLogged(EExfiltrationStatus.AwaitsManualActivation, "Proceed-2");
                         break;
                 }
             }
+
+            LoggingController.LogInfo("Extract " + exfil.Settings.Name + " activated for player " + player.Profile.Nickname);
+        }
+
+        public static void DeactivateExfilForPlayer(ExfiltrationPoint exfil, IPlayer player)
+        {
+            string methodName = "method_5";
+            MethodInfo playerDiedMethod = AccessTools.Method(typeof(ExfiltrationPoint), methodName, new Type[] { typeof(EFT.IPlayer) });
+            if (playerDiedMethod == null)
+            {
+                throw new MissingMethodException(nameof(ExfiltrationPoint), methodName);
+            }
+
+            playerDiedMethod.Invoke(exfil, new object[] { player });
+
+            LoggingController.LogInfo("Extract " + exfil.Settings.Name + " deactivated for player " + player.Profile.Nickname);
         }
     }
 }

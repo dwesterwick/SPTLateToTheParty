@@ -26,6 +26,7 @@ namespace LateToTheParty.Patches
 
             Controllers.LocationSettingsController.AdjustBossSpawnChances(location, raidTimeRemainingFraction);
 
+            // Only used to test car extract departures
             Controllers.LocationSettingsController.AdjustVExChance(location, 100);
         }
     }

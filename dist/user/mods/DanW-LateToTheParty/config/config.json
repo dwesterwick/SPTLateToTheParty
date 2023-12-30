@@ -27,8 +27,10 @@
 	},
 	"car_extract_departures" : {
 		"enabled": true,
-		"countdown_time": 5,
+		"countdown_time": 60,
+		"delay_after_countdown_reset": 120,
 		"exclusion_radius": 150,
+		"chance_of_leaving": 50,
 		"raid_fraction_when_leaving": {
 			"min": 0.3,
 			"max": 0.8
@@ -47,8 +49,9 @@
 		"affected_systems" : {
 			"loot_destruction": true,
 			"opening_unlocked_doors": true,
-			"opening_locked_doors": false,
-			"closing_doors": true
+			"opening_locked_doors": true,
+			"closing_doors": true,
+			"car_departures": true
 		}
 	},
 	"destroy_loot_during_raid" : {

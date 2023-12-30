@@ -21,6 +21,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("closing_doors")]
         public bool ClosingDoors { get; set; } = true;
 
+        [JsonProperty("car_departures")]
+        public bool CarDepartures { get; set; } = true;
+
         public OnlyMakeChangesAfterSpawningAffectedSystemsConfig()
         {
 

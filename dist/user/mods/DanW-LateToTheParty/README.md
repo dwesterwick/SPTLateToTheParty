@@ -32,7 +32,6 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **debug.loot_path_visualization.door_obstacle_min_radius**: Ensures the radii for ellipsoids drawn for **debug.loot_path_visualization.show_door_obstacles** are at least this value (in meters). Otherwise, the outlines may be hard to see. 
 
 * **scav_raid_adjustments.always_spawn_late**: If there should be a 100% chance that you spawn into the raid late as a Scav for all maps. 
-* **scav_raid_adjustments.adjust_vex_chance**: If the probability that a vehicle extraction is available can be changed if you spawn in late.
 
 * **adjust_bot_spawn_chances.enabled**: If the mod is allowed to change bot spawn-chance settings. This is **true** by default. 
 * **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to change boss spawn chances. This is **true** by default. 
@@ -136,7 +135,6 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 
 * **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid. A value of "1" means match the original loot amount. 
 * **fraction_of_players_full_of_loot**: [time_remaining_factor, players_full_of_loot_fraction] pairs describing the fraction of the maximum players allowed on the map who will be full of loot based on the fraction of time remaining in the raid. A value of "1" in the second column means that the entire starting (full) lobby of players will have looted **destroy_loot_during_raid.avg_slots_per_player** slots worth of loot by that time. This value can be greater than one to include player Scavs. 
-* **vex_chance_reduction**: [time_remaining_factor, reduction_factor] pairs describing how the chance that a vehicle extract is available changes based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **fence_item_value_permitted_chance**: [item_value, sell_chance_percent] pairs describing how likely Fence is to sell an item with a certain value. 
