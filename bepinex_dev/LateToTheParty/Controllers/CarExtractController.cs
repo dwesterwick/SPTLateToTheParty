@@ -64,6 +64,11 @@ namespace LateToTheParty.Controllers
                 carNotPresent = (VEXExfil == null) || (VEXExfil?.Status == EExfiltrationStatus.NotPresent);
 
                 LoggingController.LogInfo("VEX Found: " + !carNotPresent);
+
+                if (carNotPresent)
+                {
+                    return;
+                }
             }
 
             // Select the time when the car should leave if one is present on the map
