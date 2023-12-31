@@ -24,6 +24,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("car_departures")]
         public bool CarDepartures { get; set; } = true;
 
+        [JsonProperty("toggling_switches")]
+        public bool TogglingSwitches { get; set; } = true;
+
         public OnlyMakeChangesAfterSpawningAffectedSystemsConfig()
         {
 

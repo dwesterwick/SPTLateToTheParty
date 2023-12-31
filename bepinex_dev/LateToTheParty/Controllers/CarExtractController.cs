@@ -91,7 +91,6 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            // Make sure you aren't too close to the car so it doesn't leave by surprise
             float distance = Vector3.Distance(Singleton<GameWorld>.Instance.MainPlayer.Position, VEXExfil.transform.position);
             if (distance < ConfigController.Config.CarExtractDepartures.ExclusionRadius)
             {

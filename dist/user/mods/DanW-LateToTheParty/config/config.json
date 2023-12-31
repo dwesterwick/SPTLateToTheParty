@@ -52,7 +52,8 @@
 			"opening_unlocked_doors": true,
 			"opening_locked_doors": true,
 			"closing_doors": true,
-			"car_departures": true
+			"car_departures": true,
+			"toggling_switches": true
 		}
 	},
 	"destroy_loot_during_raid" : {
@@ -181,6 +182,21 @@
 		"percentage_of_doors_per_event": 3,
 		"chance_of_unlocking_doors": 50,
 		"chance_of_closing_doors": 15,
+		"max_calc_time_per_frame_ms": 3
+	},
+	"toggle_switches_during_raid": {
+		"enabled": true,
+		"time_between_events_ms": 3000,
+		"exclusion_radius": 150,
+		"min_raid_ET_for_exfil_switches": 600,
+		"raid_fraction_when_toggling": {
+			"min": 0.1,
+			"max": 0.95
+		},
+		"fraction_of_switches_to_toggle": {
+			"min": 0.2,
+			"max": 0.7
+		},
 		"max_calc_time_per_frame_ms": 3
 	},
 	"trader_stock_changes": {

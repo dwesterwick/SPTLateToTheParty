@@ -25,5 +25,57 @@ namespace LateToTheParty.Configuration
             Min = min;
             Max = max;
         }
+
+        public void Round()
+        {
+            Min = Math.Round(Min);
+            Max = Math.Round(Max);
+        }
+
+        public void MinFloorMaxCeiling()
+        {
+            Min = Math.Floor(Min);
+            Max = Math.Ceiling(Max);
+        }
+
+        public static MinMaxConfig operator +(MinMaxConfig a, MinMaxConfig b)
+        {
+            return new MinMaxConfig(a.Min + b.Min, a.Max + b.Max);
+        }
+
+        public static MinMaxConfig operator -(MinMaxConfig a, MinMaxConfig b)
+        {
+            return new MinMaxConfig(a.Min - b.Min, a.Max - b.Max);
+        }
+
+        public static MinMaxConfig operator *(MinMaxConfig a, MinMaxConfig b)
+        {
+            return new MinMaxConfig(a.Min * b.Min, a.Max * b.Max);
+        }
+
+        public static MinMaxConfig operator /(MinMaxConfig a, MinMaxConfig b)
+        {
+            return new MinMaxConfig(a.Min / b.Min, a.Max / b.Max);
+        }
+
+        public static MinMaxConfig operator +(MinMaxConfig a, double b)
+        {
+            return new MinMaxConfig(a.Min + b, a.Max + b);
+        }
+
+        public static MinMaxConfig operator -(MinMaxConfig a, double b)
+        {
+            return new MinMaxConfig(a.Min - b, a.Max - b);
+        }
+
+        public static MinMaxConfig operator *(MinMaxConfig a, double b)
+        {
+            return new MinMaxConfig(a.Min * b, a.Max * b);
+        }
+
+        public static MinMaxConfig operator /(MinMaxConfig a, double b)
+        {
+            return new MinMaxConfig(a.Min / b, a.Max / b);
+        }
     }
 }

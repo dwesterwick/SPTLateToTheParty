@@ -33,6 +33,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("open_doors_during_raid")]
         public OpenDoorsDuringRaidConfig OpenDoorsDuringRaid { get; set; } = new OpenDoorsDuringRaidConfig();
 
+        [JsonProperty("toggle_switches_during_raid")]
+        public ToggleSwitchesDuringRaidConfig ToggleSwitchesDuringRaid { get; set; } = new ToggleSwitchesDuringRaidConfig();
+
         [JsonProperty("trader_stock_changes")]
         public TraderStockChangesConfig TraderStockChanges { get; set; } = new TraderStockChangesConfig();
 

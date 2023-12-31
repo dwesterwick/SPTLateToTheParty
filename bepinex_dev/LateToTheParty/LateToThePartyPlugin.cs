@@ -8,7 +8,7 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.2.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.3.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private void Awake()
@@ -59,6 +59,11 @@ namespace LateToTheParty
                 if (ConfigController.Config.CarExtractDepartures.Enabled)
                 {
                     this.GetOrAddComponent<CarExtractController>();
+                }
+
+                if (ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
+                {
+                    this.GetOrAddComponent<SwitchController>();
                 }
 
                 if (ConfigController.Config.Debug.Enabled)

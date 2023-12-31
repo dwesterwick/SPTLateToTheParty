@@ -1,4 +1,4 @@
-Make your SPT experience closer to live Tarkov with loot disappearing and doors opening throughout the raid. PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
+Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, and car extracts leaving throughout the raid. PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 

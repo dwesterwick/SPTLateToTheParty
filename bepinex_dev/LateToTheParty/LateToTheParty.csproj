@@ -105,6 +105,7 @@
     <Compile Include="Configuration\MinMaxConfig.cs" />
     <Compile Include="Configuration\OnlyMakeChangesAfterSpawningAffectedSystemsConfig.cs" />
     <Compile Include="Configuration\OnlyMakeChangesJustAfterSpawningConfig.cs" />
+    <Compile Include="Configuration\ToggleSwitchesDuringRaidConfig.cs" />
     <Compile Include="Configuration\TraderStockChangesConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
@@ -126,6 +127,7 @@
     <Compile Include="Controllers\LootDestroyerController.cs" />
     <Compile Include="Controllers\NavMeshController.cs" />
     <Compile Include="Controllers\PathRender.cs" />
+    <Compile Include="Controllers\SwitchController.cs" />
     <Compile Include="CoroutineExtensions\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />
     <Compile Include="Models\DoorObstacle.cs" />

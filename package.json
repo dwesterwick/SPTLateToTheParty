@@ -1,6 +1,6 @@
 {
     "name": "LateToTheParty",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "main": "src/mod.js",
     "license": "MIT",
     "author": "DanW",
