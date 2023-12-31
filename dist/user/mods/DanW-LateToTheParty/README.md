@@ -3,11 +3,13 @@ Make your SPT experience closer to live Tarkov with loot disappearing and doors 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
 * Doors will randomly open and close throughout the raid to simulate players moving through the map (thanks to help from DrakiaXYZ!). If you're lucky, locked doors may be opened for you...
+* The car extract may leave at some point during the raid
 * Compared to vanilla SPT, PMC's are more likely to spawn toward the beginning of the raid and less likely to spawn toward the end of it. 
 * If you spawn into the map late as a Scav, bosses are less likely to spawn. 
-* If you spawn into the map late as a Scav, vehicle extracts are less likely to be available. 
 * Trader stock reduces over time (until it resets), and desirable items (like MP-133's) can sell out
 * Fence sells more items, including ammo, but most items are significantly less valuable than what he sells in the base game
+
+If you use both [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
 
 This mod is highly customizable by modifying the *config.json* file. Here are the settings you can change:
 
@@ -33,18 +35,27 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 
 * **scav_raid_adjustments.always_spawn_late**: If there should be a 100% chance that you spawn into the raid late as a Scav for all maps. 
 
+* **car_extract_departures.enabled**: If the mod is allowed to make the car extract leave at some point during the raid.
+* **car_extract_departures.countdown_time**: The countdown-timer length (in seconds) before the car extract leaves. By default, this is **60** s, which is the same as base EFT.
+* **car_extract_departures.delay_after_countdown_reset**: If the countdown timer is reset because you come too close to the car, the car won't be allowed to leave again for this many seconds (**120** s by default). This is to prevent the car extract from constantly cycling between enabled and disabled if you keep getting too close and then far enough away from it.
+* **car_extract_departures.exclusion_radius**: The car extract will only be allowed to depart if you're more than this distance (in meters) away from it (**150** m by default). This minimizes the chances of you seeing it leave without a bot leaving with it.
+* **car_extract_departures.exclusion_radius_hysteresis**: If the car extract has been activated by this mod, it will be deactivated if you come within this distance (as a fraction of **car_extract_departures.exclusion_radius**) of it. This is to prevent the car from leaving by itself when you're near it, and it prevents you from possibly getting a free ride. This is **0.9** by default.
+* **car_extract_departures.chance_of_leaving**: The chance (in percent) that the car will leave at some point during the raid.
+* **car_extract_departures.raid_fraction_when_leaving.min/max**: The minimum and maximum fractions of the overall raid length (before it's shortened for Scav raids) between which the car may leave. For example, if min=0.25 and max=0.75, the car will be allowed to leave between 10 and 30 minutes remaining in a 40-min Customs raid. If you spawn into the raid as a Scav later than the time randomly selected for the car to depart, it will depart immediately. 
+
 * **adjust_bot_spawn_chances.enabled**: If the mod is allowed to change bot spawn-chance settings. This is **true** by default. 
-* **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to change boss spawn chances. This is **true** by default. 
+* **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to reduce boss spawn chances based on the time you spawn into the raid. This is **true** by default. 
 * **adjust_bot_spawn_chances.adjust_pmc_conversion_chances**: If the mod is allowed to change PMC-conversion chances. This is **false** by default. 
 * **adjust_bot_spawn_chances.pmc_conversion_update_rate**: The time (in seconds) that must elapse after the mod updates PMC conversion-rate chances before it updates them again.  
 * **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
-* **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
+* **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. **This is highly recommend if you use [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/).**
 * **only_make_changes_just_after_spawning.time_limit**: The number of seconds that changes are allowed to be made by **only_make_changes_just_after_spawning.affected_systems** after you spawn into the raid. 
 * **only_make_changes_just_after_spawning.affected_systems.loot_destruction**: If loot destruction should only occur for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. 
 * **only_make_changes_just_after_spawning.affected_systems.opening_unlocked_doors**: If unlocked doors should only be opened for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
 * **only_make_changes_just_after_spawning.affected_systems.opening_locked_doors**: If locked doors should only be opened for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
 * **only_make_changes_just_after_spawning.affected_systems.closing_doors**: If doors should only be closed for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
+* **only_make_changes_just_after_spawning.affected_systems.car_departures**: If car extracts are allowed to depart after **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
 
 * **destroy_loot_during_raid.enabled**: If the mod is allowed to remove loot throughout the raid. If you spawn into the raid late, loot will be immediately removed from the map until it reaches the target amount for the fraction of time remaining in the raid. This is **true** by default. 
 * **destroy_loot_during_raid.exclusion_radius**: The radius (in meters) from you within which loot is not allowed to be despawned. By default, this is set to **40** meters. 
@@ -174,3 +185,4 @@ Known issues:
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.
 * The "hot items" sold by traders are always the same, regardless of your player level or account age. This makes the trader stock changes always seem like it's early wipe. 
 * Traders may sell out of junk ammo that nobody actually buys.
+* If you approach the car extract without taking it and this mod instructs it to leave later in the raid, you'll see the countdown timer when you check your extracts.

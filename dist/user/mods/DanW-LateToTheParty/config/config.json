@@ -30,6 +30,7 @@
 		"countdown_time": 60,
 		"delay_after_countdown_reset": 120,
 		"exclusion_radius": 150,
+		"exclusion_radius_hysteresis": 0.9,
 		"chance_of_leaving": 50,
 		"raid_fraction_when_leaving": {
 			"min": 0.3,

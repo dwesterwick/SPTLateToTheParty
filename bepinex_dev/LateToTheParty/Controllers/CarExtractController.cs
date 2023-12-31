@@ -91,7 +91,7 @@ namespace LateToTheParty.Controllers
             if (distance < ConfigController.Config.CarExtractDepartures.ExclusionRadius)
             {
                 // Wait until you're a little closer to the car to add some hysteresis
-                if (carActivated && (distance < ConfigController.Config.CarExtractDepartures.ExclusionRadius * 0.9f))
+                if (carActivated && (distance < ConfigController.Config.CarExtractDepartures.ExclusionRadius * ConfigController.Config.CarExtractDepartures.ExclusionRadiusHysteresis))
                 {
                     // Stop the countdown so you don't get a free ride
                     LocationSettingsController.DeactivateExfilForPlayer(VEXExfil, Singleton<GameWorld>.Instance.MainPlayer);

@@ -21,6 +21,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("exclusion_radius")]
         public double ExclusionRadius { get; set; } = 150;
 
+        [JsonProperty("exclusion_radius_hysteresis")]
+        public float ExclusionRadiusHysteresis { get; set; } = 0.9f;
+
         [JsonProperty("chance_of_leaving")]
         public float ChanceOfLeaving { get; set; } = 50;
 
