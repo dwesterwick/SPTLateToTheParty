@@ -189,6 +189,7 @@
 		"time_between_events_ms": 3000,
 		"exclusion_radius": 150,
 		"min_raid_ET_for_exfil_switches": 600,
+		"delay_after_pressing_prereq_switch_s_per_m": 1,
 		"raid_fraction_when_toggling": {
 			"min": 0.1,
 			"max": 0.95

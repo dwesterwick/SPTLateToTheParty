@@ -102,8 +102,7 @@ namespace LateToTheParty.Controllers
         {
             System.Random random = new System.Random();
             Configuration.MinMaxConfig fractionOfSwitchesToToggleRange = ConfigController.Config.ToggleSwitchesDuringRaid.FractionOfSwitchesToToggle;
-            Configuration.MinMaxConfig raidFractionWhenTogglingRange = ConfigController.Config.ToggleSwitchesDuringRaid.RaidFractionWhenToggling;
-
+            
             EFT.Interactive.Switch[] allSwitches = FindObjectsOfType<EFT.Interactive.Switch>()
                 .Where(s => CanToggleSwitch(s))
                 .OrderBy(x => random.NextDouble())
@@ -116,27 +115,55 @@ namespace LateToTheParty.Controllers
             for (int i = 0; i < allSwitches.Length; i++)
             {
                 hasToggledSwitch.Add(allSwitches[i], false);
-
-                double timeRemainingToToggle = -1;
-                if (i < switchesToToggle)
-                {
-                    double timeRemainingFractionToToggle = raidFractionWhenTogglingRange.Min + ((raidFractionWhenTogglingRange.Max - raidFractionWhenTogglingRange.Min) * random.NextDouble());
-                    timeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * timeRemainingFractionToToggle;
-                }
-
-                if (Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints.Any(x => x.Switch == allSwitches[i]))
-                {
-                    LoggingController.LogInfo("Switch " + GetSwitchText(allSwitches[i]) + " is used for an extract point");
-
-                    float maxTimeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds - ConfigController.Config.ToggleSwitchesDuringRaid.MinRaidETForExfilSwitches;
-                    timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
-                }
-
-                raidTimeRemainingToToggleSwitch.Add(allSwitches[i], timeRemainingToToggle);
-                LoggingController.LogInfo("Switch " + GetSwitchText(allSwitches[i]) + " will be toggled at " + TimeSpan.FromSeconds(timeRemainingToToggle).ToString("mm':'ss"));
+                setTimeToToggleSwitch(allSwitches[i], 0, i >= switchesToToggle);
             }
 
             HasFoundSwitches = true;
+        }
+
+        private static void setTimeToToggleSwitch(EFT.Interactive.Switch sw, float minTimeFromNow = 0, bool neverToggle = false)
+        {
+            System.Random random = new System.Random();
+            Configuration.MinMaxConfig raidFractionWhenTogglingRange = ConfigController.Config.ToggleSwitchesDuringRaid.RaidFractionWhenToggling;
+
+            double timeRemainingToToggle = -1;
+            if (!neverToggle)
+            {
+                double timeRemainingFractionToToggle = raidFractionWhenTogglingRange.Min + ((raidFractionWhenTogglingRange.Max - raidFractionWhenTogglingRange.Min) * random.NextDouble());
+                timeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * timeRemainingFractionToToggle;
+            }
+
+            if (Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints.Any(x => x.Switch == sw))
+            {
+                LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is used for an extract point");
+
+                float maxTimeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds - ConfigController.Config.ToggleSwitchesDuringRaid.MinRaidETForExfilSwitches;
+                timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
+            }
+
+            if (minTimeFromNow > 0)
+            {
+                float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+                float maxTimeRemainingToToggle = raidTimeRemaining - minTimeFromNow;
+
+                timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
+            }
+
+            if (raidTimeRemainingToToggleSwitch.ContainsKey(sw))
+            {
+                raidTimeRemainingToToggleSwitch[sw] = timeRemainingToToggle;
+            }
+            else
+            {
+                raidTimeRemainingToToggleSwitch.Add(sw, timeRemainingToToggle);
+            }
+            LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " will be toggled at " + TimeSpan.FromSeconds(timeRemainingToToggle).ToString("mm':'ss"));
+        }
+
+        private static float getSwitchDelayTime(EFT.Interactive.Switch sw1, EFT.Interactive.Switch sw2)
+        {
+            float distance = Vector3.Distance(sw1.transform.position, sw2.transform.position);
+            return ConfigController.Config.ToggleSwitchesDuringRaid.DelayAfterPressingPrereqSwitch * distance;
         }
 
         private static IEnumerator tryToggleAllSwitches()
@@ -164,6 +191,13 @@ namespace LateToTheParty.Controllers
 
         private static void tryToggleSwitch(EFT.Interactive.Switch sw)
         {
+            if (sw.DoorState == EDoorState.Interacting)
+            {
+                LoggingController.LogInfo("Somebody is already interacting with switch " + GetSwitchText(sw));
+
+                return;
+            }
+
             if (sw.DoorState == EDoorState.Open)
             {
                 if (hasToggledSwitch.ContainsKey(sw))
@@ -181,6 +215,12 @@ namespace LateToTheParty.Controllers
                     LoggingController.LogInfo("Switch " + GetSwitchText(sw.PreviousSwitch) + " must be toggled before switch " + sw.Id);
 
                     tryToggleSwitch(sw.PreviousSwitch);
+
+                    float delayBeforeSwitchCanBeToggled = getSwitchDelayTime(sw, sw.PreviousSwitch);
+                    LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " cannot be toggled for another " + delayBeforeSwitchCanBeToggled + "s");
+
+                    setTimeToToggleSwitch(sw, delayBeforeSwitchCanBeToggled, false);
+
                     return;
                 }
 

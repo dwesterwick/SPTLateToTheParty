@@ -21,6 +21,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("min_raid_ET_for_exfil_switches")]
         public float MinRaidETForExfilSwitches { get; set; } = 50;
 
+        [JsonProperty("delay_after_pressing_prereq_switch_s_per_m")]
+        public float DelayAfterPressingPrereqSwitch { get; set; } = 1;
+
         [JsonProperty("raid_fraction_when_toggling")]
         public MinMaxConfig RaidFractionWhenToggling { get; set; } = new MinMaxConfig();
 
