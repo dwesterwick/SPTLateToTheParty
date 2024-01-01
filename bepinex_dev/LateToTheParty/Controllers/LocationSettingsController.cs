@@ -119,7 +119,15 @@ namespace LateToTheParty.Controllers
 
         public static double GetTargetPlayersFullOfLoot(double timeRemainingFactor)
         {
-            return InterpolateForFirstCol(ConfigController.Config.FractionOfPlayersFullOfLoot, timeRemainingFactor);
+            double fraction = InterpolateForFirstCol(ConfigController.Config.FractionOfPlayersFullOfLoot, timeRemainingFactor);
+            
+            // Reduce the amount of loot "slots" that can be destroyed if player Scavs are not allowed to spwan into the map
+            if (CurrentLocation.DisabledForScav)
+            {
+                fraction *= ConfigController.Config.DestroyLootDuringRaid.PlayersWithLootFactorForMapsWithoutPScavs;
+            }
+
+            return fraction;
         }
 
         public static int GetTargetLootSlotsDestroyed(double timeRemainingFactor)

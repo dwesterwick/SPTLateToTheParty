@@ -99,6 +99,12 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
+            // Don't check for door eligibility until initial switches have been toggled. Otherwise, some that need to be powered will not be allowed to be opened. 
+            if (!SwitchController.HasToggledInitialSwitches)
+            {
+                return;
+            }
+
             // Only find doors once per raid
             if (ToggleableInteractiveObjectCount == 0)
             {

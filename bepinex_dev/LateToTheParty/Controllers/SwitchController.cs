@@ -18,7 +18,7 @@ namespace LateToTheParty.Controllers
         public static bool IsClearing { get; private set; } = false;
         public static bool HasFoundSwitches { get; private set; } = false;
         public static bool IsTogglingSwitches { get; private set; } = false;
-        public static bool HasToggledInitialSwitches { get; private set; } = false;
+        public static bool HasToggledInitialSwitches { get; private set; } = true;
 
         private static Dictionary<EFT.Interactive.Switch, bool> hasToggledSwitch = new Dictionary<EFT.Interactive.Switch, bool>();
         private static Dictionary<EFT.Interactive.Switch, double> raidTimeRemainingToToggleSwitch = new Dictionary<EFT.Interactive.Switch, double>();
@@ -198,6 +198,9 @@ namespace LateToTheParty.Controllers
 
                 enumeratorWithTimeLimit.Reset();
                 yield return enumeratorWithTimeLimit.Run(remainingSwitches, tryToggleSwitch);
+
+                // Add a delay before setting HasToggledInitialSwitches to true to make sure doors have power before they're (possibly) toggled
+                yield return new WaitForSeconds(1);
             }
             finally
             {

@@ -27,6 +27,9 @@ namespace LateToTheParty.Configuration
         [JsonProperty("avg_slots_per_player")]
         public double AvgSlotsPerPlayer { get; set; } = 80;
 
+        [JsonProperty("players_with_loot_factor_for_maps_without_pscavs")]
+        public float PlayersWithLootFactorForMapsWithoutPScavs { get; set; } = 0.5f;
+
         [JsonProperty("min_loot_age")]
         public double MinLootAge { get; set; } = 60;
 

@@ -46,7 +46,7 @@
 	},
 	"only_make_changes_just_after_spawning": {
 		"enabled": false,
-		"time_limit": 30,
+		"time_limit": 5,
 		"affected_systems" : {
 			"loot_destruction": true,
 			"opening_unlocked_doors": true,
@@ -63,6 +63,7 @@
 		"nearby_interactive_object_search_distance": 0.75,
 		"only_search_for_nearby_trunks": true,
 		"avg_slots_per_player": 60,
+		"players_with_loot_factor_for_maps_without_pscavs": 0.3,
 		"min_loot_age": 120,
 		"destruction_event_limits": {
 			"rate": 1,
