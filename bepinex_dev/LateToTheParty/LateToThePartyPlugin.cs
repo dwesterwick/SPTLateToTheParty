@@ -64,6 +64,7 @@ namespace LateToTheParty
                 if (ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
                 {
                     this.GetOrAddComponent<SwitchController>();
+                    new Patches.WorldInteractiveObjectPlaySoundPatch().Enable();
                 }
 
                 if (ConfigController.Config.Debug.Enabled)

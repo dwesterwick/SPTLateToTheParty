@@ -18,6 +18,7 @@ namespace LateToTheParty.Controllers
         public static bool IsClearing { get; private set; } = false;
         public static bool HasFoundSwitches { get; private set; } = false;
         public static bool IsTogglingSwitches { get; private set; } = false;
+        public static bool HasToggledInitialSwitches { get; private set; } = false;
 
         private static Dictionary<EFT.Interactive.Switch, bool> hasToggledSwitch = new Dictionary<EFT.Interactive.Switch, bool>();
         private static Dictionary<EFT.Interactive.Switch, double> raidTimeRemainingToToggleSwitch = new Dictionary<EFT.Interactive.Switch, double>();
@@ -25,10 +26,11 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.ToggleSwitchesDuringRaid.MaxCalcTimePerFrame);
         private static Stopwatch switchTogglingTimer = Stopwatch.StartNew();
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static System.Random staticRandomGen = new System.Random();
 
         public static string GetSwitchText(EFT.Interactive.Switch sw) => sw.Id + " (" + (sw.gameObject?.name ?? "???") + ")";
         public static bool CanToggleSwitch(EFT.Interactive.Switch sw) => sw.Operatable && (sw.gameObject.layer == LayerMask.NameToLayer("Interactive"));
-
+        
         private void Update()
         {
             if (IsClearing)
@@ -39,7 +41,6 @@ namespace LateToTheParty.Controllers
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {
                 StartCoroutine(Clear());
-
                 switchTogglingTimer.Restart();
 
                 return;
@@ -49,7 +50,6 @@ namespace LateToTheParty.Controllers
             {
                 return;
             }
-
             updateTimer.Restart();
 
             // Need to wait until the raid starts or Singleton<GameWorld>.Instance.ExfiltrationController will be null
@@ -61,12 +61,22 @@ namespace LateToTheParty.Controllers
 
             if (!HasFoundSwitches)
             {
-                findSwitches();
+                try
+                {
+                    findSwitches();
+                }
+                catch (Exception)
+                {
+                    HasFoundSwitches = true;
+                    HasToggledInitialSwitches = true;
+
+                    throw;
+                }
             }
 
-            if (shouldlimitEvents())
+            if (!HasToggledInitialSwitches && shouldlimitEvents())
             {
-                //return;
+                return;
             }
 
             if (!IsTogglingSwitches)
@@ -91,6 +101,7 @@ namespace LateToTheParty.Controllers
 
             HasFoundSwitches = false;
             IsTogglingSwitches = false;
+            HasToggledInitialSwitches = false;
 
             hasToggledSwitch.Clear();
             raidTimeRemainingToToggleSwitch.Clear();
@@ -100,17 +111,15 @@ namespace LateToTheParty.Controllers
 
         private static void findSwitches()
         {
-            System.Random random = new System.Random();
-            Configuration.MinMaxConfig fractionOfSwitchesToToggleRange = ConfigController.Config.ToggleSwitchesDuringRaid.FractionOfSwitchesToToggle;
-            
             EFT.Interactive.Switch[] allSwitches = FindObjectsOfType<EFT.Interactive.Switch>()
                 .Where(s => CanToggleSwitch(s))
-                .OrderBy(x => random.NextDouble())
+                .OrderBy(x => staticRandomGen.NextDouble())
                 .ToArray();
 
+            Configuration.MinMaxConfig fractionOfSwitchesToToggleRange = ConfigController.Config.ToggleSwitchesDuringRaid.FractionOfSwitchesToToggle;
             Configuration.MinMaxConfig switchesToToggleRange = fractionOfSwitchesToToggleRange * allSwitches.Length;
             switchesToToggleRange.Round();
-            int switchesToToggle = random.Next((int)switchesToToggleRange.Min, (int)switchesToToggleRange.Max);
+            int switchesToToggle = staticRandomGen.Next((int)switchesToToggleRange.Min, (int)switchesToToggleRange.Max);
 
             for (int i = 0; i < allSwitches.Length; i++)
             {
@@ -123,13 +132,12 @@ namespace LateToTheParty.Controllers
 
         private static void setTimeToToggleSwitch(EFT.Interactive.Switch sw, float minTimeFromNow = 0, bool neverToggle = false)
         {
-            System.Random random = new System.Random();
             Configuration.MinMaxConfig raidFractionWhenTogglingRange = ConfigController.Config.ToggleSwitchesDuringRaid.RaidFractionWhenToggling;
 
             double timeRemainingToToggle = -1;
             if (!neverToggle)
             {
-                double timeRemainingFractionToToggle = raidFractionWhenTogglingRange.Min + ((raidFractionWhenTogglingRange.Max - raidFractionWhenTogglingRange.Min) * random.NextDouble());
+                double timeRemainingFractionToToggle = raidFractionWhenTogglingRange.Min + ((raidFractionWhenTogglingRange.Max - raidFractionWhenTogglingRange.Min) * staticRandomGen.NextDouble());
                 timeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * timeRemainingFractionToToggle;
             }
 
@@ -186,6 +194,7 @@ namespace LateToTheParty.Controllers
             finally
             {
                 IsTogglingSwitches = false;
+                HasToggledInitialSwitches = true;
             }
         }
 
@@ -193,7 +202,7 @@ namespace LateToTheParty.Controllers
         {
             if (sw.DoorState == EDoorState.Interacting)
             {
-                LoggingController.LogInfo("Somebody is already interacting with switch " + GetSwitchText(sw));
+                //LoggingController.LogInfo("Somebody is already interacting with switch " + GetSwitchText(sw));
 
                 return;
             }
@@ -212,19 +221,24 @@ namespace LateToTheParty.Controllers
             {
                 if (sw.PreviousSwitch != null)
                 {
-                    LoggingController.LogInfo("Switch " + GetSwitchText(sw.PreviousSwitch) + " must be toggled before switch " + sw.Id);
+                    //LoggingController.LogInfo("Switch " + GetSwitchText(sw.PreviousSwitch) + " must be toggled before switch " + sw.Id);
 
                     tryToggleSwitch(sw.PreviousSwitch);
 
-                    float delayBeforeSwitchCanBeToggled = getSwitchDelayTime(sw, sw.PreviousSwitch);
-                    LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " cannot be toggled for another " + delayBeforeSwitchCanBeToggled + "s");
+                    if (HasToggledInitialSwitches)
+                    {
+                        float delayBeforeSwitchCanBeToggled = getSwitchDelayTime(sw, sw.PreviousSwitch);
+                        LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " cannot be toggled for another " + delayBeforeSwitchCanBeToggled + "s");
 
-                    setTimeToToggleSwitch(sw, delayBeforeSwitchCanBeToggled, false);
+                        setTimeToToggleSwitch(sw, delayBeforeSwitchCanBeToggled, false);
 
-                    return;
+                        return;
+                    }
                 }
-
-                LoggingController.LogInfo("Cannot toggle switch " + GetSwitchText(sw));
+                else
+                {
+                    LoggingController.LogWarning("Cannot toggle switch " + GetSwitchText(sw));
+                }
             }
 
             Vector3? yourPosition = Singleton<GameWorld>.Instance?.MainPlayer?.Position;
@@ -236,7 +250,7 @@ namespace LateToTheParty.Controllers
             float distance = Vector3.Distance(yourPosition.Value, sw.transform.position);
             if (distance < ConfigController.Config.ToggleSwitchesDuringRaid.ExclusionRadius)
             {
-                LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is too close to you");
+                //LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is too close to you");
 
                 return;
             }
