@@ -1,8 +1,9 @@
-Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, and car extracts leaving throughout the raid. PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
+Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
 * Doors will randomly open and close throughout the raid to simulate players moving through the map (thanks to help from DrakiaXYZ!). If you're lucky, locked doors may be opened for you...
+* Switches will be toggled throughout the raid to simulate players turning on power switches, using extracts, etc. 
 * The car extract may leave at some point during the raid
 * Compared to vanilla SPT, PMC's are more likely to spawn toward the beginning of the raid and less likely to spawn toward the end of it. 
 * If you spawn into the map late as a Scav, bosses are less likely to spawn. 
@@ -56,6 +57,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **only_make_changes_just_after_spawning.affected_systems.opening_locked_doors**: If locked doors should only be opened for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
 * **only_make_changes_just_after_spawning.affected_systems.closing_doors**: If doors should only be closed for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
 * **only_make_changes_just_after_spawning.affected_systems.car_departures**: If car extracts are allowed to depart after **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
+* **only_make_changes_just_after_spawning.affected_systems.toggling_switches**: If switches are allowed to be toggled after **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid.
 
 * **destroy_loot_during_raid.enabled**: If the mod is allowed to remove loot throughout the raid. If you spawn into the raid late, loot will be immediately removed from the map until it reaches the target amount for the fraction of time remaining in the raid. This is **true** by default. 
 * **destroy_loot_during_raid.exclusion_radius**: The radius (in meters) from you within which loot is not allowed to be despawned. By default, this is set to **40** meters. 
@@ -118,6 +120,15 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **open_doors_during_raid.chance_of_unlocking_doors**: The chance (in percent) that the mod will be able to unlock a door when trying to open it. By default, this is set to **50%**. 
 * **open_doors_during_raid.chance_of_closing_doors**: The chance (in percent) that the mod will close a door instead of opening a door. By default, this is set to **15%**. 
 * **open_doors_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run door-event procedures per frame. By default this is set to **3ms**, and delays of <15ms are basically imperceptible. 
+
+* **toggle_switches_during_raid.enabled**: If the mod can turn on switches throughout the raid. This is **true** by default. 
+* **toggle_switches_during_raid.time_between_events_ms**: The mod will check for switches to toggle at regular intervals of this many milliseconds throughout the raid (**3000** ms by default).
+* **toggle_switches_during_raid.exclusion_radius**: Switches will not be allowed to be toggled if they're within this distance (in meters) of you. This is **150** m by default.
+* **toggle_switches_during_raid.min_raid_ET_for_exfil_switches**: If a switch controls the ability for players to use extraction points (i.e. the power switch on Customs or elevator buttons on Labs), it will not be allowed to be toggled until this many seconds has elapsed since the beginning of the raid (before its shortened for Scav runs). This is **600** s by default.
+ * **toggle_switches_during_raid.delay_after_pressing_prereq_switch_s_per_m**: After switches have been initially toggled for Scav raids, the mod will not toggle any switches if prerequisite switches must be toggled before them (i.e. the elevator power switches on Labs). In this case, the mod won't attempt to toggle the switch until a certain amount of time has elapsed after the prerequisite switch is toggled. This delay is calculated using this parameter (in seconds/meter) and the distance between the switches. The purpose of this delay is to simulate the time needed for a player to toggle the prerequisite switch and then travel to the first switch. This is **1** s/m by default.
+  * **toggle_switches_during_raid.raid_fraction_when_toggling.min/max**: The minimum and maximum fractions of the overall raid time (before they're reduced for Scav runs) that switches are allowed to be toggled.
+  * **toggle_switches_during_raid.fraction_of_switches_to_toggle.min/max**: The minimum and maximum fractions of switches that will be toggled throughout the raid. These values are fractions of the total number of switches on the map that can be toggled by players.
+  * **toggle_switches_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run switch-toggling procedures per frame. By default this is set to **3ms**, and delays of <15ms are basically imperceptible. 
 
 * **trader_stock_changes.enabled**: If the mod should allow trader stock to deplete as well as change the number and variety of items sold by Fence.
 * **trader_stock_changes.max_ammo_buy_rate**: The maximum rate at which a trader's ammo supply (for each type) can be reduced in rounds/second.

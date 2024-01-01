@@ -67,9 +67,11 @@ namespace LateToTheParty.Controllers
                 }
                 catch (Exception)
                 {
+                    // If findSwitches() fails for some reason, HasToggledInitialSwitches must be set to true or all sounds from WorldInteractiveObjects will\
+                    // be suppressed by WorldInteractiveObjectPlaySoundPatch
                     HasFoundSwitches = true;
                     HasToggledInitialSwitches = true;
-
+                    
                     throw;
                 }
             }
@@ -111,11 +113,13 @@ namespace LateToTheParty.Controllers
 
         private static void findSwitches()
         {
+            // Randomly sort all switches that players can toggle
             EFT.Interactive.Switch[] allSwitches = FindObjectsOfType<EFT.Interactive.Switch>()
                 .Where(s => CanToggleSwitch(s))
                 .OrderBy(x => staticRandomGen.NextDouble())
                 .ToArray();
 
+            // Select a random number of total switches to toggle throughout the raid
             Configuration.MinMaxConfig fractionOfSwitchesToToggleRange = ConfigController.Config.ToggleSwitchesDuringRaid.FractionOfSwitchesToToggle;
             Configuration.MinMaxConfig switchesToToggleRange = fractionOfSwitchesToToggleRange * allSwitches.Length;
             switchesToToggleRange.Round();
@@ -132,8 +136,8 @@ namespace LateToTheParty.Controllers
 
         private static void setTimeToToggleSwitch(EFT.Interactive.Switch sw, float minTimeFromNow = 0, bool neverToggle = false)
         {
+            // Select a random time during the raid to toggle the switch
             Configuration.MinMaxConfig raidFractionWhenTogglingRange = ConfigController.Config.ToggleSwitchesDuringRaid.RaidFractionWhenToggling;
-
             double timeRemainingToToggle = -1;
             if (!neverToggle)
             {
@@ -141,6 +145,7 @@ namespace LateToTheParty.Controllers
                 timeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * timeRemainingFractionToToggle;
             }
 
+            // If the switch controls an extract point (i.e. the Labs cargo elevator), don't toggle it until after a certain time
             if (Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints.Any(x => x.Switch == sw))
             {
                 LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is used for an extract point");
@@ -149,6 +154,7 @@ namespace LateToTheParty.Controllers
                 timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
             }
 
+            // If needed, cap the minimum time into the raid when the switch will be toggled
             if (minTimeFromNow > 0)
             {
                 float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
@@ -170,6 +176,7 @@ namespace LateToTheParty.Controllers
 
         private static float getSwitchDelayTime(EFT.Interactive.Switch sw1, EFT.Interactive.Switch sw2)
         {
+            // Get the delay (in seconds) for one switch to be toggled after another one
             float distance = Vector3.Distance(sw1.transform.position, sw2.transform.position);
             return ConfigController.Config.ToggleSwitchesDuringRaid.DelayAfterPressingPrereqSwitch * distance;
         }
@@ -182,6 +189,7 @@ namespace LateToTheParty.Controllers
 
                 float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
 
+                // Enumerate all switches that haven't been toggled yet but should
                 EFT.Interactive.Switch[] remainingSwitches = hasToggledSwitch
                     .Where(s => !s.Value)
                     .Where(s => raidTimeRemaining < raidTimeRemainingToToggleSwitch[s.Key])
@@ -200,6 +208,13 @@ namespace LateToTheParty.Controllers
 
         private static void tryToggleSwitch(EFT.Interactive.Switch sw)
         {
+            // Make sure the raid hasn't ended
+            Vector3? yourPosition = Singleton<GameWorld>.Instance?.MainPlayer?.Position;
+            if (!yourPosition.HasValue)
+            {
+                return;
+            }
+
             if (sw.DoorState == EDoorState.Interacting)
             {
                 //LoggingController.LogInfo("Somebody is already interacting with switch " + GetSwitchText(sw));
@@ -219,16 +234,18 @@ namespace LateToTheParty.Controllers
 
             if ((sw.DoorState == EDoorState.Locked) || !CanToggleSwitch(sw))
             {
+                // Check if another switch needs to be toggled first before this one is available
                 if (sw.PreviousSwitch != null)
                 {
-                    //LoggingController.LogInfo("Switch " + GetSwitchText(sw.PreviousSwitch) + " must be toggled before switch " + sw.Id);
+                    LoggingController.LogInfo("Switch " + GetSwitchText(sw.PreviousSwitch) + " must be toggled before switch " + sw.Id);
 
                     tryToggleSwitch(sw.PreviousSwitch);
 
+                    // If this is beginning of a Scav raid, toggle the switch immediately after the prerequisite switch. Otherwise, add a minimum delay. 
                     if (HasToggledInitialSwitches)
                     {
                         float delayBeforeSwitchCanBeToggled = getSwitchDelayTime(sw, sw.PreviousSwitch);
-                        LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " cannot be toggled for another " + delayBeforeSwitchCanBeToggled + "s");
+                        //LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " cannot be toggled for another " + delayBeforeSwitchCanBeToggled + "s");
 
                         setTimeToToggleSwitch(sw, delayBeforeSwitchCanBeToggled, false);
 
@@ -241,12 +258,7 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            Vector3? yourPosition = Singleton<GameWorld>.Instance?.MainPlayer?.Position;
-            if (!yourPosition.HasValue)
-            {
-                return;
-            }
-
+            // Check if the switch is too close to you to toggle
             float distance = Vector3.Distance(yourPosition.Value, sw.transform.position);
             if (distance < ConfigController.Config.ToggleSwitchesDuringRaid.ExclusionRadius)
             {
