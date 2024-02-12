@@ -9,6 +9,9 @@ namespace LateToTheParty.Configuration
 {
     public class FenceStockChangesConfig
     {
+        [JsonProperty("enabled")]
+        public bool Enabled { get; set; } = false;
+
         [JsonProperty("always_regenerate")]
         public bool AlwaysRegenerate { get; set; } = false;
 

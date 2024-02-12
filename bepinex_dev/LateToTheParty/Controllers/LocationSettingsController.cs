@@ -241,6 +241,11 @@ namespace LateToTheParty.Controllers
 
         public static ExfiltrationPoint FindVEX()
         {
+            if (Singleton<GameWorld>.Instance?.ExfiltrationController?.ExfiltrationPoints == null)
+            {
+                return null;
+            }
+
             return FindVEX(Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints);
         }
 

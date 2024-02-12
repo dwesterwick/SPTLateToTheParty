@@ -34,7 +34,7 @@ export class CommonUtils
 
     public getItemName(itemID: string): string
     {
-        const translationKey = itemID + " Name";
+        const translationKey = `${itemID} Name`;
         if (translationKey in this.translations)
             return this.translations[translationKey];
 		
@@ -51,14 +51,14 @@ export class CommonUtils
     public getMaxItemPrice(itemID: string): number
     {
         // Get the handbook.json price, if any exists
-        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((i) => i.Id == itemID);
+        const matchingHandbookItems = this.databaseTables.templates.handbook.Items.filter((i) => i.Id === itemID);
         let handbookPrice = 0;
-        if (matchingHandbookItems.length == 1)
+        if (matchingHandbookItems.length === 1)
         {
             handbookPrice = matchingHandbookItems[0].Price;
 
             // Some mods add a record with a junk value
-            if ((handbookPrice == null) || isNaN(handbookPrice))
+            if ((handbookPrice == null) || Number.isNaN(handbookPrice))
             {
                 this.logWarning(`Invalid handbook price (${handbookPrice}) for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
                 handbookPrice = 0;
@@ -72,10 +72,10 @@ export class CommonUtils
             price = this.databaseTables.templates.prices[itemID];
 
             // Some mods add a record with a junk value
-            if ((price == null) || isNaN(price))
+            if ((price == null) || Number.isNaN(price))
             {
                 // Only show a warning if the method will return 0
-                if (handbookPrice == 0)
+                if (handbookPrice === 0)
                 {
                     this.logWarning(`Invalid price (${price}) for ${this.getItemName(itemID)} (${itemID}). Defaulting to 0.`);
                 }
@@ -98,7 +98,7 @@ export class CommonUtils
 
     public static getAllParents(item: ITemplateItem, databaseTables: IDatabaseTables): string[]
     {
-        if ((item._parent === null) || (item._parent === undefined) || (item._parent == ""))
+        if ((item._parent === null) || (item._parent === undefined) || (item._parent === ""))
             return [];
 		
         const allParents = CommonUtils.getAllParents(databaseTables.templates.items[item._parent], databaseTables);
@@ -121,7 +121,7 @@ export class CommonUtils
         
         const itemTpl = databaseTables.templates.items[item._tpl];
 
-        if ((itemTpl._props.armorClass !== undefined) && (itemTpl._props.armorClass.toString() == "0"))
+        if ((itemTpl._props.armorClass !== undefined) && (itemTpl._props.armorClass.toString() === "0"))
         {
             return false;
         }
@@ -131,7 +131,7 @@ export class CommonUtils
 
     public static interpolateForFirstCol(array: number[][], value: number): number
     {
-        if (array.length == 1)
+        if (array.length === 1)
         {
             return array[array.length - 1][1];
         }
@@ -145,7 +145,7 @@ export class CommonUtils
         {
             if (array[i][0] >= value)
             {
-                if (array[i][0] - array[i - 1][0] == 0)
+                if (array[i][0] - array[i - 1][0] === 0)
                 {
                     return array[i][1];
                 }

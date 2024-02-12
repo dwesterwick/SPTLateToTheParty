@@ -78,7 +78,7 @@ export class TraderAssortGenerator
         {
             // Only modify trader offers
             const traderEnumValue = 4;
-            if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType != traderEnumValue))
+            if ((offersResult.offers[offer].user === undefined) || (offersResult.offers[offer].user.memberType === undefined) || (offersResult.offers[offer].user.memberType !== traderEnumValue))
             {
                 continue;
             }
@@ -98,7 +98,7 @@ export class TraderAssortGenerator
                 }
 
                 // Find the matching item in the trader's inventory. If it doesn't exist, that means it's sold out. 
-                const matchingItem = this.lastAssort[offersResult.offers[offer].user.id].items.find(item => item._id == offersResult.offers[offer].items[i]._id);
+                const matchingItem = this.lastAssort[offersResult.offers[offer].user.id].items.find(item => item._id === offersResult.offers[offer].items[i]._id);
                 if (matchingItem === undefined)
                 {
                     if (offersResult.offers[offer].items[i].upd.StackObjectsCount > 0)
@@ -130,17 +130,17 @@ export class TraderAssortGenerator
         const now = this.timeUtil.getTimestamp();
 
         // Initialize data for when the last assort update 
-        if (this.lastLL[traderID] == undefined)
+        if (this.lastLL[traderID] === undefined)
         {
             this.lastLL[traderID] = ll;
         }
         if (this.lastAssortUpdate[traderID] === undefined)
         {
-            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds
+            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds
             const timeRemaining = assort.nextResupply - now;
             this.lastAssortUpdate[traderID] = now - (resupplyTime - timeRemaining);
         }
-        if ((this.lastLL[traderID] != ll) || (this.lastAssort[traderID] === undefined) || (this.lastAssort[traderID].items.length == 0))
+        if ((this.lastLL[traderID] !== ll) || (this.lastAssort[traderID] === undefined) || (this.lastAssort[traderID].items.length === 0))
         {
             this.commonUtils.logInfo(`Resetting last-assort cache for ${this.databaseTables.traders[traderID].base.nickname}`);
             this.lastAssort[traderID] = this.jsonUtil.clone(assort);
@@ -155,7 +155,7 @@ export class TraderAssortGenerator
             }
 
             // Skip item attachments
-            if ((assort.items[i].parentId === undefined) || (assort.items[i].parentId != "hideout"))
+            if ((assort.items[i].parentId === undefined) || (assort.items[i].parentId !== "hideout"))
             {
                 continue;
             }
@@ -169,11 +169,11 @@ export class TraderAssortGenerator
             }
 
             // For Fence, combine duplicate items if possible
-            if ((traderID == Traders.FENCE) && !CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
+            if ((traderID === Traders.FENCE) && !CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
             {
                 for (let j = i + 1; j < assort.items.length; j++)
                 {
-                    if (assort.items[j]._tpl == assort.items[i]._tpl)
+                    if (assort.items[j]._tpl === assort.items[i]._tpl)
                     {
                         //this.commonUtils.logInfo(`Combining ${this.commonUtils.getItemName(assort.items[i]._tpl)} in assort...`);
                         this.removeIndexFromTraderAssort(assort, j);
@@ -183,10 +183,10 @@ export class TraderAssortGenerator
             }
 
             // Update the stack size unless there was just a trader reset
-            if (this.lastAssort[traderID].nextResupply == assort.nextResupply)
+            if (this.lastAssort[traderID].nextResupply === assort.nextResupply)
             {
                 // Find the matching item from the previous trader inventory update
-                const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id == assort.items[i]._id));
+                const lastAssortItem = this.lastAssort[traderID].items.find((item) => (item._id === assort.items[i]._id));
                 if (lastAssortItem !== undefined)
                 {
                     // Determine how much to reduce the stack size
@@ -227,8 +227,8 @@ export class TraderAssortGenerator
             }
             
             // Set the initial stack size for Fence's ammo offers
-            const isAmmo = itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id;
-            if ((traderID == Traders.FENCE) && isAmmo && (assort.items[i].upd.StackObjectsCount == 1))
+            const isAmmo = itemTpl._parent === modConfig.trader_stock_changes.ammo_parent_id;
+            if ((traderID === Traders.FENCE) && isAmmo && (assort.items[i].upd.StackObjectsCount === 1))
             {
                 assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
             }
@@ -309,10 +309,10 @@ export class TraderAssortGenerator
             }
 
             // Determine if the item should be allowed in Fence's assorts
-            if ((itemPrice == 0) || (permittedChance <= randNum))
+            if ((itemPrice === 0) || (permittedChance <= randNum))
             {
                 // Ensure the index is valid
-                const itemIndex = assort.items.findIndex((i) => i._id == itemID);
+                const itemIndex = assort.items.findIndex((i) => i._id === itemID);
                 if (itemIndex < 0)
                 {
                     this.commonUtils.logError(`Invalid item: ${itemID}`);
@@ -334,7 +334,7 @@ export class TraderAssortGenerator
     {
         for (let i = 0; i < assort.items.length; i++)
         {
-            if ((assort.items[i].upd === undefined) || (assort.items[i].upd.sptPresetId === undefined) || (assort.items[i].upd.sptPresetId.length == 0))
+            if ((assort.items[i].upd === undefined) || (assort.items[i].upd.sptPresetId === undefined) || (assort.items[i].upd.sptPresetId.length === 0))
             {
                 continue;
             }
@@ -386,7 +386,6 @@ export class TraderAssortGenerator
             {
                 const durabilityFraction = assort.items[i].upd.Repairable.Durability / itemTpl._props.MaxDurability;
                 this.adjustFenceItemPrice(assort, assort.items[i], durabilityFraction);
-                continue;
             }
         }
     }
@@ -403,7 +402,7 @@ export class TraderAssortGenerator
             return 0;
         }
 
-        const fenceMult = (traderID == Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
+        const fenceMult = (traderID === Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
         let selloutMult = this.randomUtil.getInt(modConfig.trader_stock_changes.item_sellout_chance.min, modConfig.trader_stock_changes.item_sellout_chance.max) / 100;
         selloutMult *= isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
         if (itemTpl._id in hotItems)
@@ -412,13 +411,13 @@ export class TraderAssortGenerator
         }
         
         let maxBuyRate = modConfig.trader_stock_changes.max_ammo_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
-        if (itemTpl._parent == modConfig.trader_stock_changes.ammo_parent_id)
+        if (itemTpl._parent === modConfig.trader_stock_changes.ammo_parent_id)
         {
             return Math.round(selloutMult * maxBuyRate / fenceMult * (now - this.lastAssortUpdate[traderID]));
         }
 
         maxBuyRate = modConfig.trader_stock_changes.max_item_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
-        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId == traderID).seconds);
+        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds);
         const maxItemsSold = selloutMult * originalStock * refreshFractionElapsed * fenceMult;
         const itemsSold = originalStock - currentStock;
         const maxReduction = selloutMult * maxBuyRate * (now - this.lastAssortUpdate[traderID]);
@@ -434,7 +433,7 @@ export class TraderAssortGenerator
         if (assort.barter_scheme[itemID] === undefined)
         {
             // Ensure the item isn't an attachment for another item
-            if (assort.items.find((i) => i._id == itemID).parentId != "hideout")
+            if (assort.items.find((i) => i._id === itemID).parentId !== "hideout")
             {
                 return false;
             }
@@ -518,7 +517,7 @@ export class TraderAssortGenerator
         const allItems = this.databaseTables.templates.items;
         for (const itemID in allItems)
         {
-            if (allItems[itemID]._parent != modConfig.trader_stock_changes.ammo_parent_id)
+            if (allItems[itemID]._parent !== modConfig.trader_stock_changes.ammo_parent_id)
             {
                 continue;
             }
@@ -537,7 +536,6 @@ export class TraderAssortGenerator
             if (allItems[itemID]._props.Damage > modConfig.trader_stock_changes.fence_stock_changes.blacklist_ammo_damage_limit)
             {
                 this.iTraderConfig.fence.blacklist.push(itemID);
-                continue;
             }
         }
 
@@ -557,7 +555,7 @@ export class TraderAssortGenerator
 
         for (const id in assort.loyal_level_items)
         {
-            if (assort.loyal_level_items[id] == ll)
+            if (assort.loyal_level_items[id] === ll)
             {
                 ids.push(id);
             }

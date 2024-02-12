@@ -104,7 +104,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                 url: "/LateToTheParty/GetLoggingPath",
                 action: () => 
                 {
-                    return JSON.stringify({ path: __dirname + "/../log/" });
+                    return JSON.stringify({ path: `${__dirname}/../log/` });
                 }
             }], "GetLoggingPath"
         );
@@ -136,6 +136,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         staticRouterModService.registerStaticRouter(`StaticAkiGameStart${modName}`,
             [{
                 url: "/client/game/start",
+                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
                     // Clear any cached trader inventory data if the game is restarted
@@ -162,6 +163,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         dynamicRouterModService.registerDynamicRouter(`DynamicGetTraderAssort${modName}`,
             [{
                 url: "/client/trading/api/getTraderAssort/",
+                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
                     if (!modConfig.trader_stock_changes.enabled)
@@ -181,6 +183,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         staticRouterModService.registerStaticRouter(`StaticAkiSearchRagfair${modName}`,
             [{
                 url: "/client/ragfair/find",
+                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                 action: (url: string, info: any, sessionId: string, output: string) => 
                 {
                     if (!modConfig.trader_stock_changes.enabled)
@@ -538,8 +541,13 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private getUpdatedTraderAssort(traderID: string, sessionId: string, canRegenerate = true): ITraderAssort
     {
         // Refresh Fence's assorts
-        if (traderID == Traders.FENCE)
+        if (traderID === Traders.FENCE)
         {
+            if (!modConfig.trader_stock_changes.fence_stock_changes.enabled)
+            {
+                return this.traderController.getAssort(sessionId, traderID);
+            }
+
             this.traderAssortGenerator.updateFenceAssort();
         }
         
@@ -548,10 +556,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
         // Update stock for trader
         const assort = this.traderController.getAssort(sessionId, traderID);
-        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID == Traders.FENCE);
+        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID === Traders.FENCE);
 
         // Remove fancy weapons and then check if Fence's assorts need to be regenerated
-        if (traderID == Traders.FENCE)
+        if (traderID === Traders.FENCE)
         {
             this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
             this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
@@ -575,7 +583,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             const traderID = this.iTraderConfig.updateTime[t].traderId;
 
             // Ignore Fence because his items aren't available on the flea market
-            if (traderID == Traders.FENCE)
+            if (traderID === Traders.FENCE)
             {
                 continue;
             }
@@ -596,7 +604,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }
 
             const assort = this.traderController.getAssort(sessionId, traderID);
-            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID == Traders.FENCE);
+            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID === Traders.FENCE);
         }
 
         // Update all offers to reflect the latest trader inventory

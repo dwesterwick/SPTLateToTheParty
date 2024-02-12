@@ -237,10 +237,11 @@
             // 
             this.minOverlapTrackBar.Location = new System.Drawing.Point(123, 55);
             this.minOverlapTrackBar.Maximum = 90;
+            this.minOverlapTrackBar.Minimum = -90;
             this.minOverlapTrackBar.Name = "minOverlapTrackBar";
             this.minOverlapTrackBar.Size = new System.Drawing.Size(171, 20);
             this.minOverlapTrackBar.TabIndex = 5;
-            this.minOverlapTrackBar.TickFrequency = 5;
+            this.minOverlapTrackBar.TickFrequency = 10;
             this.minOverlapTrackBar.ValueChanged += new System.EventHandler(this.RefreshSphere);
             // 
             // minCirclesPerRingLabel
@@ -426,10 +427,11 @@
             // 
             this.minOverlapTrackBar2.Location = new System.Drawing.Point(123, 107);
             this.minOverlapTrackBar2.Maximum = 90;
+            this.minOverlapTrackBar2.Minimum = -90;
             this.minOverlapTrackBar2.Name = "minOverlapTrackBar2";
             this.minOverlapTrackBar2.Size = new System.Drawing.Size(171, 20);
             this.minOverlapTrackBar2.TabIndex = 5;
-            this.minOverlapTrackBar2.TickFrequency = 5;
+            this.minOverlapTrackBar2.TickFrequency = 10;
             this.minOverlapTrackBar2.ValueChanged += new System.EventHandler(this.RefreshBox);
             // 
             // label3

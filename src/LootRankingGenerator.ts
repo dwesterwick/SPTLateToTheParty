@@ -12,7 +12,7 @@ import { HashUtil } from "@spt-aki/utils/HashUtil";
 import { IPreset } from "@spt-aki/models/eft/common/IGlobals";
 
 const verboseLogging = false;
-const lootFilePath = __dirname + "/../db/lootRanking.json";
+const lootFilePath = `${__dirname}/../db/lootRanking.json`;
 
 // Overall file structure
 export interface LootRankingContainer
@@ -86,7 +86,7 @@ export class LootRankingGenerator
         const items: Record<string, LootRankingData> = {};
         for (const itemID in this.databaseTables.templates.items)
         {
-            if (this.databaseTables.templates.items[itemID]._type == "Node")
+            if (this.databaseTables.templates.items[itemID]._type === "Node")
             {
                 continue;
             }
@@ -131,14 +131,14 @@ export class LootRankingGenerator
             let bestWeaponMatch: Item[] = this.findBestWeaponMatchfromTraders(item);
 
             // If the weapon isn't offered by any traders, find the most desirable version in the presets
-            if (bestWeaponMatch.length == 0)
+            if (bestWeaponMatch.length === 0)
             {
                 if (verboseLogging) this.commonUtils.logInfo(`Could not find ${this.commonUtils.getItemName(item._id)} in trader assorts.`);
                 bestWeaponMatch = this.findBestWeaponInPresets(item);
             }
 
             // Ensure a weapon has been generated
-            if (bestWeaponMatch.length == 0)
+            if (bestWeaponMatch.length === 0)
             {
                 this.commonUtils.logError(`Could not generate a weapon for ${this.commonUtils.getItemName(item._id)}`);
             }
@@ -254,13 +254,13 @@ export class LootRankingGenerator
                 );
                 
                 // If the random weapon is invalid, don't bother running more iterations; the weapon slot is wrong
-                if ((randomWeapon.weapon === undefined) && (randomWeapon.weapon.length == 0))
+                if ((randomWeapon.weapon === undefined) && (randomWeapon.weapon.length === 0))
                 {
                     break;
                 }
 
                 // Store the initial weapon selection
-                if (weapon.length == 0)
+                if (weapon.length === 0)
                 {
                     weapon = randomWeapon.weapon;
                     continue;
@@ -290,10 +290,10 @@ export class LootRankingGenerator
         for (const presetID in this.databaseTables.globals.ItemPresets)
         {
             const preset = this.databaseTables.globals.ItemPresets[presetID];
-            if (preset._items[0]._tpl == item._id)
+            if (preset._items[0]._tpl === item._id)
             {
                 // Store the initial weapon selection
-                if (weapon.length == 0)
+                if (weapon.length === 0)
                 {
                     weapon = preset._items;
                     continue;
@@ -308,7 +308,7 @@ export class LootRankingGenerator
         }
 
         // If there are no presets for the weapon, create one
-        if (weapon.length == 0)
+        if (weapon.length === 0)
         {
             return this.generateWeaponPreset(item)._items;
         }
@@ -320,7 +320,7 @@ export class LootRankingGenerator
     {
         for (const presetID in this.databaseTables.globals.ItemPresets)
         {
-            if (this.databaseTables.globals.ItemPresets[presetID]._items[0]._tpl == item._id)
+            if (this.databaseTables.globals.ItemPresets[presetID]._items[0]._tpl === item._id)
             {
                 return true;
             }
@@ -347,7 +347,7 @@ export class LootRankingGenerator
             _id: this.hashUtil.generate(),
             _type: "Preset",
             _changeWeaponName: false,
-            _name: item._name + "_autoGen",
+            _name: `${item._name}_autoGen`,
             _parent: weapon[0]._id,
             _items: weapon
         }
@@ -467,7 +467,7 @@ export class LootRankingGenerator
             for (const assortID in assort.items)
             {
                 const weaponCandidate: Item[] = [];
-                if (assort.items[assortID]._tpl == item._id)
+                if (assort.items[assortID]._tpl === item._id)
                 {
                     // Get all parts attached to the weapon
                     const matchingSlots = this.findChildSlotIndexesInTraderAssort(assort, assortID);
@@ -477,7 +477,7 @@ export class LootRankingGenerator
                     }
 
                     // Store the initial weapon selection
-                    if (weapon.length == 0)
+                    if (weapon.length === 0)
                     {
                         weapon = weaponCandidate;
                         continue;
@@ -522,7 +522,7 @@ export class LootRankingGenerator
             const templateID = weaponParts[weaponPart]._tpl;
             const slotID = weaponParts[weaponPart].slotId;
 
-            if (baseWeaponItem._id == templateID)
+            if (baseWeaponItem._id === templateID)
             {
                 continue;
             }
@@ -532,7 +532,7 @@ export class LootRankingGenerator
             // Fold the weapon if possible
             if (baseWeaponItem._props.FoldedSlot !== undefined)
             {
-                if (baseWeaponItem._props.FoldedSlot == slotID)
+                if (baseWeaponItem._props.FoldedSlot === slotID)
                 {
                     //if (verboseLogging) this.commonUtils.logInfo(`Getting properties for ${this.commonUtils.getItemName(baseWeaponItem._id)}...folds with ${this.commonUtils.getItemName(templateID)} => Width=${width},Height=${height},Weight=${weight}`);
                     continue;
@@ -558,7 +558,7 @@ export class LootRankingGenerator
         const parentID = assort.items[parentIndex]._id;
         for (const assortID in assort.items)
         {
-            if (assort.items[assortID].parentId == parentID)
+            if (assort.items[assortID].parentId === parentID)
             {
                 matchingSlots.push(assortID);
                 matchingSlots = matchingSlots.concat(this.findChildSlotIndexesInTraderAssort(assort, assortID));
@@ -596,7 +596,7 @@ export class LootRankingGenerator
                 break;
             }
 
-            if (rankingData.parentWeighting[parentID].value != modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents[parentID].value)
+            if (rankingData.parentWeighting[parentID].value !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents[parentID].value)
             {
                 parentParametersMatch = false;
                 break;
@@ -605,12 +605,12 @@ export class LootRankingGenerator
 
         // Check if the general weighting parameters in config.json match the file data
         if (
-            rankingData.costPerSlot != modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot ||
-            rankingData.maxDim != modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim ||
-            rankingData.size != modConfig.destroy_loot_during_raid.loot_ranking.weighting.size ||
-            rankingData.gridSize != modConfig.destroy_loot_during_raid.loot_ranking.weighting.gridSize ||
-            rankingData.weight != modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight ||
-            rankingData.armorClass != modConfig.destroy_loot_during_raid.loot_ranking.weighting.armor_class ||
+            rankingData.costPerSlot !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot ||
+            rankingData.maxDim !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim ||
+            rankingData.size !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.size ||
+            rankingData.gridSize !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.gridSize ||
+            rankingData.weight !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight ||
+            rankingData.armorClass !== modConfig.destroy_loot_during_raid.loot_ranking.weighting.armor_class ||
             !parentParametersMatch
         )
         {

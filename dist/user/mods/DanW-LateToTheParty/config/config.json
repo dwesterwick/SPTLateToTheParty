@@ -215,6 +215,7 @@
 		"money_parent_id": "543be5dd4bdc2deb348b4569",
 		"ragfair_refresh_time_fraction": 0.05,
 		"fence_stock_changes": {
+			"enabled": true,
 			"always_regenerate": false,
 			"assort_size": 190,
 			"assort_size_discount": 70,
