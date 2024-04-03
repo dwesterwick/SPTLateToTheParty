@@ -14,7 +14,7 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Player).GetMethod("OnItemAddedOrRemoved", BindingFlags.NonPublic | BindingFlags.Instance);
+            return typeof(Player).GetMethod("OnItemAddedOrRemoved", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPostfix]

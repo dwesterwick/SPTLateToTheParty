@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Aki.Common.Http;
-using LateToTheParty.Configuration;
 using Newtonsoft.Json;
 
 namespace LateToTheParty.Controllers
@@ -93,7 +92,7 @@ namespace LateToTheParty.Controllers
                     throw new InvalidCastException("Could deserialize an empty string to an object of type " + typeof(T).FullName);
                 }
 
-                obj = JsonConvert.DeserializeObject<T>(json, GClass1340.SerializerSettings);
+                obj = JsonConvert.DeserializeObject<T>(json, GClass1448.SerializerSettings);
 
                 return true;
             }

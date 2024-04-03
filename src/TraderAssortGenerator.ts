@@ -2,19 +2,19 @@ import modConfig from "../config/config.json";
 import hotItems from "../config/hotItems.json";
 import { CommonUtils } from "./CommonUtils";
 
-import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
-import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
-import { FenceService } from "@spt-aki/services/FenceService";
-import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
-import { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
-import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
-import { JsonUtil } from "@spt-aki/utils/JsonUtil";
-import { RandomUtil } from "@spt-aki/utils/RandomUtil";
-import { TimeUtil } from "@spt-aki/utils/TimeUtil";
-import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
+import type { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
+import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
+import type { FenceService } from "@spt-aki/services/FenceService";
+import type { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
+import type { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
+import type { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
+import type { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import type { RandomUtil } from "@spt-aki/utils/RandomUtil";
+import type { TimeUtil } from "@spt-aki/utils/TimeUtil";
+import type { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { Traders } from "@spt-aki/models/enums/Traders";
-import { Item } from "@spt-aki/models/eft/common/tables/IItem";
-import { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
+import type { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
 
 export class TraderAssortGenerator
 {
@@ -136,7 +136,7 @@ export class TraderAssortGenerator
         }
         if (this.lastAssortUpdate[traderID] === undefined)
         {
-            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds
+            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds.min;
             const timeRemaining = assort.nextResupply - now;
             this.lastAssortUpdate[traderID] = now - (resupplyTime - timeRemaining);
         }
@@ -417,7 +417,7 @@ export class TraderAssortGenerator
         }
 
         maxBuyRate = modConfig.trader_stock_changes.max_item_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
-        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds);
+        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds.min);
         const maxItemsSold = selloutMult * originalStock * refreshFractionElapsed * fenceMult;
         const itemsSold = originalStock - currentStock;
         const maxReduction = selloutMult * maxBuyRate * (now - this.lastAssortUpdate[traderID]);
@@ -495,7 +495,7 @@ export class TraderAssortGenerator
         // Adjust assort size and variety
         this.iTraderConfig.fence.assortSize = modConfig.trader_stock_changes.fence_stock_changes.assort_size;
         this.iTraderConfig.fence.discountOptions.assortSize = modConfig.trader_stock_changes.fence_stock_changes.assort_size_discount;
-        this.iTraderConfig.fence.maxPresetsPercent = modConfig.trader_stock_changes.fence_stock_changes.maxPresetsPercent;
+        this.iTraderConfig.fence.weaponPresetMinMax.max = modConfig.trader_stock_changes.fence_stock_changes.maxPresetsPercent;
         
         for (const itemID in modConfig.trader_stock_changes.fence_stock_changes.itemTypeLimits_Override)
         {

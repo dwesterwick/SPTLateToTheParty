@@ -12,7 +12,12 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(MatchmakerTimeHasCome).GetMethod("Show", BindingFlags.NonPublic | BindingFlags.Instance);
+            return typeof(MatchmakerTimeHasCome).GetMethod(
+                "Show",
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                new Type[] { typeof(ISession), typeof(RaidSettings) },
+                null);
         }
 
         [PatchPostfix]

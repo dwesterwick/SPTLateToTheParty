@@ -13,7 +13,7 @@ namespace LateToTheParty.Patches
         protected override MethodBase GetTargetMethod()
         {
             Type localGameType = Aki.Reflection.Utils.PatchConstants.LocalGameType;
-            return localGameType.GetMethod("smethod_6", BindingFlags.NonPublic | BindingFlags.Static);
+            return localGameType.GetMethod("smethod_6", BindingFlags.Public | BindingFlags.Static);
         }
 
         [PatchPrefix]

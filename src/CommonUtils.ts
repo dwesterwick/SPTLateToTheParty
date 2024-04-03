@@ -1,9 +1,9 @@
 import modConfig from "../config/config.json";
-import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
-import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
-import { LocaleService } from "@spt-aki/services/LocaleService";
-import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
+import type { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
+import type { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
+import type { LocaleService } from "@spt-aki/services/LocaleService";
+import type { Item } from "@spt-aki/models/eft/common/tables/IItem";
 
 export class CommonUtils
 {

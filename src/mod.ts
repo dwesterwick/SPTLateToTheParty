@@ -5,7 +5,7 @@ import { BotConversionHelper } from "./BotConversionHelper";
 import { LootRankingGenerator } from "./LootRankingGenerator";
 import { TraderAssortGenerator } from "./TraderAssortGenerator";
 
-import { DependencyContainer } from "tsyringe";
+import type { DependencyContainer } from "tsyringe";
 import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
 import type { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
 import type { IPostAkiLoadMod } from "@spt-aki/models/external/IPostAkiLoadMod";
@@ -13,35 +13,35 @@ import type { StaticRouterModService } from "@spt-aki/services/mod/staticRouter/
 import type { DynamicRouterModService } from "@spt-aki/services/mod/dynamicRouter/DynamicRouterModService";
 
 import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import { ConfigServer } from "@spt-aki/servers/ConfigServer";
-import { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
-import { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
-import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
-import { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
-import { IAirdropConfig } from "@spt-aki/models/spt/config/IAirdropConfig";
-import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
+import type { ConfigServer } from "@spt-aki/servers/ConfigServer";
+import type { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
+import type { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
+import type { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
+import type { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
+import type { IAirdropConfig } from "@spt-aki/models/spt/config/IAirdropConfig";
+import type { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
-import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
-import { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
-import { VFS } from "@spt-aki/utils/VFS";
-import { LocaleService } from "@spt-aki/services/LocaleService";
-import { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
-import { HashUtil } from "@spt-aki/utils/HashUtil";
-import { JsonUtil } from "@spt-aki/utils/JsonUtil";
-import { TimeUtil } from "@spt-aki/utils/TimeUtil";
-import { RandomUtil } from "@spt-aki/utils/RandomUtil";
-import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
-import { TraderController } from "@spt-aki/controllers/TraderController";
-import { FenceService } from "@spt-aki/services/FenceService";
-import { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
-import { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
-import { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
-import { RagfairController } from "@spt-aki/controllers/RagfairController";
-import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
+import type { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import type { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
+import type { VFS } from "@spt-aki/utils/VFS";
+import type { LocaleService } from "@spt-aki/services/LocaleService";
+import type { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
+import type { HashUtil } from "@spt-aki/utils/HashUtil";
+import type { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import type { TimeUtil } from "@spt-aki/utils/TimeUtil";
+import type { RandomUtil } from "@spt-aki/utils/RandomUtil";
+import type { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
+import type { TraderController } from "@spt-aki/controllers/TraderController";
+import type { FenceService } from "@spt-aki/services/FenceService";
+import type { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
+import type { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
+import type { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
+import type { RagfairController } from "@spt-aki/controllers/RagfairController";
+import type { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
 import { Traders } from "@spt-aki/models/enums/Traders";
-import { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
-import { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
-import { ISearchRequestData } from "@spt-aki/models/eft/ragfair/ISearchRequestData";
+import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
+import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
+import type { ISearchRequestData } from "@spt-aki/models/eft/ragfair/ISearchRequestData";
 
 const modName = "LateToTheParty";
 
@@ -351,8 +351,9 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             // Modify trader restock times
             for (const t in this.iTraderConfig.updateTime)
             {
-                this.iTraderConfig.updateTime[t].seconds *= modConfig.debug.trader_resupply_time_factor;
-                const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds;
+                this.iTraderConfig.updateTime[t].seconds.min *= modConfig.debug.trader_resupply_time_factor;
+                this.iTraderConfig.updateTime[t].seconds.max *= modConfig.debug.trader_resupply_time_factor;
+                const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds.max;
 
                 // This is undefined for some trader mods
                 if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
@@ -469,7 +470,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             tarkovstreets: this.locationConfig.looseLootMultiplier.tarkovstreets,
             terminal: this.locationConfig.looseLootMultiplier.terminal,
             town: this.locationConfig.looseLootMultiplier.town,
-            woods: this.locationConfig.looseLootMultiplier.woods
+            woods: this.locationConfig.looseLootMultiplier.woods,
+            sandbox: this.locationConfig.looseLootMultiplier.sandbox
         }
 
         this.originalStaticLootMultipliers = 
@@ -489,7 +491,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             tarkovstreets: this.locationConfig.staticLootMultiplier.tarkovstreets,
             terminal: this.locationConfig.staticLootMultiplier.terminal,
             town: this.locationConfig.staticLootMultiplier.town,
-            woods: this.locationConfig.staticLootMultiplier.woods
+            woods: this.locationConfig.staticLootMultiplier.woods,
+            sandbox: this.locationConfig.staticLootMultiplier.sandbox
         }
     }
 
@@ -513,6 +516,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.locationConfig.looseLootMultiplier.terminal = this.originalLooseLootMultipliers.terminal * factor;
         this.locationConfig.looseLootMultiplier.town = this.originalLooseLootMultipliers.town * factor;
         this.locationConfig.looseLootMultiplier.woods = this.originalLooseLootMultipliers.woods * factor;
+        this.locationConfig.looseLootMultiplier.sandbox = this.originalLooseLootMultipliers.sandbox * factor;
 
         this.locationConfig.staticLootMultiplier.bigmap = this.originalStaticLootMultipliers.bigmap * factor;
         this.locationConfig.staticLootMultiplier.develop = this.originalStaticLootMultipliers.develop * factor;
@@ -530,6 +534,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.locationConfig.staticLootMultiplier.terminal = this.originalStaticLootMultipliers.terminal * factor;
         this.locationConfig.staticLootMultiplier.town = this.originalStaticLootMultipliers.town * factor;
         this.locationConfig.staticLootMultiplier.woods = this.originalStaticLootMultipliers.woods * factor;
+        this.locationConfig.staticLootMultiplier.sandbox = this.originalStaticLootMultipliers.sandbox * factor;
     }
 
     private generateLootRankingData(sessionId: string): void
@@ -596,7 +601,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
             // Determine how much time has passed since the trader's inventory was last updated, and compare that to the max time allowed
             const resupplyAge = this.timeutil.getTimestamp() - this.traderAssortGenerator.getLastTraderRefreshTimestamp(traderID);
-            const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
+            const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds.min * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
 
             if (resupplyAge < resupplyAgeMax)
             {

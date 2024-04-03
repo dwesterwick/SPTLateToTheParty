@@ -14,11 +14,16 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(QuestClass).GetMethod("SetStatus", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(GClass1249).GetMethod("SetStatus", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
-        private static void PatchPrefix(QuestClass __instance, EQuestStatus status)
+        private static void PatchPrefix(GClass1249 __instance, EQuestStatus status, bool notify, bool fromServer)
+        {
+            SetQuestStatus(__instance, status, notify, fromServer);
+        }
+
+        public static void SetQuestStatus<T>(AbstractQuestClass<T> __instance, EQuestStatus status, bool notify, bool fromServer) where T: IConditionCounter
         {
             // Ignore quests that already have this status
             if (__instance.QuestStatus == status)

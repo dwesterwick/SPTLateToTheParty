@@ -13,7 +13,7 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(WorldInteractiveObject).GetMethod("PlaySound", BindingFlags.NonPublic | BindingFlags.Instance);
+            return typeof(WorldInteractiveObject).GetMethod("PlaySound", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]

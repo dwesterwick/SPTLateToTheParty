@@ -27,7 +27,6 @@ namespace LateToTheParty.Controllers
         private static List<WorldInteractiveObject> eligibleInteractiveObjects = new List<WorldInteractiveObject>();
         private static Dictionary<WorldInteractiveObject, bool> allowedToToggleInteractiveObject = new Dictionary<WorldInteractiveObject, bool>();
         private GamePlayerOwner gamePlayerOwner = null;
-        private static MethodInfo canStartInteractionMethodInfo = typeof(WorldInteractiveObject).GetMethod("CanStartInteraction", BindingFlags.NonPublic | BindingFlags.Instance);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static Stopwatch interactiveObjectOpeningsTimer = new Stopwatch();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
@@ -239,8 +238,8 @@ namespace LateToTheParty.Controllers
                 interactiveObject.OnEnable();
             }
 
-            // Ignore doors that are currently being opened/closed                    
-            if (!(bool)canStartInteractionMethodInfo.Invoke(interactiveObject, new object[] { newState, true }))
+            // Ignore doors that are currently being opened/closed
+            if (!interactiveObject.CanStartInteraction(newState, true))
             {
                 return false;
             }
@@ -462,7 +461,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Ensure there are context menu options for the door
-            GClass2805 availableActions = GClass1726.GetAvailableActions(gamePlayerOwner, interactiveObject);
+            ActionsReturnClass availableActions = GetActionsClass.GetAvailableActions(gamePlayerOwner, interactiveObject);
             if ((availableActions == null) || (availableActions.Actions.Count == 0))
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has no interaction options.");

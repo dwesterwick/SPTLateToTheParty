@@ -10,6 +10,7 @@ using EFT.Game.Spawning;
 using EFT.Interactive;
 using HarmonyLib;
 using UnityEngine;
+using LocationExit = GClass1225;
 
 namespace LateToTheParty.Controllers
 {
@@ -149,7 +150,7 @@ namespace LateToTheParty.Controllers
                 CarExtractNames = ConfigController.GetCarExtractNames();
             }
 
-            foreach (GClass1135 exit in location.exits)
+            foreach (LocationExit exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
@@ -189,7 +190,7 @@ namespace LateToTheParty.Controllers
 
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
-                foreach (GClass1135 exit in location.exits)
+                foreach (LocationExit exit in location.exits)
                 {
                     if (CarExtractNames.Contains(exit.Name))
                     {
@@ -216,7 +217,7 @@ namespace LateToTheParty.Controllers
 
             Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
             
-            foreach (GClass1135 exit in location.exits)
+            foreach (LocationExit exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
@@ -295,15 +296,7 @@ namespace LateToTheParty.Controllers
 
         public static void DeactivateExfilForPlayer(ExfiltrationPoint exfil, IPlayer player)
         {
-            string methodName = "method_5";
-            MethodInfo playerDiedMethod = AccessTools.Method(typeof(ExfiltrationPoint), methodName, new Type[] { typeof(EFT.IPlayer) });
-            if (playerDiedMethod == null)
-            {
-                throw new MissingMethodException(nameof(ExfiltrationPoint), methodName);
-            }
-
-            playerDiedMethod.Invoke(exfil, new object[] { player });
-
+            exfil.method_5(player);
             LoggingController.LogInfo("Extract " + exfil.Settings.Name + " deactivated for player " + player.Profile.Nickname);
         }
     }

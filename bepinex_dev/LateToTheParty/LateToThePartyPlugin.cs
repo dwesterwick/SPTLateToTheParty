@@ -8,7 +8,7 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.3.1.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.4.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private void Awake()
@@ -40,6 +40,7 @@ namespace LateToTheParty
                 if (ConfigController.Config.TraderStockChanges.Enabled)
                 {
                     new Patches.QuestSetStatusPatch().Enable();
+                    new Patches.QuestSetStatusPatch2().Enable();
                 }
 
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
