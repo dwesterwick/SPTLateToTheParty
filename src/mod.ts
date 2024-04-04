@@ -38,7 +38,6 @@ import type { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGene
 import type { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
 import type { RagfairController } from "@spt-aki/controllers/RagfairController";
 import type { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
-import { Traders } from "@spt-aki/models/enums/Traders";
 import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
 import type { ISearchRequestData } from "@spt-aki/models/eft/ragfair/ISearchRequestData";
@@ -171,9 +170,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                         return output;
                     }
 
-                    const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
-                    const assort = this.getUpdatedTraderAssort(traderID, sessionId);
-                    return this.httpResponseUtil.getBody(assort);
+                    this.commonUtils.logWarning("Trader-stock changes are disabled for SPT-AKI 3.8.0");
+                    return output;
+
+                    //const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
+                    //const assort = this.getUpdatedTraderAssort(traderID, sessionId);
+                    //return this.httpResponseUtil.getBody(assort);
                 }
             }], "aki"
         );
@@ -546,7 +548,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private getUpdatedTraderAssort(traderID: string, sessionId: string, canRegenerate = true): ITraderAssort
     {
         // Refresh Fence's assorts
-        if (traderID === Traders.FENCE)
+        if (traderID === CommonUtils.fenceID)
         {
             if (!modConfig.trader_stock_changes.fence_stock_changes.enabled)
             {
@@ -561,10 +563,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
         // Update stock for trader
         const assort = this.traderController.getAssort(sessionId, traderID);
-        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID === Traders.FENCE);
+        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID === CommonUtils.fenceID);
 
         // Remove fancy weapons and then check if Fence's assorts need to be regenerated
-        if (traderID === Traders.FENCE)
+        if (traderID === CommonUtils.fenceID)
         {
             this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
             this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
@@ -588,7 +590,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             const traderID = this.iTraderConfig.updateTime[t].traderId;
 
             // Ignore Fence because his items aren't available on the flea market
-            if (traderID === Traders.FENCE)
+            if (traderID === CommonUtils.fenceID)
             {
                 continue;
             }
@@ -609,7 +611,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }
 
             const assort = this.traderController.getAssort(sessionId, traderID);
-            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID === Traders.FENCE);
+            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID === CommonUtils.fenceID);
         }
 
         // Update all offers to reflect the latest trader inventory

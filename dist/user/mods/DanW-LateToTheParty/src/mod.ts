@@ -38,7 +38,6 @@ import type { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGene
 import type { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
 import type { RagfairController } from "@spt-aki/controllers/RagfairController";
 import type { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
-import { Traders } from "@spt-aki/models/enums/Traders";
 import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
 import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
 import type { ISearchRequestData } from "@spt-aki/models/eft/ragfair/ISearchRequestData";
@@ -171,9 +170,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
                         return output;
                     }
 
-                    const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
-                    const assort = this.getUpdatedTraderAssort(traderID, sessionId);
-                    return this.httpResponseUtil.getBody(assort);
+                    this.commonUtils.logWarning("Trader-stock changes are disabled for SPT-AKI 3.8.0");
+                    return output;
+
+                    //const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
+                    //const assort = this.getUpdatedTraderAssort(traderID, sessionId);
+                    //return this.httpResponseUtil.getBody(assort);
                 }
             }], "aki"
         );
@@ -351,8 +353,9 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             // Modify trader restock times
             for (const t in this.iTraderConfig.updateTime)
             {
-                this.iTraderConfig.updateTime[t].seconds *= modConfig.debug.trader_resupply_time_factor;
-                const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds;
+                this.iTraderConfig.updateTime[t].seconds.min *= modConfig.debug.trader_resupply_time_factor;
+                this.iTraderConfig.updateTime[t].seconds.max *= modConfig.debug.trader_resupply_time_factor;
+                const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds.max;
 
                 // This is undefined for some trader mods
                 if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
@@ -469,7 +472,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             tarkovstreets: this.locationConfig.looseLootMultiplier.tarkovstreets,
             terminal: this.locationConfig.looseLootMultiplier.terminal,
             town: this.locationConfig.looseLootMultiplier.town,
-            woods: this.locationConfig.looseLootMultiplier.woods
+            woods: this.locationConfig.looseLootMultiplier.woods,
+            sandbox: this.locationConfig.looseLootMultiplier.sandbox
         }
 
         this.originalStaticLootMultipliers = 
@@ -489,7 +493,8 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             tarkovstreets: this.locationConfig.staticLootMultiplier.tarkovstreets,
             terminal: this.locationConfig.staticLootMultiplier.terminal,
             town: this.locationConfig.staticLootMultiplier.town,
-            woods: this.locationConfig.staticLootMultiplier.woods
+            woods: this.locationConfig.staticLootMultiplier.woods,
+            sandbox: this.locationConfig.staticLootMultiplier.sandbox
         }
     }
 
@@ -513,6 +518,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.locationConfig.looseLootMultiplier.terminal = this.originalLooseLootMultipliers.terminal * factor;
         this.locationConfig.looseLootMultiplier.town = this.originalLooseLootMultipliers.town * factor;
         this.locationConfig.looseLootMultiplier.woods = this.originalLooseLootMultipliers.woods * factor;
+        this.locationConfig.looseLootMultiplier.sandbox = this.originalLooseLootMultipliers.sandbox * factor;
 
         this.locationConfig.staticLootMultiplier.bigmap = this.originalStaticLootMultipliers.bigmap * factor;
         this.locationConfig.staticLootMultiplier.develop = this.originalStaticLootMultipliers.develop * factor;
@@ -530,6 +536,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         this.locationConfig.staticLootMultiplier.terminal = this.originalStaticLootMultipliers.terminal * factor;
         this.locationConfig.staticLootMultiplier.town = this.originalStaticLootMultipliers.town * factor;
         this.locationConfig.staticLootMultiplier.woods = this.originalStaticLootMultipliers.woods * factor;
+        this.locationConfig.staticLootMultiplier.sandbox = this.originalStaticLootMultipliers.sandbox * factor;
     }
 
     private generateLootRankingData(sessionId: string): void
@@ -541,7 +548,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private getUpdatedTraderAssort(traderID: string, sessionId: string, canRegenerate = true): ITraderAssort
     {
         // Refresh Fence's assorts
-        if (traderID === Traders.FENCE)
+        if (traderID === CommonUtils.fenceID)
         {
             if (!modConfig.trader_stock_changes.fence_stock_changes.enabled)
             {
@@ -556,10 +563,10 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
         // Update stock for trader
         const assort = this.traderController.getAssort(sessionId, traderID);
-        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID === Traders.FENCE);
+        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID === CommonUtils.fenceID);
 
         // Remove fancy weapons and then check if Fence's assorts need to be regenerated
-        if (traderID === Traders.FENCE)
+        if (traderID === CommonUtils.fenceID)
         {
             this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
             this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
@@ -583,7 +590,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             const traderID = this.iTraderConfig.updateTime[t].traderId;
 
             // Ignore Fence because his items aren't available on the flea market
-            if (traderID === Traders.FENCE)
+            if (traderID === CommonUtils.fenceID)
             {
                 continue;
             }
@@ -596,7 +603,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
 
             // Determine how much time has passed since the trader's inventory was last updated, and compare that to the max time allowed
             const resupplyAge = this.timeutil.getTimestamp() - this.traderAssortGenerator.getLastTraderRefreshTimestamp(traderID);
-            const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
+            const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds.min * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
 
             if (resupplyAge < resupplyAgeMax)
             {
@@ -604,7 +611,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }
 
             const assort = this.traderController.getAssort(sessionId, traderID);
-            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID === Traders.FENCE);
+            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID === CommonUtils.fenceID);
         }
 
         // Update all offers to reflect the latest trader inventory

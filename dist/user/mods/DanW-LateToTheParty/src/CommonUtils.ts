@@ -7,6 +7,8 @@ import type { Item } from "@spt-aki/models/eft/common/tables/IItem";
 
 export class CommonUtils
 {
+    public static fenceID = "579dc571d53a0658a154fbec";
+
     private debugMessagePrefix = "[Late to the Party] ";
     private translations: Record<string, string>;
 	

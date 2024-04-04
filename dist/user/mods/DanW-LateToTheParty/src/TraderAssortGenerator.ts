@@ -12,7 +12,6 @@ import type { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import type { RandomUtil } from "@spt-aki/utils/RandomUtil";
 import type { TimeUtil } from "@spt-aki/utils/TimeUtil";
 import type { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
-import { Traders } from "@spt-aki/models/enums/Traders";
 import type { Item } from "@spt-aki/models/eft/common/tables/IItem";
 import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
 
@@ -40,7 +39,7 @@ export class TraderAssortGenerator
     )
     {
         this.modifyFenceConfig();
-        this.originalFenceBaseAssortData = this.jsonUtil.clone(this.databaseTables.traders[Traders.FENCE].assort);
+        this.originalFenceBaseAssortData = this.jsonUtil.clone(this.databaseTables.traders[CommonUtils.fenceID].assort);
     }
 
     public clearLastAssortData(): void
@@ -136,7 +135,7 @@ export class TraderAssortGenerator
         }
         if (this.lastAssortUpdate[traderID] === undefined)
         {
-            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds
+            const resupplyTime = this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds.min;
             const timeRemaining = assort.nextResupply - now;
             this.lastAssortUpdate[traderID] = now - (resupplyTime - timeRemaining);
         }
@@ -169,7 +168,7 @@ export class TraderAssortGenerator
             }
 
             // For Fence, combine duplicate items if possible
-            if ((traderID === Traders.FENCE) && !CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
+            if ((traderID === CommonUtils.fenceID) && !CommonUtils.canItemDegrade(assort.items[i], this.databaseTables))
             {
                 for (let j = i + 1; j < assort.items.length; j++)
                 {
@@ -228,7 +227,7 @@ export class TraderAssortGenerator
             
             // Set the initial stack size for Fence's ammo offers
             const isAmmo = itemTpl._parent === modConfig.trader_stock_changes.ammo_parent_id;
-            if ((traderID === Traders.FENCE) && isAmmo && (assort.items[i].upd.StackObjectsCount === 1))
+            if ((traderID === CommonUtils.fenceID) && isAmmo && (assort.items[i].upd.StackObjectsCount === 1))
             {
                 assort.items[i].upd.StackObjectsCount = this.randomUtil.randInt(0, modConfig.trader_stock_changes.fence_stock_changes.max_ammo_stack);
             }
@@ -263,7 +262,7 @@ export class TraderAssortGenerator
         this.updateFenceAssortIDs();
         
         // Ensure the new assorts are generated at least once
-        if ((this.lastAssort[Traders.FENCE] === undefined) || modConfig.trader_stock_changes.fence_stock_changes.always_regenerate)
+        if ((this.lastAssort[CommonUtils.fenceID] === undefined) || modConfig.trader_stock_changes.fence_stock_changes.always_regenerate)
         {
             this.generateNewFenceAssorts();
         }
@@ -323,8 +322,8 @@ export class TraderAssortGenerator
             }
         }
 
-        this.databaseTables.traders[Traders.FENCE].assort = assort;
-
+        this.fenceService.setFenceAssort(assort);
+        
         //const originalAssortCount = Object.keys(this.originalFenceBaseAssortData.loyal_level_items).length;
         //const newAssortCount = Object.keys(this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items).length;
         //this.commonUtils.logInfo(`Updated Fence assort data: ${newAssortCount}/${originalAssortCount} items are available for sale.`);
@@ -402,7 +401,7 @@ export class TraderAssortGenerator
             return 0;
         }
 
-        const fenceMult = (traderID === Traders.FENCE ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
+        const fenceMult = (traderID === CommonUtils.fenceID ? modConfig.trader_stock_changes.fence_stock_changes.sell_chance_multiplier : 1);
         let selloutMult = this.randomUtil.getInt(modConfig.trader_stock_changes.item_sellout_chance.min, modConfig.trader_stock_changes.item_sellout_chance.max) / 100;
         selloutMult *= isbarter ? modConfig.trader_stock_changes.barter_trade_sellout_factor : 1;
         if (itemTpl._id in hotItems)
@@ -417,7 +416,7 @@ export class TraderAssortGenerator
         }
 
         maxBuyRate = modConfig.trader_stock_changes.max_item_buy_rate / (modConfig.debug.enabled ? modConfig.debug.trader_resupply_time_factor : 1);
-        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds);
+        const refreshFractionElapsed = 1 - ((nextResupply - now) / this.iTraderConfig.updateTime.find((t) => t.traderId === traderID).seconds.min);
         const maxItemsSold = selloutMult * originalStock * refreshFractionElapsed * fenceMult;
         const itemsSold = originalStock - currentStock;
         const maxReduction = selloutMult * maxBuyRate * (now - this.lastAssortUpdate[traderID]);
@@ -495,7 +494,7 @@ export class TraderAssortGenerator
         // Adjust assort size and variety
         this.iTraderConfig.fence.assortSize = modConfig.trader_stock_changes.fence_stock_changes.assort_size;
         this.iTraderConfig.fence.discountOptions.assortSize = modConfig.trader_stock_changes.fence_stock_changes.assort_size_discount;
-        this.iTraderConfig.fence.maxPresetsPercent = modConfig.trader_stock_changes.fence_stock_changes.maxPresetsPercent;
+        this.iTraderConfig.fence.weaponPresetMinMax.max = modConfig.trader_stock_changes.fence_stock_changes.maxPresetsPercent;
         
         for (const itemID in modConfig.trader_stock_changes.fence_stock_changes.itemTypeLimits_Override)
         {
@@ -541,10 +540,10 @@ export class TraderAssortGenerator
 
         // Update Fence's base assorts
         //this.commonUtils.logInfo(`Original Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
-        this.databaseTables.traders[Traders.FENCE].assort.barter_scheme = {};
-        this.databaseTables.traders[Traders.FENCE].assort.items = [];
-        this.databaseTables.traders[Traders.FENCE].assort.loyal_level_items = {};
-        this.databaseTables.traders[Traders.FENCE].assort.nextResupply = this.fenceService.getNextFenceUpdateTimestamp();
+        this.databaseTables.traders[CommonUtils.fenceID].assort.barter_scheme = {};
+        this.databaseTables.traders[CommonUtils.fenceID].assort.items = [];
+        this.databaseTables.traders[CommonUtils.fenceID].assort.loyal_level_items = {};
+        this.databaseTables.traders[CommonUtils.fenceID].assort.nextResupply = this.fenceService.getNextFenceUpdateTimestamp();
         this.fenceBaseAssortGenerator.generateFenceBaseAssorts();
         //this.commonUtils.logInfo(`Updated Fence assort data: ${this.databaseTables.traders[Traders.FENCE].assort.items.length} items are available for sale.`);
     }

@@ -247,7 +247,7 @@ export class LootRankingGenerator
                     possibleSlots[possibleSlot],
                     this.databaseTables.bots.types[botType].inventory,
                     item._parent,
-                    this.databaseTables.bots.types[botType].chances.mods,
+                    this.databaseTables.bots.types[botType].chances.weaponMods,
                     botType,
                     false,
                     1
