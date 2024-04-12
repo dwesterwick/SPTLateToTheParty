@@ -150,6 +150,12 @@ namespace LateToTheParty.Controllers
                 //LoggingController.LogInfo("Checking for picked-up item in eligible loot: " + relevantItem.LocalizedName());
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))
                 {
+                    if (!LootInfo.ContainsKey(relevantItem))
+                    {
+                        LoggingController.LogError("Item " + relevantItem.Id + " (" + relevantItem.LocalizedName() + ") is not a discovered loot item. Cannot prevent it from despawning in your inventory!");
+                        continue;
+                    }
+
                     if (LootInfo[relevantItem].IsInPlayerInventory)
                     {
                         continue;

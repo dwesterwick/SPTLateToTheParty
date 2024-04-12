@@ -75,7 +75,7 @@ namespace LateToTheParty.Controllers
 
             // Only run the script if you've traveled a minimum distance from the last update. Othewise, stuttering will occur. 
             // However, ignore this check initially so loot can be despawned at the very beginning of the raid before you start moving if you spawn in late
-            Vector3 yourPosition = Camera.main.transform.position;
+            Vector3 yourPosition = Singleton<GameWorld>.Instance.MainPlayer.Position;
             float lastUpdateDist = Vector3.Distance(yourPosition, lastUpdatePosition);
             if (
                 (updateTimer.ElapsedMilliseconds < ConfigController.Config.DestroyLootDuringRaid.MaxTimeBeforeUpdate)
