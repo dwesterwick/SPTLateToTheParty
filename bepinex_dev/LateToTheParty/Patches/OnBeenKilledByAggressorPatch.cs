@@ -28,9 +28,9 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsOnDeadBots.OnlyIfYouKilledThem && (aggressor.PlayerId != Singleton<GameWorld>.Instance.MainPlayer.PlayerId))
+            if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsOnDeadBots.OnlyIfYouKilledThem && !PlayerMonitorController.GetPlayerIDs().Contains(aggressor.Profile.Id))
             {
-                LoggingController.LogInfo("Player " + __instance.Profile.Nickname + " was killed by " + aggressor.Profile.Nickname + " (allowing their loot to despawn because you didn't kill them)");
+                LoggingController.LogInfo("Player " + __instance.Profile.Nickname + " was killed by " + aggressor.Profile.Nickname + " (allowing their loot to despawn because a human player didn't kill them)");
                 return;
             }
 

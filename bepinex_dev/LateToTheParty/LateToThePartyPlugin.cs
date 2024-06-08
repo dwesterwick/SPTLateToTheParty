@@ -8,7 +8,7 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.4.1.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.5.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private void Awake()
@@ -46,6 +46,7 @@ namespace LateToTheParty
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<InteractiveObjectController>();
                 this.GetOrAddComponent<NavMeshController>();
+                this.GetOrAddComponent<PlayerMonitorController>();
 
                 if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
                 {

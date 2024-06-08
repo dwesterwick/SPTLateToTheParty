@@ -211,13 +211,6 @@ namespace LateToTheParty.Controllers
 
         private static void tryToggleSwitch(EFT.Interactive.Switch sw)
         {
-            // Make sure the raid hasn't ended
-            Vector3? yourPosition = Singleton<GameWorld>.Instance?.MainPlayer?.Position;
-            if (!yourPosition.HasValue)
-            {
-                return;
-            }
-
             if (sw.DoorState == EDoorState.Interacting)
             {
                 //LoggingController.LogInfo("Somebody is already interacting with switch " + GetSwitchText(sw));
@@ -261,11 +254,18 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            // Check if the switch is too close to you to toggle
-            float distance = Vector3.Distance(yourPosition.Value, sw.transform.position);
+            // Check if the switch is too close to a human player to toggle
+            Player nearestPlayer = Controllers.PlayerMonitorController.GetNearestPlayer(sw.transform.position);
+            if (nearestPlayer == null)
+            {
+                LoggingController.LogWarning("Cannot find an alive player near the switch " + sw.Id);
+                return;
+            }
+
+            float distance = Vector3.Distance(nearestPlayer.Position, sw.transform.position);
             if (distance < ConfigController.Config.ToggleSwitchesDuringRaid.ExclusionRadius)
             {
-                //LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is too close to you");
+                //LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is too close to a human player");
 
                 return;
             }

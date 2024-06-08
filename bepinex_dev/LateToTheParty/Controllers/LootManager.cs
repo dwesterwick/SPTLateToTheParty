@@ -170,7 +170,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static IEnumerator FindAndDestroyLoot(Vector3 yourPosition, float timeRemainingFraction, double raidET)
+        public static IEnumerator FindAndDestroyLoot(IEnumerable<Vector3> playerPositions, float timeRemainingFraction, double raidET)
         {
             try
             {
@@ -257,7 +257,7 @@ namespace LateToTheParty.Controllers
 
                 // Determine which loot is eligible to destroy
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, yourPosition, raidET);
+                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, playerPositions, raidET);
 
                 // Sort eligible loot
                 IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible);
@@ -405,9 +405,9 @@ namespace LateToTheParty.Controllers
             return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
         }
 
-        private static void UpdateLootEligibility(Item item, Vector3 yourPosition, double raidET)
+        private static void UpdateLootEligibility(Item item, IEnumerable<Vector3> playerPositions, double raidET)
         {
-            LootInfo[item].CanDestroy = CanDestroyItem(item, yourPosition, raidET);
+            LootInfo[item].CanDestroy = CanDestroyItem(item, playerPositions, raidET);
         }
 
         private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
@@ -515,7 +515,7 @@ namespace LateToTheParty.Controllers
             return lootValueStdev * 4;
         }
 
-        private static bool CanDestroyItem(this Item item, Vector3 yourPosition, double raidET)
+        private static bool CanDestroyItem(this Item item, IEnumerable<Vector3> playerPositions, double raidET)
         {
             if (!LootInfo.ContainsKey(item))
             {
@@ -541,9 +541,8 @@ namespace LateToTheParty.Controllers
                 return false;
             }
 
-            // Ignore loot that's too close to you
-            float lootDist = Vector3.Distance(yourPosition, LootInfo[item].Transform.position);
-            if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius)
+            // Ignore loot that's too close to a player
+            if (playerPositions.Any(p => Vector3.Distance(p, LootInfo[item].Transform.position) < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius))
             {
                 return false;
             }
@@ -554,7 +553,7 @@ namespace LateToTheParty.Controllers
             {
                 return false;
             }
-            lootDist = Vector3.Distance(nearestPlayer.Position, LootInfo[item].Transform.position);
+            float lootDist = Vector3.Distance(nearestPlayer.Position, LootInfo[item].Transform.position);
             if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadiusBots)
             {
                 return false;

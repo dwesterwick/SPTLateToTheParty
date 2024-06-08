@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace LateToTheParty.Patches
 
             bool preventFromDespawning = false;
 
-            if (__instance == Singleton<GameWorld>.Instance.MainPlayer)
+            if (PlayerMonitorController.GetPlayerIDs().Contains(__instance.Profile.Id))
             {
                 if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
                 {

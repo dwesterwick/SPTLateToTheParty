@@ -25,7 +25,9 @@ namespace LateToTheParty.Controllers
 
         private static List<WorldInteractiveObject> toggleableInteractiveObjects = new List<WorldInteractiveObject>();
         private static List<WorldInteractiveObject> eligibleInteractiveObjects = new List<WorldInteractiveObject>();
+        private static NoPowerTip[] allNoPowerTips = new NoPowerTip[0];
         private static Dictionary<WorldInteractiveObject, bool> allowedToToggleInteractiveObject = new Dictionary<WorldInteractiveObject, bool>();
+        private static Dictionary<WorldInteractiveObject, NoPowerTip> noPowerTipsForInteractiveObjects = new Dictionary<WorldInteractiveObject, NoPowerTip>();
         private GamePlayerOwner gamePlayerOwner = null;
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static Stopwatch interactiveObjectOpeningsTimer = new Stopwatch();
@@ -170,6 +172,7 @@ namespace LateToTheParty.Controllers
             toggleableInteractiveObjects.Clear();
             eligibleInteractiveObjects.Clear();
             allowedToToggleInteractiveObject.Clear();
+            noPowerTipsForInteractiveObjects.Clear();
             updateTimer.Restart();
 
             HasToggledInitialInteractiveObjects = false;
@@ -357,7 +360,12 @@ namespace LateToTheParty.Controllers
                 WorldInteractiveObject[] allNormalDoors = FindObjectsOfType<Door>();
                 WorldInteractiveObject[] allKaycardDoors = FindObjectsOfType<KeycardDoor>();
                 WorldInteractiveObject[] allTrunks = FindObjectsOfType<Trunk>();
-                IEnumerable<WorldInteractiveObject> allDoors = allNormalDoors.Concat(allKaycardDoors).Concat(allTrunks);
+                allNoPowerTips = FindObjectsOfType<NoPowerTip>();
+
+                IEnumerable<WorldInteractiveObject> allDoors = allNormalDoors
+                    .Concat(allKaycardDoors)
+                    .Concat(allTrunks)
+                    .Distinct(o => o.Id);
 
                 LoggingController.LogInfo("Searching for valid interactive objects...found " + allDoors.Count() + " possible interactive objects.");
 
@@ -374,19 +382,87 @@ namespace LateToTheParty.Controllers
 
         private void CheckIfInteractiveObjectIsEligible(WorldInteractiveObject interactiveObject)
         {
-            // If the door can be toggled, add it to the dictionary
+            // If the object can be toggled, add it to the dictionary
             if (!CheckIfInteractiveObjectCanBeToggled(interactiveObject, true))
             {
                 return;
             }
             toggleableInteractiveObjects.Add(interactiveObject);
 
-            // If the door is eligible for toggling during the raid, add it to the dictionary
+            // If the object is eligible for toggling during the raid, add it to the dictionary
             if (!IsEligibleInteractiveObject(interactiveObject, true))
             {
                 return;
             }
             eligibleInteractiveObjects.Add(interactiveObject);
+
+            // Check if the object is a door
+            Door door = interactiveObject as Door;
+            if (door == null)
+            {
+                return;
+            }
+
+            // Check if the door requires power to toggle
+            foreach (NoPowerTip noPowerTip in allNoPowerTips)
+            {
+                if (!doorHasNoPowerTip(door, noPowerTip))
+                {
+                    continue;
+                }
+
+                LoggingController.LogInfo("Found NoPowerTip " + noPowerTip.name + " for door " + interactiveObject.Id);
+                noPowerTipsForInteractiveObjects.Add(interactiveObject, noPowerTip);
+                
+                break;
+            }
+        }
+
+        private bool doorHasNoPowerTip(Door door, NoPowerTip noPowerTip)
+        {
+            if (!noPowerTip.gameObject.TryGetComponent(out BoxCollider collider))
+            {
+                LoggingController.LogWarning("Could not find collider for NoPowerTip " + noPowerTip.name);
+                return false;
+            }
+
+            // Check if the door is a keycard door
+            KeycardDoor keycardDoor = door as KeycardDoor;
+            if (keycardDoor != null)
+            {
+                // Need to expand the collider because the Saferoom keypad on Interchange isn't fully contained by the NoPowerTip for it
+                float boundsExpansion = 2.5f;
+                Bounds expandedBounds = new Bounds(collider.bounds.center, collider.bounds.size * boundsExpansion);
+
+                // Check if there is a NoPowerTip for any of the keypads for the door (but there should only be one)
+                foreach (InteractiveProxy interactiveProxy in keycardDoor.Proxies)
+                {
+                    if (expandedBounds.Contains(interactiveProxy.transform.position))
+                    {
+                        return true;
+                    }
+
+                    //LoggingController.LogInfo("NoPowerTip " + noPowerTip.name + "(" + expandedBounds.center + " with extents " + expandedBounds.extents + ") does not surround proxy of door " + door.Id + "(" + interactiveProxy.transform.position + ")");
+                }
+            }
+            else
+            {
+                // Check if the door has a handle, which is what is needed to test if it's within a NoPowerTip collider
+                Transform doorTestTransform = door.LockHandle?.transform;
+                if (doorTestTransform == null)
+                {
+                    return false;
+                }
+
+                if (collider.bounds.Contains(doorTestTransform.position))
+                {
+                    return true;
+                }
+
+                //LoggingController.LogInfo("NoPowerTip " + noPowerTip.name + "(" + collider.bounds.center + ") does not surround door " + door.Id + "(" + doorTestTransform.position + ")");
+            }
+
+            return false;
         }
 
         private void UpdateIfInteractiveObjectIsAllowedToBeToggle(WorldInteractiveObject interactiveObject)
@@ -416,6 +492,27 @@ namespace LateToTheParty.Controllers
             float doorDist = Vector3.Distance(yourPosition, interactiveObject.transform.position);
             if (doorDist < ConfigController.Config.OpenDoorsDuringRaid.ExclusionRadius)
             {
+                return false;
+            }
+
+            // Prevent the inner KIBA door from being unlocked before the outer KIBA door
+            if (interactiveObject.Id == "Shopping_Mall_DesignStuff_00049")
+            {
+                IEnumerable<bool> kibaOuterDoor = eligibleInteractiveObjects
+                    .Where(d => d.Id == "Shopping_Mall_DesignStuff_00050")
+                    .Select(d => d.DoorState == EDoorState.Locked);
+
+                if (kibaOuterDoor.Any(v => v == true))
+                {
+                    LoggingController.LogInfo("Cannot unlock inner KIBA door until outer KIBA door is unlocked");
+                    return false;
+                }
+            }
+
+            // Prevent doors that require power from being unlocked before the power is turned on
+            if (noPowerTipsForInteractiveObjects.ContainsKey(interactiveObject) && noPowerTipsForInteractiveObjects[interactiveObject].isActiveAndEnabled)
+            {
+                LoggingController.LogInfo("NoPowerTip for door " + interactiveObject.Id + " is still active.");
                 return false;
             }
 
@@ -462,7 +559,7 @@ namespace LateToTheParty.Controllers
 
             // Ensure there are context menu options for the door
             ActionsReturnClass availableActions = GetActionsClass.GetAvailableActions(gamePlayerOwner, interactiveObject);
-            if ((availableActions == null) || (availableActions.Actions.Count == 0))
+            if ((availableActions == null) || !availableActions.Actions.Any())
             {
                 if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has no interaction options.");
                 return false;

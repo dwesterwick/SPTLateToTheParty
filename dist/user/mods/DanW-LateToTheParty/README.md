@@ -199,4 +199,3 @@ Known issues:
 * The "hot items" sold by traders are always the same, regardless of your player level or account age. This makes the trader stock changes always seem like it's early wipe. 
 * Traders may sell out of junk ammo that nobody actually buys.
 * If you approach the car extract without taking it and this mod instructs it to leave later in the raid, you'll see the countdown timer when you check your extracts.
-* In rare cases, the KIBA inner door on Interchange may be opened when the outer door is still locked

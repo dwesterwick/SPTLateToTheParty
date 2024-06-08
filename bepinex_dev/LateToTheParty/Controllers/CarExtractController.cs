@@ -91,7 +91,14 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            float distance = Vector3.Distance(Singleton<GameWorld>.Instance.MainPlayer.Position, VEXExfil.transform.position);
+            Player nearestPlayer = Controllers.PlayerMonitorController.GetNearestPlayer(VEXExfil.transform.position);
+            if (nearestPlayer == null)
+            {
+                LoggingController.LogWarning("Cannot find an alive player near the VEX");
+                return;
+            }
+
+            float distance = Vector3.Distance(nearestPlayer.Position, VEXExfil.transform.position);
             if (distance < ConfigController.Config.CarExtractDepartures.ExclusionRadius)
             {
                 // Wait until you're a little closer to the car to add some hysteresis

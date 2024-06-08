@@ -127,6 +127,7 @@
     <Compile Include="Controllers\LootDestroyerController.cs" />
     <Compile Include="Controllers\NavMeshController.cs" />
     <Compile Include="Controllers\PathRender.cs" />
+    <Compile Include="Controllers\PlayerMonitorController.cs" />
     <Compile Include="Controllers\SwitchController.cs" />
     <Compile Include="CoroutineExtensions\EnumeratorWithTimeLimit.cs" />
     <Compile Include="Controllers\ItemHelpers.cs" />
