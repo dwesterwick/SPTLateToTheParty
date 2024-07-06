@@ -71,6 +71,11 @@ namespace LateToTheParty.Controllers
             IEnumerable<float> distancesTravelled = playerPositionsCurrent
                 .Select(p => Vector3.Distance(playerPositionsCurrent[p.Key], playerPositionsLast[p.Key]));
 
+            if (!distancesTravelled.Any())
+            {
+                return 0;
+            }
+
             foreach (Player player in playerPositionsCurrent.Keys)
             {
                 playerPositionsLast[player] = playerPositionsCurrent[player];

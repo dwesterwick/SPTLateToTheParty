@@ -62,13 +62,33 @@ export class LootRankingGenerator
 
     public getLootRankingDataFromFile(): LootRankingContainer
     {
+        if (!this.vfs.exists(lootFilePath))
+        {
+            this.commonUtils.logWarning("Loot ranking data not found. Creating empty loot ranking file...");
+
+            // Generate empty file
+            const rankingData: LootRankingContainer = {
+                costPerSlot: modConfig.destroy_loot_during_raid.loot_ranking.weighting.cost_per_slot,
+                weight: modConfig.destroy_loot_during_raid.loot_ranking.weighting.weight,
+                size: modConfig.destroy_loot_during_raid.loot_ranking.weighting.size,
+                gridSize: modConfig.destroy_loot_during_raid.loot_ranking.weighting.gridSize,
+                maxDim: modConfig.destroy_loot_during_raid.loot_ranking.weighting.max_dim,
+                armorClass: modConfig.destroy_loot_during_raid.loot_ranking.weighting.armor_class,
+                parentWeighting: modConfig.destroy_loot_during_raid.loot_ranking.weighting.parents,
+                items: {}
+            };
+
+            const rankingDataStr = JSON.stringify(rankingData);
+            this.vfs.writeFile(lootFilePath, rankingDataStr);
+        }
+
         const rankingDataStr = this.vfs.readFile(lootFilePath);
         return JSON.parse(rankingDataStr);
     }
 
     public generateLootRankingData(sessionId: string): void
     {
-        if (!modConfig.destroy_loot_during_raid.loot_ranking)
+        if (!modConfig.destroy_loot_during_raid.loot_ranking.enabled)
         {
             this.commonUtils.logInfo("Loot ranking is disabled in config.json.");
             return;
