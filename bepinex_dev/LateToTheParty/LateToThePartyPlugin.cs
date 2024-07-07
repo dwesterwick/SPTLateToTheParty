@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
+using BepInEx.Bootstrap;
 using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.5.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.5.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
+        public static string ModName { get; private set; } = "???";
+
         private void Awake()
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
@@ -18,6 +22,13 @@ namespace LateToTheParty
             Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ConfigController.GetConfig();
             LoggingController.Logger = Logger;
+            ModName = Info.Metadata.Name;
+
+            if (!confirmNoPreviousVersionExists())
+            {
+                Chainloader.DependencyErrors.Add("An older version of " + ModName + " still exists in '/BepInEx/plugins'. Please remove LateToTheParty.dll from that directory, or this mod will not work correctly.");
+                return;
+            }
 
             if (ConfigController.Config.Enabled)
             {
@@ -89,6 +100,17 @@ namespace LateToTheParty
             LoggingController.WriteMessagesToLogFile();
 
             throw ex;
+        }
+
+        private bool confirmNoPreviousVersionExists()
+        {
+            string oldPath = AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/LateToTheParty.dll";
+            if (File.Exists(oldPath))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

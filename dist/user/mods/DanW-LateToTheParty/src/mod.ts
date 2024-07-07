@@ -97,34 +97,6 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             }], "GetConfig"
         );
 
-        // Get the logging directory for bepinex crash reports
-        staticRouterModService.registerStaticRouter(`StaticGetLoggingPath${modName}`,
-            [{
-                url: "/LateToTheParty/GetLoggingPath",
-                action: () => 
-                {
-                    return JSON.stringify({ path: `${__dirname}/../log/` });
-                }
-            }], "GetLoggingPath"
-        );
-
-        // Report error messages to the SPT-AKI server console in case the user hasn't enabled the bepinex console
-        dynamicRouterModService.registerDynamicRouter(`DynamicReportError${modName}`,
-            [{
-                url: "/LateToTheParty/ReportError/",
-                action: (url: string) => 
-                {
-                    const urlParts = url.split("/");
-                    const errorMessage = urlParts[urlParts.length - 1];
-
-                    const regex = /%20/g;
-                    this.commonUtils.logError(errorMessage.replace(regex, " "));
-
-                    return JSON.stringify({ resp: "OK" });
-                }
-            }], "ReportError"
-        );
-
         if (!modConfig.enabled)
         {
             return;
@@ -319,6 +291,12 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         if (!modConfig.enabled)
         {
             this.commonUtils.logInfo("Mod disabled in config.json.");
+            return;
+        }
+
+        if (!this.doesFileIntegrityCheckPass())
+        {
+            modConfig.enabled = false;
             return;
         }
 
@@ -619,6 +597,25 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         offers = this.traderAssortGenerator.updateFleaOffers(offers);
 
         return offers;
+    }
+
+    private doesFileIntegrityCheckPass(): boolean
+    {
+        const path = `${__dirname}/..`;
+
+        if (this.vfs.exists(`${path}/log/`))
+        {
+            this.commonUtils.logWarning("Found obsolete log folder 'user\\mods\\DanW-LateToTheParty\\log'. Logs are now saved in 'BepInEx\\plugins\\DanW-LateToTheParty\\log'.");
+        }
+
+        if (this.vfs.exists(`${path}/../../../BepInEx/plugins/LateToTheParty.dll`))
+        {
+            this.commonUtils.logError("Please remove BepInEx/plugins/LateToTheParty.dll from the previous version of this mod and restart the server, or it will NOT work correctly.");
+        
+            return false;
+        }
+
+        return true;
     }
 }
 module.exports = {mod: new LateToTheParty()}

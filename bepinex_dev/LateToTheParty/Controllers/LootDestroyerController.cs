@@ -13,6 +13,7 @@ namespace LateToTheParty.Controllers
     {
         private static Stopwatch lootDestructionTimer = new Stopwatch();
         private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private static bool canDestroyLoot = true;
 
         private void Update()
         {
@@ -37,11 +38,12 @@ namespace LateToTheParty.Controllers
             {
                 StartCoroutine(LootManager.Clear());
                 lootDestructionTimer.Reset();
+                canDestroyLoot = true;
 
                 return;
             }
 
-            if (!LocationSettingsController.HasRaidStarted)
+            if (!LocationSettingsController.HasRaidStarted || !canDestroyLoot)
             {
                 return;
             }
@@ -88,6 +90,17 @@ namespace LateToTheParty.Controllers
             // This should only be run once to generate the list of lootable containers in the map
             if (LootManager.LootableContainerCount == 0)
             {
+                // Only enable the following line for testing
+                //Controllers.LocationSettingsController.SetCurrentLocation(null);
+
+                // If CurrentLocation is null, OnGameStartedPatch did not run (likely due to this mod not working with Fika) 
+                if (LocationSettingsController.CurrentLocation == null)
+                {
+                    LoggingController.LogErrorToServerConsole("Cannot determine the current map. Disabling loot destruction.");
+                    canDestroyLoot = false;
+                    return;
+                }
+
                 LootManager.FindAllLootableContainers(LocationSettingsController.CurrentLocation.Name);
             }
 

@@ -11,8 +11,11 @@ namespace LateToTheParty.Controllers
 {
     public static class ConfigController
     {
+        public static string LoggingPath { get; private set; } = null;
+
         public static Configuration.ModConfig Config { get; private set; } = null;
         public static Configuration.LootRankingWeightingConfig LootRanking { get; private set; } = null;
+        public static string ModPathRelative { get; } = "/BepInEx/plugins/DanW-LateToTheParty";
 
         public static Configuration.ModConfig GetConfig()
         {
@@ -27,15 +30,14 @@ namespace LateToTheParty.Controllers
 
         public static string GetLoggingPath()
         {
-            string errorMessage = "Cannot retrieve logging path from the server. Falling back to using the current directory.";
-            string json = RequestHandler.GetJson("/LateToTheParty/GetLoggingPath");
-
-            if (TryDeserializeObject(json, errorMessage, out Configuration.LoggingPath _path))
+            if (LoggingPath != null)
             {
-                return _path.Path;
+                return LoggingPath;
             }
 
-            return Assembly.GetExecutingAssembly().Location;
+            LoggingPath = AppDomain.CurrentDomain.BaseDirectory + ModPathRelative + "/log/";
+
+            return LoggingPath;
         }
 
         public static Configuration.LootRankingWeightingConfig GetLootRankingData()
@@ -78,9 +80,19 @@ namespace LateToTheParty.Controllers
             RequestHandler.GetJson("/LateToTheParty/QuestStatusChange/" + questID + "/" + newStatus);
         }
 
-        public static void ReportError(string errorMessage)
+        public static void ReportInfoToServer(string message)
         {
-            RequestHandler.GetJson("/LateToTheParty/ReportError/" + errorMessage);
+            Aki.Common.Utils.ServerLog.Info("Late to the Party", message);
+        }
+
+        public static void ReportWarningToServer(string message)
+        {
+            Aki.Common.Utils.ServerLog.Warn("Late to the Party", message);
+        }
+
+        public static void ReportErrorToServer(string message)
+        {
+            Aki.Common.Utils.ServerLog.Error("Late to the Party", message);
         }
 
         public static bool TryDeserializeObject<T>(string json, string errorMessage, out T obj)

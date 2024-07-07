@@ -56,7 +56,7 @@ namespace LateToTheParty.Controllers
         public static void LogErrorToServerConsole(string message)
         {
             LogError(message);
-            ConfigController.ReportError(message);
+            ConfigController.ReportErrorToServer(message);
         }
 
         public static void WriteMessagesToLogFile()
