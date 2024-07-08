@@ -142,7 +142,7 @@ namespace LateToTheParty.Controllers
             if (!neverToggle)
             {
                 double timeRemainingFractionToToggle = raidFractionWhenTogglingRange.Min + ((raidFractionWhenTogglingRange.Max - raidFractionWhenTogglingRange.Min) * staticRandomGen.NextDouble());
-                timeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * timeRemainingFractionToToggle;
+                timeRemainingToToggle = SPT.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * timeRemainingFractionToToggle;
             }
 
             // If the switch controls an extract point (i.e. the Labs cargo elevator), don't toggle it until after a certain time
@@ -150,14 +150,14 @@ namespace LateToTheParty.Controllers
             {
                 LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is used for an extract point");
 
-                float maxTimeRemainingToToggle = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds - ConfigController.Config.ToggleSwitchesDuringRaid.MinRaidETForExfilSwitches;
+                float maxTimeRemainingToToggle = SPT.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds - ConfigController.Config.ToggleSwitchesDuringRaid.MinRaidETForExfilSwitches;
                 timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
             }
 
             // If needed, cap the minimum time into the raid when the switch will be toggled
             if (minTimeFromNow > 0)
             {
-                float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+                float raidTimeRemaining = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
                 float maxTimeRemainingToToggle = raidTimeRemaining - minTimeFromNow;
 
                 timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
@@ -187,7 +187,7 @@ namespace LateToTheParty.Controllers
             {
                 IsTogglingSwitches = true;
 
-                float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+                float raidTimeRemaining = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
 
                 // Enumerate all switches that haven't been toggled yet but should
                 EFT.Interactive.Switch[] remainingSwitches = hasToggledSwitch

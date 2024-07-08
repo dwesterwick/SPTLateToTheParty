@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Aki.Common.Http;
+using SPT.Common.Http;
 using Newtonsoft.Json;
 
 namespace LateToTheParty.Controllers
@@ -82,17 +82,17 @@ namespace LateToTheParty.Controllers
 
         public static void ReportInfoToServer(string message)
         {
-            Aki.Common.Utils.ServerLog.Info("Late to the Party", message);
+            SPT.Common.Utils.ServerLog.Info("Late to the Party", message);
         }
 
         public static void ReportWarningToServer(string message)
         {
-            Aki.Common.Utils.ServerLog.Warn("Late to the Party", message);
+            SPT.Common.Utils.ServerLog.Warn("Late to the Party", message);
         }
 
         public static void ReportErrorToServer(string message)
         {
-            Aki.Common.Utils.ServerLog.Error("Late to the Party", message);
+            SPT.Common.Utils.ServerLog.Error("Late to the Party", message);
         }
 
         public static bool TryDeserializeObject<T>(string json, string errorMessage, out T obj)
@@ -104,7 +104,7 @@ namespace LateToTheParty.Controllers
                     throw new InvalidCastException("Could deserialize an empty string to an object of type " + typeof(T).FullName);
                 }
 
-                obj = JsonConvert.DeserializeObject<T>(json, GClass1448.SerializerSettings);
+                obj = JsonConvert.DeserializeObject<T>(json, GClass1459.SerializerSettings);
 
                 return true;
             }

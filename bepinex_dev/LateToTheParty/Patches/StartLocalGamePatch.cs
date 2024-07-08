@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Aki.Reflection.Patching;
+using SPT.Reflection.Patching;
 
 namespace LateToTheParty.Patches
 {
@@ -12,7 +12,7 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            Type localGameType = Aki.Reflection.Utils.PatchConstants.LocalGameType;
+            Type localGameType = SPT.Reflection.Utils.PatchConstants.LocalGameType;
             return localGameType.GetMethod("smethod_6", BindingFlags.Public | BindingFlags.Static);
         }
 

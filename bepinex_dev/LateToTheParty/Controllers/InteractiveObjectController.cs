@@ -91,8 +91,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
-            float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+            float raidTimeElapsed = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+            float raidTimeRemaining = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
 
             // Don't run the script before the raid begins
             if (raidTimeElapsed < 3)
