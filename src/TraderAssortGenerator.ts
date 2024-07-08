@@ -2,18 +2,18 @@ import modConfig from "../config/config.json";
 import hotItems from "../config/hotItems.json";
 import { CommonUtils } from "./CommonUtils";
 
-import type { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
-import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
-import type { FenceService } from "@spt-aki/services/FenceService";
-import type { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
-import type { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
-import type { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
-import type { JsonUtil } from "@spt-aki/utils/JsonUtil";
-import type { RandomUtil } from "@spt-aki/utils/RandomUtil";
-import type { TimeUtil } from "@spt-aki/utils/TimeUtil";
-import type { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
-import type { Item } from "@spt-aki/models/eft/common/tables/IItem";
-import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
+import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
+import type { ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
+import type { FenceService } from "@spt/services/FenceService";
+import type { FenceBaseAssortGenerator } from "@spt/generators/FenceBaseAssortGenerator";
+import type { RagfairOfferGenerator } from "@spt/generators/RagfairOfferGenerator";
+import type { RagfairOfferService } from "@spt/services/RagfairOfferService";
+import type { JsonUtil } from "@spt/utils/JsonUtil";
+import type { RandomUtil } from "@spt/utils/RandomUtil";
+import type { TimeUtil } from "@spt/utils/TimeUtil";
+import type { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
+import type { Item } from "@spt/models/eft/common/tables/IItem";
+import type { IGetOffersResult } from "@spt/models/eft/ragfair/IGetOffersResult";
 
 export class TraderAssortGenerator
 {

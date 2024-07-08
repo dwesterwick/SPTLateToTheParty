@@ -1,15 +1,15 @@
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
-import type { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
-import type { VFS } from "@spt-aki/utils/VFS";
-import type { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
-import type { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
-import type { Item } from "@spt-aki/models/eft/common/tables/IItem";
-import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
-import type { GenerateWeaponResult } from "@spt-aki/models/spt/bots/GenerateWeaponResult";
-import type { HashUtil } from "@spt-aki/utils/HashUtil";
-import type { IPreset } from "@spt-aki/models/eft/common/IGlobals";
+import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
+import type { VFS } from "@spt/utils/VFS";
+import type { BotWeaponGenerator } from "@spt/generators/BotWeaponGenerator";
+import type { ITemplateItem } from "@spt/models/eft/common/tables/ITemplateItem";
+import type { Item } from "@spt/models/eft/common/tables/IItem";
+import type { ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
+import type { GenerateWeaponResult } from "@spt/models/spt/bots/GenerateWeaponResult";
+import type { HashUtil } from "@spt/utils/HashUtil";
+import type { IPreset } from "@spt/models/eft/common/IGlobals";
 
 const verboseLogging = false;
 const lootFilePath = `${__dirname}/../db/lootRanking.json`;

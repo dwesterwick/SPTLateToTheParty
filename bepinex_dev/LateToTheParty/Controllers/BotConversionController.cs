@@ -34,7 +34,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            float raidTimeElapsed = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+            float raidTimeElapsed = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
             
             // Don't run the script before the raid begins
             if (raidTimeElapsed < 3)
@@ -42,7 +42,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+            float raidTimeRemaining = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
             int totalRaidTime = (int)Math.Ceiling(raidTimeRemaining + raidTimeElapsed);
 
             // Share the escape time and current time remaining with the server

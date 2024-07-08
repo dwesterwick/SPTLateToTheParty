@@ -6,45 +6,45 @@ import { LootRankingGenerator } from "./LootRankingGenerator";
 import { TraderAssortGenerator } from "./TraderAssortGenerator";
 
 import type { DependencyContainer } from "tsyringe";
-import type { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
-import type { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
-import type { IPostAkiLoadMod } from "@spt-aki/models/external/IPostAkiLoadMod";
-import type { StaticRouterModService } from "@spt-aki/services/mod/staticRouter/StaticRouterModService";
-import type { DynamicRouterModService } from "@spt-aki/services/mod/dynamicRouter/DynamicRouterModService";
+import type { IPreSptLoadMod } from "@spt/models/external/IPreSptLoadMod";
+import type { IPostDBLoadMod } from "@spt/models/external/IPostDBLoadMod";
+import type { IPostSptLoadMod } from "@spt/models/external/IPostSptLoadMod";
+import type { StaticRouterModService } from "@spt/services/mod/staticRouter/StaticRouterModService";
+import type { DynamicRouterModService } from "@spt/services/mod/dynamicRouter/DynamicRouterModService";
 
-import type { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import type { ConfigServer } from "@spt-aki/servers/ConfigServer";
-import type { ILocationConfig, LootMultiplier } from "@spt-aki/models/spt/config/ILocationConfig";
-import type { IInRaidConfig } from "@spt-aki/models/spt/config/IInRaidConfig";
-import type { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
-import type { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
-import type { IAirdropConfig } from "@spt-aki/models/spt/config/IAirdropConfig";
-import type { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
-import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
-import type { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
-import type { IDatabaseTables } from "@spt-aki/models/spt/server/IDatabaseTables";
-import type { VFS } from "@spt-aki/utils/VFS";
-import type { LocaleService } from "@spt-aki/services/LocaleService";
-import type { BotWeaponGenerator } from "@spt-aki/generators/BotWeaponGenerator";
-import type { HashUtil } from "@spt-aki/utils/HashUtil";
-import type { JsonUtil } from "@spt-aki/utils/JsonUtil";
-import type { TimeUtil } from "@spt-aki/utils/TimeUtil";
-import type { RandomUtil } from "@spt-aki/utils/RandomUtil";
-import type { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
-import type { TraderController } from "@spt-aki/controllers/TraderController";
-import type { FenceService } from "@spt-aki/services/FenceService";
-import type { FenceBaseAssortGenerator } from "@spt-aki/generators/FenceBaseAssortGenerator";
-import type { RagfairOfferGenerator } from "@spt-aki/generators/RagfairOfferGenerator";
-import type { RagfairOfferService } from "@spt-aki/services/RagfairOfferService";
-import type { RagfairController } from "@spt-aki/controllers/RagfairController";
-import type { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
-import type { ITraderAssort } from "@spt-aki/models/eft/common/tables/ITrader";
-import type { IGetOffersResult } from "@spt-aki/models/eft/ragfair/IGetOffersResult";
-import type { ISearchRequestData } from "@spt-aki/models/eft/ragfair/ISearchRequestData";
+import type { ILogger } from "@spt/models/spt/utils/ILogger";
+import type { ConfigServer } from "@spt/servers/ConfigServer";
+import type { ILocationConfig, LootMultiplier } from "@spt/models/spt/config/ILocationConfig";
+import type { IInRaidConfig } from "@spt/models/spt/config/IInRaidConfig";
+import type { IBotConfig } from "@spt/models/spt/config/IBotConfig";
+import type { IPmcConfig } from "@spt/models/spt/config/IPmcConfig";
+import type { IAirdropConfig } from "@spt/models/spt/config/IAirdropConfig";
+import type { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
+import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
+import type { DatabaseServer } from "@spt/servers/DatabaseServer";
+import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
+import type { VFS } from "@spt/utils/VFS";
+import type { LocaleService } from "@spt/services/LocaleService";
+import type { BotWeaponGenerator } from "@spt/generators/BotWeaponGenerator";
+import type { HashUtil } from "@spt/utils/HashUtil";
+import type { JsonUtil } from "@spt/utils/JsonUtil";
+import type { TimeUtil } from "@spt/utils/TimeUtil";
+import type { RandomUtil } from "@spt/utils/RandomUtil";
+import type { ProfileHelper } from "@spt/helpers/ProfileHelper";
+import type { TraderController } from "@spt/controllers/TraderController";
+import type { FenceService } from "@spt/services/FenceService";
+import type { FenceBaseAssortGenerator } from "@spt/generators/FenceBaseAssortGenerator";
+import type { RagfairOfferGenerator } from "@spt/generators/RagfairOfferGenerator";
+import type { RagfairOfferService } from "@spt/services/RagfairOfferService";
+import type { RagfairController } from "@spt/controllers/RagfairController";
+import type { HttpResponseUtil } from "@spt/utils/HttpResponseUtil";
+import type { ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
+import type { IGetOffersResult } from "@spt/models/eft/ragfair/IGetOffersResult";
+import type { ISearchRequestData } from "@spt/models/eft/ragfair/ISearchRequestData";
 
 const modName = "LateToTheParty";
 
-class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
+class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
 {
     private commonUtils: CommonUtils
     private botConversionHelper: BotConversionHelper
@@ -80,7 +80,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
     private originalLooseLootMultipliers : LootMultiplier
     private originalStaticLootMultipliers : LootMultiplier
 	
-    public preAkiLoad(container: DependencyContainer): void
+    public preSptLoad(container: DependencyContainer): void
     {
         const staticRouterModService = container.resolve<StaticRouterModService>("StaticRouterModService");
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
@@ -90,7 +90,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         staticRouterModService.registerStaticRouter(`StaticGetConfig${modName}`,
             [{
                 url: "/LateToTheParty/GetConfig",
-                action: () => 
+                action: async () => 
                 {
                     return JSON.stringify(modConfig);
                 }
@@ -108,7 +108,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             [{
                 url: "/client/game/start",
                 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                action: (url: string, info: any, sessionId: string, output: string) => 
+                action: async (url: string, info: any, sessionId: string, output: string) => 
                 {
                     // Clear any cached trader inventory data if the game is restarted
                     if (modConfig.trader_stock_changes.enabled)
@@ -135,7 +135,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             [{
                 url: "/client/trading/api/getTraderAssort/",
                 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                action: (url: string, info: any, sessionId: string, output: string) => 
+                action: async (url: string, info: any, sessionId: string, output: string) => 
                 {
                     if (!modConfig.trader_stock_changes.enabled)
                     {
@@ -158,7 +158,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
             [{
                 url: "/client/ragfair/find",
                 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                action: (url: string, info: any, sessionId: string, output: string) => 
+                action: async (url: string, info: any, sessionId: string, output: string) => 
                 {
                     if (!modConfig.trader_stock_changes.enabled)
                     {
@@ -176,7 +176,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         staticRouterModService.registerStaticRouter(`StaticAkiRaidEnd${modName}`,
             [{
                 url: "/client/match/offline/end",
-                action: (output: string) => 
+                action: async (output: string) => 
                 {
                     BotConversionHelper.stopRaidTimer();                    
                     return output;
@@ -188,7 +188,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         staticRouterModService.registerStaticRouter(`StaticGetLootRankingData${modName}`,
             [{
                 url: "/LateToTheParty/GetLootRankingData",
-                action: () => 
+                action: async () => 
                 {
                     return JSON.stringify(this.lootRankingGenerator.getLootRankingDataFromFile());
                 }
@@ -199,7 +199,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         staticRouterModService.registerStaticRouter(`StaticGetCarExtractNames${modName}`,
             [{
                 url: "/LateToTheParty/GetCarExtractNames",
-                action: () => 
+                action: async () => 
                 {
                     return JSON.stringify(this.inRaidConfig.carExtracts);
                 }
@@ -210,7 +210,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         dynamicRouterModService.registerDynamicRouter(`DynamicSetLootMultipliers${modName}`,
             [{
                 url: "/LateToTheParty/SetLootMultiplier/",
-                action: (url: string) => 
+                action: async (url: string) => 
                 {
                     const urlParts = url.split("/");
                     const factor = Number(urlParts[urlParts.length - 1]);
@@ -225,7 +225,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         dynamicRouterModService.registerDynamicRouter(`DynamicSetEscapeTime${modName}`,
             [{
                 url: "/LateToTheParty/EscapeTime/",
-                action: (url: string) => 
+                action: async (url: string) => 
                 {
                     const urlParts = url.split("/");
                     const escapeTime = Number(urlParts[urlParts.length - 2]);
@@ -241,7 +241,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         dynamicRouterModService.registerDynamicRouter(`DynamicAddRecentlyChangedQuest${modName}`,
             [{
                 url: "/LateToTheParty/QuestStatusChange/",
-                action: (url: string) => 
+                action: async (url: string) => 
                 {
                     const urlParts = url.split("/");
                     const questID = urlParts[urlParts.length - 2];
@@ -349,7 +349,7 @@ class LateToTheParty implements IPreAkiLoadMod, IPostDBLoadMod, IPostAkiLoadMod
         }
     }
 
-    public postAkiLoad(): void
+    public postSptLoad(): void
     {
         if (!modConfig.enabled)
         {

@@ -81,7 +81,7 @@ namespace LateToTheParty.Controllers
                 if (random.Next(1, 100) <= ConfigController.Config.CarExtractDepartures.ChanceOfLeaving)
                 {
                     double leaveTimeFraction = leaveTimeRange.Min + ((leaveTimeRange.Max - leaveTimeRange.Min) * random.NextDouble());
-                    carLeaveTime = Aki.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * leaveTimeFraction;
+                    carLeaveTime = SPT.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds * leaveTimeFraction;
 
                     LoggingController.LogInfo("The VEX will try to leave at " + TimeSpan.FromSeconds(carLeaveTime).ToString("mm':'ss"));
                 }
@@ -121,7 +121,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Wait until the car should leave
-            float raidTimeRemaining = Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
+            float raidTimeRemaining = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetRemainingRaidSeconds();
             if (raidTimeRemaining > carLeaveTime)
             {
                 return;

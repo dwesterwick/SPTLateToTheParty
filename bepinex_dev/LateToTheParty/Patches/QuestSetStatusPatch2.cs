@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Aki.Reflection.Patching;
+using SPT.Reflection.Patching;
 using EFT.Quests;
 
 namespace LateToTheParty.Patches
@@ -13,11 +13,11 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass1251).GetMethod("SetStatus", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(GClass1260).GetMethod("SetStatus", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
-        private static void PatchPrefix(GClass1251 __instance, EQuestStatus status, bool notify, bool fromServer)
+        private static void PatchPrefix(GClass1260 __instance, EQuestStatus status, bool notify, bool fromServer)
         {
             QuestSetStatusPatch.SetQuestStatus(__instance, status, notify, fromServer);
         }

@@ -1,8 +1,8 @@
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
-import type { MinMax } from "@spt-aki/models/common/MinMax";
-import type { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
+import type { MinMax } from "@spt/models/common/MinMax";
+import type { IPmcConfig } from "@spt/models/spt/config/IPmcConfig";
 
 export class BotConversionHelper
 {

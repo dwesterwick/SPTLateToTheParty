@@ -8,9 +8,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
 using EFT.Interactive;
-using HarmonyLib;
 using UnityEngine;
-using LocationExit = GClass1225;
 
 namespace LateToTheParty.Controllers
 {
@@ -150,7 +148,7 @@ namespace LateToTheParty.Controllers
                 CarExtractNames = ConfigController.GetCarExtractNames();
             }
 
-            foreach (LocationExit exit in location.exits)
+            foreach (LocationExitClass exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
@@ -190,7 +188,7 @@ namespace LateToTheParty.Controllers
 
                 location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
-                foreach (LocationExit exit in location.exits)
+                foreach (LocationExitClass exit in location.exits)
                 {
                     if (CarExtractNames.Contains(exit.Name))
                     {
@@ -217,7 +215,7 @@ namespace LateToTheParty.Controllers
 
             Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
             
-            foreach (LocationExit exit in location.exits)
+            foreach (LocationExitClass exit in location.exits)
             {
                 if (CarExtractNames.Contains(exit.Name))
                 {
