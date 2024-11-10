@@ -260,7 +260,10 @@ namespace LateToTheParty.Controllers
                 yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, playerPositions, raidET);
 
                 // Sort eligible loot
-                IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo.Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible);
+                IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo
+                    .Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible)
+                    .removeItemsWithoutValidTemplates();
+                
                 Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
 
                 // Identify items to destroy
@@ -920,6 +923,32 @@ namespace LateToTheParty.Controllers
                 LoggingController.LogError(ex.ToString());
                 LootInfo.Remove(item);
             }
+        }
+
+        private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> removeItemsWithoutValidTemplates(this IEnumerable<KeyValuePair<Item, Models.LootInfo>> lootInfo)
+        {
+            // If loot ranking is disabled or invalid, this cannot be performed
+            if
+            (
+                !ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled
+                || (ConfigController.LootRanking == null)
+                || (ConfigController.LootRanking.Items.Count == 0)
+            )
+            {
+                return LootInfo;
+            }
+
+            foreach (KeyValuePair<Item, Models.LootInfo> item in lootInfo)
+            {
+                if (ConfigController.LootRanking.Items.ContainsKey(item.Key.TemplateId))
+                {
+                    continue;
+                }
+
+                LoggingController.LogWarning("Preventing " + item.Key.LocalizedName() + " from being destroyed because it does not have a valid template (" + item.Key.TemplateId + ")");
+            }
+
+            return lootInfo.Where(l => ConfigController.LootRanking.Items.ContainsKey(l.Key.TemplateId));
         }
 
         private static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items)
