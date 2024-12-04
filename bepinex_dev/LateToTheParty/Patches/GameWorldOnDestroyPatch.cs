@@ -17,7 +17,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPostfix]
-        private static void PatchPostfix()
+        protected static void PatchPostfix()
         {
             // Don't do anything if this is for the hideout
             if (!Controllers.LocationSettingsController.HasRaidStarted)

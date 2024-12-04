@@ -68,7 +68,7 @@ namespace LateToTheParty.Controllers
 
         public static IEnumerable<string> GetSecureContainerIDs()
         {
-            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
+            ItemFactoryClass itemFactory = Singleton<ItemFactoryClass>.Instance;
             if (itemFactory == null)
             {
                 return Enumerable.Empty<string>();
@@ -78,12 +78,7 @@ namespace LateToTheParty.Controllers
             List<string> secureContainerIDs = new List<string>();
             foreach (Item item in itemFactory.CreateAllItemsEver())
             {
-                if (!(item.Template is SecureContainerTemplateClass))
-                {
-                    continue;
-                }
-
-                if (!(item.Template as SecureContainerTemplateClass).isSecured)
+                if (!EFT.UI.DragAndDrop.ItemViewFactory.IsSecureContainer(item))
                 {
                     continue;
                 }
@@ -101,7 +96,7 @@ namespace LateToTheParty.Controllers
                 return allItems;
             }
 
-            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
+            ItemFactoryClass itemFactory = Singleton<ItemFactoryClass>.Instance;
             if (itemFactory == null)
             {
                 return allItems;

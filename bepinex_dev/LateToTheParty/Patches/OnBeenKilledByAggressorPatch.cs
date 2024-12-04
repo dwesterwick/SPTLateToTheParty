@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using SPT.Reflection.Patching;
-using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using LateToTheParty.Controllers;
@@ -20,7 +19,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(Player __instance, Player aggressor)
+        protected static void PatchPostfix(Player __instance, Player aggressor)
         {
             if (!ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsOnDeadBots.Enabled)
             {

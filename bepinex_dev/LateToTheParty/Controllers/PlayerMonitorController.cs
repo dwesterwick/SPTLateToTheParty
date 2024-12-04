@@ -16,7 +16,7 @@ namespace LateToTheParty.Controllers
         private static Dictionary<Player, Vector3> playerPositionsLast = new Dictionary<Player, Vector3>();
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
-        private void Update()
+        protected void Update()
         {
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {

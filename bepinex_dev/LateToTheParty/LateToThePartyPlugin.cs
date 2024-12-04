@@ -10,12 +10,12 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.6.2.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static string ModName { get; private set; } = "???";
 
-        private void Awake()
+        protected void Awake()
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
 

@@ -15,12 +15,12 @@ namespace LateToTheParty.Controllers
         private static Dictionary<string, Models.PathVisualizationData> paths = new Dictionary<string, Models.PathVisualizationData>();
         private static object pathDictLock = new object();
 
-        private void OnDisable()
+        protected void OnDisable()
         {
             Clear();
         }
 
-        private void LateUpdate()
+        protected void LateUpdate()
         {
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {

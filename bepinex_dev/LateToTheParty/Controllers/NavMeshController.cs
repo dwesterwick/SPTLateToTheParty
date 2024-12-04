@@ -25,12 +25,12 @@ namespace LateToTheParty.Controllers
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.MaxCalcTimePerFrame);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
-        private void OnDisable()
+        protected void OnDisable()
         {
             Clear();
         }
 
-        private void LateUpdate()
+        protected void LateUpdate()
         {
             if (IsClearing)
             {

@@ -17,7 +17,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(WorldInteractiveObject __instance)
+        protected static bool PatchPrefix(WorldInteractiveObject __instance)
         {
             if (!Controllers.SwitchController.HasToggledInitialSwitches)
             {

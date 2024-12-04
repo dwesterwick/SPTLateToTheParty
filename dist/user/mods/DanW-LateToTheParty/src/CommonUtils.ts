@@ -3,7 +3,7 @@ import type { ILogger } from "@spt/models/spt/utils/ILogger";
 import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
 import type { ITemplateItem } from "@spt/models/eft/common/tables/ITemplateItem";
 import type { LocaleService } from "@spt/services/LocaleService";
-import type { Item } from "@spt/models/eft/common/tables/IItem";
+import type { IItem } from "@spt/models/eft/common/tables/IItem";
 
 export class CommonUtils
 {
@@ -109,7 +109,7 @@ export class CommonUtils
         return allParents;
     }
 
-    public static canItemDegrade(item: Item, databaseTables: IDatabaseTables): boolean
+    public static canItemDegrade(item: IItem, databaseTables: IDatabaseTables): boolean
     {
         if (item.upd === undefined)
         {

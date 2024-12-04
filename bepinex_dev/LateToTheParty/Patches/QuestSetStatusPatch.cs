@@ -14,11 +14,11 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass1259).GetMethod("SetStatus", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(GClass1367).GetMethod("SetStatus", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
-        private static void PatchPrefix(GClass1259 __instance, EQuestStatus status, bool notify, bool fromServer)
+        protected static void PatchPrefix(GClass1367 __instance, EQuestStatus status, bool notify, bool fromServer)
         {
             SetQuestStatus(__instance, status, notify, fromServer);
         }

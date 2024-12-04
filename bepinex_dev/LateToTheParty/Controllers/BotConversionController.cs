@@ -13,7 +13,7 @@ namespace LateToTheParty.Controllers
     {
         private static bool EscapeTimeShared = false;
 
-        private void Update()
+        protected void Update()
         {
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {

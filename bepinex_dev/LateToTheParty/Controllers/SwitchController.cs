@@ -30,8 +30,8 @@ namespace LateToTheParty.Controllers
 
         public static string GetSwitchText(EFT.Interactive.Switch sw) => sw.Id + " (" + (sw.gameObject?.name ?? "???") + ")";
         public static bool CanToggleSwitch(EFT.Interactive.Switch sw) => sw.Operatable && (sw.gameObject.layer == LayerMask.NameToLayer("Interactive"));
-        
-        private void Update()
+
+        protected void Update()
         {
             if (IsClearing)
             {

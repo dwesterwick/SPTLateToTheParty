@@ -813,13 +813,13 @@ namespace LateToTheParty.Controllers
                 return true;
             }
 
-            LootItemClass lootItemClass;
-            if ((lootItemClass = (parentItem as LootItemClass)) == null)
+            CompoundItem compoundItem;
+            if ((compoundItem = (parentItem as CompoundItem)) == null)
             {
                 return true;
             }
 
-            foreach(Slot slot in lootItemClass.Slots)
+            foreach(Slot slot in compoundItem.Slots)
             {
                 /*if (!slot.Required)
                 {
@@ -871,9 +871,9 @@ namespace LateToTheParty.Controllers
 
             // Ensure child items are destroyed before parent items
             LootInfo[item].ParentItem = parentItem;
-            if ((item.Parent.Item != null) && allItemsToDestroy.Contains(item.Parent.Item))
+            if ((item.Parent.Container.ParentItem != null) && allItemsToDestroy.Contains(item.Parent.Container.ParentItem))
             {
-                allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(item.Parent.Item), item);
+                allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(item.Parent.Container.ParentItem), item);
             }
             else
             {
@@ -902,7 +902,14 @@ namespace LateToTheParty.Controllers
                     }
                 }
 
-                LootInfo[item].TraderController.DestroyItem(item);
+                var destroyResult = InteractionsHandlerClass.RemoveWithoutRestrictions(item, LootInfo[item].TraderController);
+                if (destroyResult.Failed)
+                {
+                    LoggingController.LogError("Could not destroy " + item.LocalizedName() + " in " + LootInfo[item].ParentItem.LocalizedName());
+                    return;
+                }
+
+                //LootInfo[item].TraderController.DestroyItem(item);
                 LootInfo[item].IsDestroyed = true;
                 LootInfo[item].RaidETWhenDestroyed = raidET;
                 lastLootDestroyedTimer.Restart();
@@ -967,7 +974,7 @@ namespace LateToTheParty.Controllers
             IEnumerable<Item> filteredItems = items
                 .Where(i => i.Template.Parent == null || !ConfigController.Config.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
                 .Where(i => !ConfigController.Config.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
-                .Where(i => !secureContainerIDs.Contains(i.TemplateId));
+                .Where(i => !secureContainerIDs.Contains(i.TemplateId.ToString()));
 
             return filteredItems;
         }

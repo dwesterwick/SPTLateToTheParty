@@ -14,7 +14,7 @@ import type { DynamicRouterModService } from "@spt/services/mod/dynamicRouter/Dy
 
 import type { ILogger } from "@spt/models/spt/utils/ILogger";
 import type { ConfigServer } from "@spt/servers/ConfigServer";
-import type { ILocationConfig, LootMultiplier } from "@spt/models/spt/config/ILocationConfig";
+import type { ILocationConfig, ILootMultiplier } from "@spt/models/spt/config/ILocationConfig";
 import type { IInRaidConfig } from "@spt/models/spt/config/IInRaidConfig";
 import type { IBotConfig } from "@spt/models/spt/config/IBotConfig";
 import type { IPmcConfig } from "@spt/models/spt/config/IPmcConfig";
@@ -77,8 +77,8 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     private ragfairOfferService: RagfairOfferService;
     private ragfairController: RagfairController;
 
-    private originalLooseLootMultipliers : LootMultiplier
-    private originalStaticLootMultipliers : LootMultiplier
+    private originalLooseLootMultipliers : ILootMultiplier
+    private originalStaticLootMultipliers : ILootMultiplier
 	
     public preSptLoad(container: DependencyContainer): void
     {

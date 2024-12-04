@@ -21,7 +21,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPrefix]
-        private static void PatchPrefix(ref LocationSettingsClass.Location location)
+        protected static void PatchPrefix(ref LocationSettingsClass.Location location)
         {
             Controllers.LocationSettingsController.SetCurrentLocation(location);
 

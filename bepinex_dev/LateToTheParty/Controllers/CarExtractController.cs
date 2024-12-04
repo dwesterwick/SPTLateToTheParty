@@ -22,7 +22,7 @@ namespace LateToTheParty.Controllers
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static double updateDelay = 0;
 
-        private void Update()
+        protected void Update()
         {
             if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
             {

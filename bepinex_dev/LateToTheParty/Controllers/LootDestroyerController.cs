@@ -15,7 +15,7 @@ namespace LateToTheParty.Controllers
         private static Stopwatch updateTimer = Stopwatch.StartNew();
         private static bool canDestroyLoot = true;
 
-        private void Update()
+        protected void Update()
         {
             if (LootManager.IsClearing)
             {

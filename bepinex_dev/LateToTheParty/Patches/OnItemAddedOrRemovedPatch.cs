@@ -19,7 +19,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(Player __instance, Item item, ItemAddress location, bool added)
+        protected static void PatchPostfix(Player __instance, Item item, ItemAddress location, bool added)
         {
             if (!Singleton<GameWorld>.Instantiated)
             {

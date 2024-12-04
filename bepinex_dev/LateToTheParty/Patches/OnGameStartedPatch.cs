@@ -17,7 +17,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(GameWorld __instance)
+        protected static void PatchPostfix(GameWorld __instance)
         {
             Controllers.LocationSettingsController.HasRaidStarted = true;
         }

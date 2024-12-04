@@ -5,11 +5,11 @@ import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
 import type { VFS } from "@spt/utils/VFS";
 import type { BotWeaponGenerator } from "@spt/generators/BotWeaponGenerator";
 import type { ITemplateItem } from "@spt/models/eft/common/tables/ITemplateItem";
-import type { Item } from "@spt/models/eft/common/tables/IItem";
+import type { IItem } from "@spt/models/eft/common/tables/IItem";
 import type { ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
-import type { GenerateWeaponResult } from "@spt/models/spt/bots/GenerateWeaponResult";
 import type { HashUtil } from "@spt/utils/HashUtil";
 import type { IPreset } from "@spt/models/eft/common/IGlobals";
+import type { IGenerateWeaponResult } from "@spt/models/spt/bots/IGenerateWeaponResult";
 
 const verboseLogging = false;
 const lootFilePath = `${__dirname}/../db/lootRanking.json`;
@@ -148,7 +148,7 @@ export class LootRankingGenerator
         if (item._props.weapClass !== undefined)
         {
             // First try to find the most desirable weapon from the traders
-            let bestWeaponMatch: Item[] = this.findBestWeaponMatchfromTraders(item);
+            let bestWeaponMatch: IItem[] = this.findBestWeaponMatchfromTraders(item);
 
             // If the weapon isn't offered by any traders, find the most desirable version in the presets
             if (bestWeaponMatch.length === 0)
@@ -240,7 +240,7 @@ export class LootRankingGenerator
      * @param sessionId the sessionId from the HTTP router
      * @returns a weapon represented by an array of Item objects
      */
-    private generateRandomWeapon(item: ITemplateItem, sessionId: string): Item[]
+    private generateRandomWeapon(item: ITemplateItem, sessionId: string): IItem[]
     {
         if (!this.weaponPresetExists(item))
         {
@@ -255,8 +255,8 @@ export class LootRankingGenerator
             "Holster"
         ];
         
-        let weapon: Item[] = [];
-        let randomWeapon: GenerateWeaponResult;
+        let weapon: IItem[] = [];
+        let randomWeapon: IGenerateWeaponResult;
         for (const possibleSlot in possibleSlots)
         {
             for (let iteration = 0; iteration < iterations; iteration++)
@@ -303,9 +303,9 @@ export class LootRankingGenerator
         return weapon;
     }
 
-    private findBestWeaponInPresets(item: ITemplateItem): Item[]
+    private findBestWeaponInPresets(item: ITemplateItem): IItem[]
     {
-        let weapon: Item[] = [];
+        let weapon: IItem[] = [];
 
         for (const presetID in this.databaseTables.globals.ItemPresets)
         {
@@ -351,11 +351,11 @@ export class LootRankingGenerator
 
     private generateWeaponPreset(item: ITemplateItem): IPreset
     {
-        const baseWeapon: Item = {
+        const baseWeapon: IItem = {
             _id: this.hashUtil.generate(),
             _tpl: item._id
         };
-        const weapon: Item[] = this.fillItemSlots(baseWeapon, []);
+        const weapon: IItem[] = this.fillItemSlots(baseWeapon, []);
 
         if (verboseLogging) this.commonUtils.logInfo(`Creating preset for ${this.commonUtils.getItemName(item._id)}...`);
         for (const weaponPart in weapon)
@@ -380,12 +380,12 @@ export class LootRankingGenerator
      * @param item the base item containing slots
      * @returns an array of Item objects containing the base item and all required attachments generated for it
      */
-    private fillItemSlots(item: Item, initialBannedParts: string[]): Item[]
+    private fillItemSlots(item: IItem, initialBannedParts: string[]): IItem[]
     {
         const itemTemplate = this.databaseTables.templates.items[item._tpl];
 
         let isValid = false;
-        let filledItem: Item[];
+        let filledItem: IItem[];
         const bannedParts: string[] = [].concat(initialBannedParts);
         while (!isValid)
         {
@@ -415,7 +415,7 @@ export class LootRankingGenerator
                 );
                 
                 // Add the first valid item to the slot along with all of the items attached to its (child) slots
-                let itemPart: Item;
+                let itemPart: IItem;
                 for (const filter in filtersSorted)
                 {
                     if (!bannedParts.includes(filters[filter]))
@@ -470,9 +470,9 @@ export class LootRankingGenerator
         return filledItem;
     }
 
-    private findBestWeaponMatchfromTraders(item: ITemplateItem): Item[]
+    private findBestWeaponMatchfromTraders(item: ITemplateItem): IItem[]
     {
-        let weapon: Item[] = [];
+        let weapon: IItem[] = [];
 
         // Search all traders to see if they sell the weapon
         for (const traderID in this.databaseTables.traders)
@@ -486,7 +486,7 @@ export class LootRankingGenerator
             //if (verboseLogging) this.commonUtils.logInfo(`Searching ${this.databaseTables.traders[traderID].base.nickname}...`);
             for (const assortID in assort.items)
             {
-                const weaponCandidate: Item[] = [];
+                const weaponCandidate: IItem[] = [];
                 if (assort.items[assortID]._tpl === item._id)
                 {
                     // Get all parts attached to the weapon
@@ -515,7 +515,7 @@ export class LootRankingGenerator
         return weapon;
     }
 
-    private weaponBaseValue(baseWeaponItem: ITemplateItem, weaponParts: Item[]): number
+    private weaponBaseValue(baseWeaponItem: ITemplateItem, weaponParts: IItem[]): number
     {
         const [width, height, weight]: number[] = this.getWeaponProperties(baseWeaponItem, weaponParts);
 
@@ -531,7 +531,7 @@ export class LootRankingGenerator
      * @param weaponParts All parts attached to the weapon (which may include the base weapon item itself)
      * @returns [length, width, weight] of the assembled weapon
      */
-    private getWeaponProperties(baseWeaponItem: ITemplateItem, weaponParts: Item[]): [number, number, number]
+    private getWeaponProperties(baseWeaponItem: ITemplateItem, weaponParts: IItem[]): [number, number, number]
     {
         let width = baseWeaponItem._props.Width;
         let height = baseWeaponItem._props.Height;

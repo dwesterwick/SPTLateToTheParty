@@ -12,7 +12,7 @@ import type { JsonUtil } from "@spt/utils/JsonUtil";
 import type { RandomUtil } from "@spt/utils/RandomUtil";
 import type { TimeUtil } from "@spt/utils/TimeUtil";
 import type { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
-import type { Item } from "@spt/models/eft/common/tables/IItem";
+import type { IItem } from "@spt/models/eft/common/tables/IItem";
 import type { IGetOffersResult } from "@spt/models/eft/ragfair/IGetOffersResult";
 
 export class TraderAssortGenerator
@@ -389,7 +389,7 @@ export class TraderAssortGenerator
         }
     }
 
-    private getStackSizeReduction(item: Item, isbarter: boolean, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
+    private getStackSizeReduction(item: IItem, isbarter: boolean, nextResupply: number, originalStock: number, currentStock: number, traderID: string): number
     {
         const now = this.timeUtil.getTimestamp();
 
@@ -464,7 +464,7 @@ export class TraderAssortGenerator
         return true;
     }
 
-    private adjustFenceItemPrice(assort: ITraderAssort, item: Item, durabilityFraction: number): void
+    private adjustFenceItemPrice(assort: ITraderAssort, item: IItem, durabilityFraction: number): void
     {
         // Ensure the item hasn't already been modified
         const id = item._id;
@@ -563,7 +563,7 @@ export class TraderAssortGenerator
         return ids;
     }
 
-    private getIDofRecentlyChangedQuestForItem(item: Item, traderID: string): string
+    private getIDofRecentlyChangedQuestForItem(item: IItem, traderID: string): string
     {
         const questassort = this.databaseTables.traders[traderID].questassort;
         if (questassort === undefined)

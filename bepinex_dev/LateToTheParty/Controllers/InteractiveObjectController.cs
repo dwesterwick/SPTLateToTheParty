@@ -39,12 +39,12 @@ namespace LateToTheParty.Controllers
             get { return IsFindingInteractiveObjects ? 0 : toggleableInteractiveObjects.Count; }
         }
 
-        private void OnDisable()
+        protected void OnDisable()
         {
             Clear();
         }
 
-        private void Update()
+        protected void Update()
         {
             if (IsClearing)
             {

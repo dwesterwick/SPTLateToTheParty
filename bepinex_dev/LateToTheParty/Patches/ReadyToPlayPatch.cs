@@ -16,12 +16,12 @@ namespace LateToTheParty.Patches
                 "Show",
                 BindingFlags.Public | BindingFlags.Instance,
                 null,
-                new Type[] { typeof(ISession), typeof(RaidSettings) },
+                new Type[] { typeof(ISession), typeof(RaidSettings), typeof(MatchmakerPlayerControllerClass) },
                 null);
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(ISession session, RaidSettings raidSettings)
+        protected static void PatchPostfix(ISession session, RaidSettings raidSettings)
         {
             Controllers.LocationSettingsController.CacheLocationSettings(raidSettings.SelectedLocation);
         }
