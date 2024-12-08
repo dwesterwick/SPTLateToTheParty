@@ -12,15 +12,6 @@ namespace LateToTheParty.Configuration
         [JsonProperty("enabled")]
         public bool Enabled { get; set; } = false;
 
-        [JsonProperty("scav_cooldown_time")]
-        public long ScavCooldownTime { get; set; } = 1500;
-
-        [JsonProperty("free_labs_access")]
-        public bool FreeLabsAccess { get; set; } = false;
-
-        [JsonProperty("min_level_for_flea")]
-        public byte MinLevelForFlea { get; set; } = 15;
-
         [JsonProperty("trader_resupply_time_factor")]
         public double TraderResupplyTimeFactor { get; set; } = 1;
 

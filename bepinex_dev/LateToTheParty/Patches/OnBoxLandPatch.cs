@@ -15,19 +15,20 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(AirdropSynchronizableObject).GetMethod("Deserialize", BindingFlags.Public | BindingFlags.Instance);
+            // Called when eairdropFallingStage_0=EAirdropFallingStage.Landed in ManualUpdate()
+            return typeof(AirdropLogicClass).GetMethod("method_13", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPostfix]
-        protected static void PatchPostfix(AirdropSynchronizableObject __instance)
+        protected static void PatchPostfix(AirdropSynchronizableObject ___airdropSynchronizableObject_0)
         {
-            LootableContainer container = __instance.gameObject.GetComponentInChildren<LootableContainer>();
-            if (container == null)
-            {
-                throw new InvalidOperationException("Cannot find the airdop's LootableContainer");
-            }
+            LootableContainer airdropContainer = ___airdropSynchronizableObject_0.gameObject.GetComponentInChildren<LootableContainer>();
 
-            LootManager.AddLootableContainer(container);
+            string airdropType = ___airdropSynchronizableObject_0.AirdropType.ToString();
+            IEnumerable<EFT.InventoryLogic.Item> airdropItems = airdropContainer.ItemOwner.Items.FindAllItemsInContainers();
+            LoggingController.LogInfo("Found " + airdropType + " airdrop with " + airdropItems.Count() + " items");
+
+            LootManager.AddLootableContainer(airdropContainer);
         }
     }
 }

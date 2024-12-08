@@ -102,12 +102,10 @@
     <Compile Include="Configuration\DestroyLootDuringRaidConfig.cs" />
     <Compile Include="Configuration\DestructionEventLimitsConfig.cs" />
     <Compile Include="Configuration\EscapeTimeConfig.cs" />
-    <Compile Include="Configuration\FenceStockChangesConfig.cs" />
     <Compile Include="Configuration\MinMaxConfig.cs" />
     <Compile Include="Configuration\OnlyMakeChangesAfterSpawningAffectedSystemsConfig.cs" />
     <Compile Include="Configuration\OnlyMakeChangesJustAfterSpawningConfig.cs" />
     <Compile Include="Configuration\ToggleSwitchesDuringRaidConfig.cs" />
-    <Compile Include="Configuration\TraderStockChangesConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsDroppedByPlayerConfig.cs" />
     <Compile Include="Configuration\IgnoreItemsOnDeadBotsConfig.cs" />
     <Compile Include="Configuration\LoggingPath.cs" />
@@ -145,8 +143,6 @@
     <Compile Include="Patches\OnGameStartedPatch.cs" />
     <Compile Include="Patches\OnBeenKilledByAggressorPatch.cs" />
     <Compile Include="Patches\OnItemAddedOrRemovedPatch.cs" />
-    <Compile Include="Patches\QuestSetStatusPatch.cs" />
-    <Compile Include="Patches\QuestSetStatusPatch2.cs" />
     <Compile Include="Patches\ReadyToPlayPatch.cs" />
     <Compile Include="Patches\StartLocalGamePatch.cs" />
     <Compile Include="Patches\WorldInteractiveObjectPlaySoundPatch.cs" />

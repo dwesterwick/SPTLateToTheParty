@@ -3,7 +3,6 @@ import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 import { BotConversionHelper } from "./BotConversionHelper";
 import { LootRankingGenerator } from "./LootRankingGenerator";
-import { TraderAssortGenerator } from "./TraderAssortGenerator";
 
 import type { DependencyContainer } from "tsyringe";
 import type { IPreSptLoadMod } from "@spt/models/external/IPreSptLoadMod";
@@ -16,10 +15,7 @@ import type { ILogger } from "@spt/models/spt/utils/ILogger";
 import type { ConfigServer } from "@spt/servers/ConfigServer";
 import type { ILocationConfig, ILootMultiplier } from "@spt/models/spt/config/ILocationConfig";
 import type { IInRaidConfig } from "@spt/models/spt/config/IInRaidConfig";
-import type { IBotConfig } from "@spt/models/spt/config/IBotConfig";
 import type { IPmcConfig } from "@spt/models/spt/config/IPmcConfig";
-import type { IAirdropConfig } from "@spt/models/spt/config/IAirdropConfig";
-import type { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
 import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
 import type { DatabaseServer } from "@spt/servers/DatabaseServer";
 import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
@@ -27,20 +23,6 @@ import type { VFS } from "@spt/utils/VFS";
 import type { LocaleService } from "@spt/services/LocaleService";
 import type { BotWeaponGenerator } from "@spt/generators/BotWeaponGenerator";
 import type { HashUtil } from "@spt/utils/HashUtil";
-import type { JsonUtil } from "@spt/utils/JsonUtil";
-import type { TimeUtil } from "@spt/utils/TimeUtil";
-import type { RandomUtil } from "@spt/utils/RandomUtil";
-import type { ProfileHelper } from "@spt/helpers/ProfileHelper";
-import type { TraderController } from "@spt/controllers/TraderController";
-import type { FenceService } from "@spt/services/FenceService";
-import type { FenceBaseAssortGenerator } from "@spt/generators/FenceBaseAssortGenerator";
-import type { RagfairOfferGenerator } from "@spt/generators/RagfairOfferGenerator";
-import type { RagfairOfferService } from "@spt/services/RagfairOfferService";
-import type { RagfairController } from "@spt/controllers/RagfairController";
-import type { HttpResponseUtil } from "@spt/utils/HttpResponseUtil";
-import type { ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
-import type { IGetOffersResult } from "@spt/models/eft/ragfair/IGetOffersResult";
-import type { ISearchRequestData } from "@spt/models/eft/ragfair/ISearchRequestData";
 
 const modName = "LateToTheParty";
 
@@ -49,15 +31,11 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     private commonUtils: CommonUtils
     private botConversionHelper: BotConversionHelper
     private lootRankingGenerator: LootRankingGenerator
-    private traderAssortGenerator: TraderAssortGenerator
     
     private logger: ILogger;
     private locationConfig: ILocationConfig;
     private inRaidConfig: IInRaidConfig;
-    private iBotConfig: IBotConfig;
     private iPmcConfig: IPmcConfig;
-    private iAirdropConfig: IAirdropConfig;
-    private iTraderConfig: ITraderConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -65,17 +43,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     private localeService: LocaleService;
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
-    private jsonUtil: JsonUtil;
-    private timeutil: TimeUtil;
-    private randomUtil: RandomUtil;
-    private profileHelper: ProfileHelper;
-    private httpResponseUtil: HttpResponseUtil;
-    private fenceService: FenceService;
-    private traderController: TraderController;
-    private fenceBaseAssortGenerator: FenceBaseAssortGenerator;
-    private ragfairOfferGenerator: RagfairOfferGenerator;
-    private ragfairOfferService: RagfairOfferService;
-    private ragfairController: RagfairController;
 
     private originalLooseLootMultipliers : ILootMultiplier
     private originalStaticLootMultipliers : ILootMultiplier
@@ -110,63 +77,11 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
                 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                 action: async (url: string, info: any, sessionId: string, output: string) => 
                 {
-                    // Clear any cached trader inventory data if the game is restarted
-                    if (modConfig.trader_stock_changes.enabled)
-                    {
-                        this.traderAssortGenerator.clearLastAssortData();
-                    }
-
                     this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iPmcConfig);
 
                     this.generateLootRankingData(sessionId);
 
-                    if (modConfig.debug.enabled)
-                    {
-                        this.updateScavTimer(sessionId);
-                    }
-
                     return output;
-                }
-            }], "aki"
-        );
-
-        // Update trader inventory
-        dynamicRouterModService.registerDynamicRouter(`DynamicGetTraderAssort${modName}`,
-            [{
-                url: "/client/trading/api/getTraderAssort/",
-                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                action: async (url: string, info: any, sessionId: string, output: string) => 
-                {
-                    if (!modConfig.trader_stock_changes.enabled)
-                    {
-                        return output;
-                    }
-
-                    this.commonUtils.logWarning("Trader-stock changes are disabled for SPT-AKI 3.8.0");
-                    return output;
-
-                    //const traderID = url.replace("/client/trading/api/getTraderAssort/", "");
-                    //const assort = this.getUpdatedTraderAssort(traderID, sessionId);
-                    //return this.httpResponseUtil.getBody(assort);
-                }
-            }], "aki"
-        );
-
-        // Search flea offers
-        // Needed to adjust flea offers to match trader stock
-        staticRouterModService.registerStaticRouter(`StaticAkiSearchRagfair${modName}`,
-            [{
-                url: "/client/ragfair/find",
-                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                action: async (url: string, info: any, sessionId: string, output: string) => 
-                {
-                    if (!modConfig.trader_stock_changes.enabled)
-                    {
-                        return output;
-                    }
-
-                    const offers = this.getRagfairOffersForTraders(info, sessionId);
-                    return this.httpResponseUtil.getBody(offers);
                 }
             }], "aki"
         );
@@ -236,26 +151,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
                 }
             }], "SetEscapeTime"
         );
-
-        // Needed so trader assorts just unlocked by a quest aren't sold out immediately
-        dynamicRouterModService.registerDynamicRouter(`DynamicAddRecentlyChangedQuest${modName}`,
-            [{
-                url: "/LateToTheParty/QuestStatusChange/",
-                action: async (url: string) => 
-                {
-                    const urlParts = url.split("/");
-                    const questID = urlParts[urlParts.length - 2];
-                    //const newStatus = urlParts[urlParts.length - 1];
-
-                    if (modConfig.trader_stock_changes.enabled)
-                    {
-                        this.traderAssortGenerator.addRecentlyChangedQuest(questID);
-                    }
-                    
-                    return JSON.stringify({ resp: "OK" });
-                }
-            }], "AddRecentlyChangedQuest"
-        );
     }
 
     public postDBLoad(container: DependencyContainer): void
@@ -266,24 +161,10 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
         this.localeService = container.resolve<LocaleService>("LocaleService");
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
-        this.jsonUtil = container.resolve<JsonUtil>("JsonUtil");
-        this.timeutil = container.resolve<TimeUtil>("TimeUtil");
-        this.randomUtil = container.resolve<RandomUtil>("RandomUtil");
-        this.profileHelper = container.resolve<ProfileHelper>("ProfileHelper");
-        this.httpResponseUtil = container.resolve<HttpResponseUtil>("HttpResponseUtil");
-        this.traderController = container.resolve<TraderController>("TraderController");
-        this.fenceService = container.resolve<FenceService>("FenceService");
-        this.fenceBaseAssortGenerator = container.resolve<FenceBaseAssortGenerator>("FenceBaseAssortGenerator");
-        this.ragfairOfferGenerator = container.resolve<RagfairOfferGenerator>("RagfairOfferGenerator");
-        this.ragfairOfferService = container.resolve<RagfairOfferService>("RagfairOfferService");
-        this.ragfairController = container.resolve<RagfairController>("RagfairController");
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
-        this.iBotConfig = this.configServer.getConfig(ConfigTypes.BOT);
         this.iPmcConfig = this.configServer.getConfig(ConfigTypes.PMC);
-        this.iAirdropConfig = this.configServer.getConfig(ConfigTypes.AIRDROP);
-        this.iTraderConfig = this.configServer.getConfig(ConfigTypes.TRADER);
 
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);
@@ -301,52 +182,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
         }
 
         this.adjustSPTScavRaidChanges();
-        
-        // Adjust parameters to make debugging easier
-        if (modConfig.debug.enabled)
-        {
-            this.commonUtils.logInfo("Applying debug options...");
-
-            if (modConfig.debug.scav_cooldown_time < this.databaseTables.globals.config.SavagePlayCooldown)
-            {
-                this.databaseTables.globals.config.SavagePlayCooldown = modConfig.debug.scav_cooldown_time;
-            }
-
-            if (modConfig.debug.free_labs_access)
-            {
-                this.databaseTables.locations.laboratory.base.AccessKeys = [];
-                this.databaseTables.locations.laboratory.base.DisabledForScav = false;
-            }
-
-            this.databaseTables.globals.config.RagFair.minUserLevel = modConfig.debug.min_level_for_flea;
-
-            //this.iAirdropConfig.airdropChancePercent.bigmap = 100;
-            //this.iAirdropConfig.airdropChancePercent.woods = 100;
-            //this.iAirdropConfig.airdropChancePercent.lighthouse = 100;
-            //this.iAirdropConfig.airdropChancePercent.shoreline = 100;
-            //this.iAirdropConfig.airdropChancePercent.interchange = 100;
-            //this.iAirdropConfig.airdropChancePercent.reserve = 100;
-            //this.iAirdropConfig.airdropChancePercent.tarkovStreets = 100;
-
-            // Modify trader restock times
-            for (const t in this.iTraderConfig.updateTime)
-            {
-                this.iTraderConfig.updateTime[t].seconds.min *= modConfig.debug.trader_resupply_time_factor;
-                this.iTraderConfig.updateTime[t].seconds.max *= modConfig.debug.trader_resupply_time_factor;
-                const maxResupplyTime = this.timeutil.getTimestamp() + this.iTraderConfig.updateTime[t].seconds.max;
-
-                // This is undefined for some trader mods
-                if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
-                {
-                    continue;
-                }
-
-                if (this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply > maxResupplyTime)
-                {
-                    this.databaseTables.traders[this.iTraderConfig.updateTime[t].traderId].base.nextResupply = maxResupplyTime;
-                }
-            }
-        }
     }
 
     public postSptLoad(): void
@@ -358,25 +193,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
 
         // Store the original static and loose loot multipliers
         this.getLootMultipliers();
-
-        // Initialize trader assort data
-        if (modConfig.trader_stock_changes.enabled)
-        {
-            this.traderAssortGenerator = new TraderAssortGenerator(
-                this.commonUtils,
-                this.databaseTables,
-                this.jsonUtil,
-                this.fenceService,
-                this.fenceBaseAssortGenerator,
-                this.ragfairOfferGenerator,
-                this.ragfairOfferService,
-                this.iTraderConfig,
-                this.randomUtil,
-                this.timeutil
-            );
-        }
-
-        
     }
 
     private adjustSPTScavRaidChanges(): void
@@ -395,40 +211,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
                 this.locationConfig.scavRaidTimeSettings.maps[map].reduceLootByPercent = false;
             }
         }
-    }
-
-    private updateScavTimer(sessionId: string): void
-    {
-        const pmcData = this.profileHelper.getPmcProfile(sessionId);
-        const scavData = this.profileHelper.getScavProfile(sessionId);
-		
-        if ((scavData.Info === null) || (scavData.Info === undefined))
-        {
-            this.commonUtils.logInfo("Scav profile hasn't been created yet.");
-            return;
-        }
-		
-        // In case somebody disables scav runs and later wants to enable them, we need to reset their Scav timer unless it's plausible
-        const worstCooldownFactor = this.getWorstSavageCooldownModifier();
-        if (scavData.Info.SavageLockTime - pmcData.Info.LastTimePlayedAsSavage > this.databaseTables.globals.config.SavagePlayCooldown * worstCooldownFactor * 1.1)
-        {
-            this.commonUtils.logInfo(`Resetting scav timer for sessionId=${sessionId}...`);
-            scavData.Info.SavageLockTime = 0;
-        }
-    }
-	
-    // Return the highest Scav cooldown factor from Fence's rep levels
-    private getWorstSavageCooldownModifier(): number
-    {
-        // Initialize the return value at something very low
-        let worstCooldownFactor = 0.01;
-
-        for (const level in this.databaseTables.globals.config.FenceSettings.Levels)
-        {
-            if (this.databaseTables.globals.config.FenceSettings.Levels[level].SavageCooldownModifier > worstCooldownFactor)
-                worstCooldownFactor = this.databaseTables.globals.config.FenceSettings.Levels[level].SavageCooldownModifier;
-        }
-        return worstCooldownFactor;
     }
 
     private getLootMultipliers(): void
@@ -521,82 +303,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     {
         this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs, this.botWeaponGenerator, this.hashUtil);
         this.lootRankingGenerator.generateLootRankingData(sessionId);
-    }
-
-    private getUpdatedTraderAssort(traderID: string, sessionId: string, canRegenerate = true): ITraderAssort
-    {
-        // Refresh Fence's assorts
-        if (traderID === CommonUtils.fenceID)
-        {
-            if (!modConfig.trader_stock_changes.fence_stock_changes.enabled)
-            {
-                return this.traderController.getAssort(sessionId, traderID);
-            }
-
-            this.traderAssortGenerator.updateFenceAssort();
-        }
-        
-        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-        const maxLL = pmcProfile.TradersInfo[traderID].loyaltyLevel;
-
-        // Update stock for trader
-        const assort = this.traderController.getAssort(sessionId, traderID);
-        this.traderAssortGenerator.updateTraderStock(traderID, assort, maxLL, traderID === CommonUtils.fenceID);
-
-        // Remove fancy weapons and then check if Fence's assorts need to be regenerated
-        if (traderID === CommonUtils.fenceID)
-        {
-            this.traderAssortGenerator.adjustFenceAssortItemPrices(assort);
-            this.traderAssortGenerator.removeExpensivePresets(assort, modConfig.trader_stock_changes.fence_stock_changes.max_preset_cost);
-
-            if (this.traderAssortGenerator.replenishFenceStockIfNeeded(assort, maxLL) && canRegenerate)
-            {
-                return this.getUpdatedTraderAssort(traderID, sessionId, false);
-            }
-        }
-
-        return assort;
-    }
-
-    private getRagfairOffersForTraders(info: ISearchRequestData, sessionId: string): IGetOffersResult
-    {
-        const pmcProfile = this.profileHelper.getPmcProfile(sessionId);
-
-        // Update each trader's inventory if too much time has elapsed since it was last refreshed
-        for (const t in this.iTraderConfig.updateTime)
-        {
-            const traderID = this.iTraderConfig.updateTime[t].traderId;
-
-            // Ignore Fence because his items aren't available on the flea market
-            if (traderID === CommonUtils.fenceID)
-            {
-                continue;
-            }
-
-            // This is undefined for some trader mods
-            if (!(this.iTraderConfig.updateTime[t].traderId in this.databaseTables.traders))
-            {
-                continue;
-            }
-
-            // Determine how much time has passed since the trader's inventory was last updated, and compare that to the max time allowed
-            const resupplyAge = this.timeutil.getTimestamp() - this.traderAssortGenerator.getLastTraderRefreshTimestamp(traderID);
-            const resupplyAgeMax = this.iTraderConfig.updateTime[t].seconds.min * modConfig.trader_stock_changes.ragfair_refresh_time_fraction;
-
-            if (resupplyAge < resupplyAgeMax)
-            {
-                continue;
-            }
-
-            const assort = this.traderController.getAssort(sessionId, traderID);
-            this.traderAssortGenerator.updateTraderStock(traderID, assort, pmcProfile.TradersInfo[traderID].loyaltyLevel, traderID === CommonUtils.fenceID);
-        }
-
-        // Update all offers to reflect the latest trader inventory
-        let offers = this.ragfairController.getOffers(sessionId, info);
-        offers = this.traderAssortGenerator.updateFleaOffers(offers);
-
-        return offers;
     }
 
     private doesFileIntegrityCheckPass(): boolean

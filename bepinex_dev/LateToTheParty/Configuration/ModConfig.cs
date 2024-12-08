@@ -36,9 +36,6 @@ namespace LateToTheParty.Configuration
         [JsonProperty("toggle_switches_during_raid")]
         public ToggleSwitchesDuringRaidConfig ToggleSwitchesDuringRaid { get; set; } = new ToggleSwitchesDuringRaidConfig();
 
-        [JsonProperty("trader_stock_changes")]
-        public TraderStockChangesConfig TraderStockChanges { get; set; } = new TraderStockChangesConfig();
-
         [JsonProperty("loot_multipliers")]
         public double[][] LootMultipliers { get; set; } = new double[0][];
 
@@ -50,9 +47,6 @@ namespace LateToTheParty.Configuration
 
         [JsonProperty("boss_spawn_chance_multipliers")]
         public double[][] BossSpawnChanceMultipliers { get; set; } = new double[0][];
-
-        [JsonProperty("fence_item_value_permitted_chance")]
-        public double[][] FenceItemValuePermittedChance { get; set; } = new double[0][];
 
         public ModConfig()
         {

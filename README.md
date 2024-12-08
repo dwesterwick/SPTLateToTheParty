@@ -1,4 +1,4 @@
-Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. PMC's are more likely to spawn early in the raid, traders can sell out of items, and much more!
+Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. PMC's are more likely to spawn early in the raid, and much more!
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
@@ -7,7 +7,6 @@ This mod makes the the following changes to your SPT experience:
 * The car extract may leave at some point during the raid
 * Compared to vanilla SPT, PMC's are more likely to spawn toward the beginning of the raid and less likely to spawn toward the end of it. 
 * If you spawn into the map late as a Scav, bosses are less likely to spawn. 
-* Trader stock reduces over time (until it resets), and desirable items (like MP-133's) can sell out
 * Fence sells more items, including ammo, but most items are significantly less valuable than what he sells in the base game
 
 If you use both [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
@@ -16,10 +15,6 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 
 * **enabled**: Completely enable or disable all featues of this mod. 
 * **debug.enabled**: Enable debug mode.
-* **debug.scav_cooldown_time**: Cooldown timer (in seconds) after a Scav raid ends before you're allowed to start another one. This is **1500** by default, which is the same as the base game.
-* **debug.free_labs_access**: If **true**, Labs cards are no longer required to enter Labs, and you're also allowed to do Scav runs in Labs. 
-* **debug.min_level_for_flea**: The minimum player level to be able to access the flea market. 
-* **debug.trader_resupply_time_factor**: A multiplier for trader reset times. For example, if this is 0.5, trader resets occur every 30 min instead of 60 min. **trader_stock_changes.max_ammo_buy_rate** and **trader_stock_changes.max_item_buy_rate** are divided by this value for testing purposes. 
 * **debug.loot_path_visualization.enabled**: Enable visualization of loot items and NavMesh pathing to them to view which ones the mod thinks are accessible. Most visuals require **destroy_loot_during_raid.check_loot_accessibility.enabled=true**.
 * **debug.loot_path_visualization.points_per_circle**: The number of points to use for drawing a circle. This is **10** by default. Considering this is only used for debugging, higher values might result in rounder-looking circles, but there isn't much benefit.
 * **debug.loot_path_visualization.outline_loot**: Draw a spherical outline around loot items and loot containers that are not empty. The center of the sphere should be in the center of loose loot, but it will be somewhere around the perimeter of loot containers (and varies by the type of container). The color of the outline will change based on the loot's accessibility as determined by the mod. Green = accessible, Red = inaccessible, White = undetermined (cannot find a valid NavMesh path to the loot). 
@@ -131,38 +126,10 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
   * **toggle_switches_during_raid.fraction_of_switches_to_toggle.min/max**: The minimum and maximum fractions of switches that will be toggled throughout the raid. These values are fractions of the total number of switches on the map that can be toggled by players.
   * **toggle_switches_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run switch-toggling procedures per frame. By default this is set to **3ms**, and delays of <15ms are basically imperceptible. 
 
-* **trader_stock_changes.enabled**: If the mod should allow trader stock to deplete as well as change the number and variety of items sold by Fence.
-* **trader_stock_changes.max_ammo_buy_rate**: The maximum rate at which a trader's ammo supply (for each type) can be reduced in rounds/second.
-* **trader_stock_changes.max_item_buy_rate**: The maximum rate at which a trader's item supply (for each type) can be reduced in items/second.
-* **trader_stock_changes.item_sellout_chance.min**: The minimum chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
-* **trader_stock_changes.item_sellout_chance.max**: The maximum chance (in percent) that any item in a trader's inventory can be sold out just before the trader's inventory resets.
-* **trader_stock_changes.barter_trade_sellout_factor**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for barter items. 
-* **trader_stock_changes.hot_item_sell_chance_global_multiplier**: A multiplier applied to all values in *hotItems.json*.
-* **trader_stock_changes.ammo_parent_id**: The parent ID of loose ammo, which is needed to determine what items are ammo. **This should NOT be changed, or the mod may not work properly.** 
-* **trader_stock_changes.money_parent_id**: The parent ID of money, which is needed to determine what items are barter trades. **This should NOT be changed, or the mod may not work properly.** 
-* **trader_stock_changes.ragfair_refresh_time_fraction**: The maximum fraction of the trader's refresh time that can elapse before the trader's inventory is forced to refresh when viewing his flea-market offers. For example, if this is 0.05 and the trader's refresh time is 3600 seconds, if the trader's inventory hasn't been refreshed in the last 180 seconds when viewing his flea-market offers, his inventory will first be forced to update. The purpose of this is to close a loophole of only viewing a trader's offers in the flea market to avoid having items sell out in the normal trader view. By default, this is **0.05**.
-* **trader_stock_changes.fence_stock_changes.enabled**: If Fence's stock is allowed to be modified. This is **false** by default because Fence's inventory has significantly improved in recent SPT updates. 
-* **trader_stock_changes.fence_stock_changes.always_regenerate**: If the list of items sold by Fence should be regenerated whenever you refresh it. This is **false** by default like in the base game.
-* **trader_stock_changes.fence_stock_changes.assort_size**: The number of items sold by Fence at LL1. This is **190** by default compared to the base game's **120**.
-* **trader_stock_changes.fence_stock_changes.assort_size_discount**: The number of items sold by Fence at LL2. This is **90** by default compared to the base game's **50**.
-* **trader_stock_changes.fence_stock_changes.assort_restock_threshold**: If Fence's stock drops below this percentage of **trader_stock_changes.fence_stock_changes.assort_size** or **trader_stock_changes.fence_stock_changes.assort_size_discount**, his inventory will be forced to regenerate. 
-* **trader_stock_changes.fence_stock_changes.maxPresetsPercent**: The maximum percentage of **trader_stock_changes.fence_stock_changes.assort_size** that can be filled with weapons. This overrides **fence.maxPresetsPercent** in the SPT-AKI *trader.json* config file.
-* **trader_stock_changes.fence_stock_changes.max_preset_cost**: Any weapons that exceeds this cost after adjusting for **item_cost_fraction_vs_durability** will be removed from Fence's inventory. 
-* **trader_stock_changes.fence_stock_changes.min_allowed_item_value**: Fence will always be able to sell any item below this price (using the maximum found in *handbook.json* and *prices.json*) regardless of the chance of selling it as determined by the **fence_item_value_permitted_chance** array.
-* **trader_stock_changes.fence_stock_changes.max_ammo_stack**: The largest stack of any type of ammo allowed in Fence's inventory.
-* **trader_stock_changes.fence_stock_changes.sell_chance_multiplier**: A multiplier applied to **trader_stock_changes.item_sellout_chance** for determining how likely an item in Fence's inventory is to be sold. 
-* **trader_stock_changes.fence_stock_changes.itemTypeLimits_Override**: A dictionary describing the maximum number of items of a given type that Fence is allowed to sell per reset. If an entry for the type already exists in **fence.itemTypeLimits** in the SPT-AKI *trader.json* config file, its value will be overriden with this one. Otherwise, it will be added to that dictionary. 
-* **trader_stock_changes.fence_stock_changes.blacklist_append**: The ID's that should be added to Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
-* **trader_stock_changes.fence_stock_changes.blacklist_remove**: The ID's that should be removed from Fence's blacklist, which is initially set by **fence.blacklist** in the SPT-AKI *trader.json* config file. 
-* **trader_stock_changes.fence_stock_changes.blacklist_ammo_penetration_limit**: Any ammo that has a penetration value above this will be removed from Fence's inventory. 
-* **trader_stock_changes.fence_stock_changes.blacklist_ammo_damage_limit**: Any ammo that has a damage value above this will be removed from Fence's inventory.
-
 * **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid. A value of "1" means match the original loot amount. 
 * **fraction_of_players_full_of_loot**: [time_remaining_factor, players_full_of_loot_fraction] pairs describing the fraction of the maximum players allowed on the map who will be full of loot based on the fraction of time remaining in the raid. A value of "1" in the second column means that the entire starting (full) lobby of players will have looted **destroy_loot_during_raid.avg_slots_per_player** slots worth of loot by that time. This value can be greater than one to include player Scavs. 
 * **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
-* **fence_item_value_permitted_chance**: [item_value, sell_chance_percent] pairs describing how likely Fence is to sell an item with a certain value. 
-* **item_cost_fraction_vs_durability**: [item_durability_fraction, price_multiplier] pairs describing how much cheaper Fence will sell degraded items. This applies to anything with durability (namely weapons and armor) and items with limited uses like medkits.
 
 The mod uses the following process to determine which loot is accessible:
 1. If the loot was previously determined to be accessible, it will always be considered accessible for the rest of the raid. 
@@ -196,6 +163,4 @@ Known issues:
 * Any locked door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
 * Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.
-* The "hot items" sold by traders are always the same, regardless of your player level or account age. This makes the trader stock changes always seem like it's early wipe. 
-* Traders may sell out of junk ammo that nobody actually buys.
 * If you approach the car extract without taking it and this mod instructs it to leave later in the raid, you'll see the countdown timer when you check your extracts.

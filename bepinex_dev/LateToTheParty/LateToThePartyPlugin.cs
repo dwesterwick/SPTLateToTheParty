@@ -48,12 +48,6 @@ namespace LateToTheParty
                     new Patches.OnBoxLandPatch().Enable();
                 }
 
-                if (ConfigController.Config.TraderStockChanges.Enabled)
-                {
-                    new Patches.QuestSetStatusPatch().Enable();
-                    new Patches.QuestSetStatusPatch2().Enable();
-                }
-
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<InteractiveObjectController>();
                 this.GetOrAddComponent<NavMeshController>();

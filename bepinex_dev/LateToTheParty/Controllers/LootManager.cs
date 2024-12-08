@@ -104,6 +104,12 @@ namespace LateToTheParty.Controllers
 
         public static void AddLootableContainer(LootableContainer container)
         {
+            if (AllLootableContainers.Contains(container))
+            {
+                LoggingController.LogWarning("Container " + container.name + " is already included when searching for loot.");
+                return;
+            }
+
             lock (lootableContainerLock)
             {
                 LoggingController.LogInfo("Including container " + container.name + " when searching for loot.");
@@ -285,7 +291,7 @@ namespace LateToTheParty.Controllers
 
                 // Destroy items
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot, raidET);
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
 
                 itemsToDestroy.Clear();
             }
@@ -321,6 +327,12 @@ namespace LateToTheParty.Controllers
             IEnumerable<Item> allItems = lootItem.Item.FindAllItemsInContainer(true).RemoveExcludedItems().RemoveItemsDroppedByPlayer();
             foreach (Item item in allItems)
             {
+                if (item.isLocked())
+                {
+                    ItemsDroppedByMainPlayer.Add(item);
+                    continue;
+                }
+
                 if (!LootInfo.ContainsKey(item))
                 {
                     Models.LootInfo newLoot = new Models.LootInfo(
@@ -365,6 +377,12 @@ namespace LateToTheParty.Controllers
             {
                 foreach (Item item in containerItem.FindAllItemsInContainer().RemoveItemsDroppedByPlayer())
                 {
+                    if (item.isLocked())
+                    {
+                        ItemsDroppedByMainPlayer.Add(item);
+                        continue;
+                    }
+
                     if (!LootInfo.ContainsKey(item))
                     {
                         Models.LootInfo newLoot = new Models.LootInfo(
@@ -386,6 +404,35 @@ namespace LateToTheParty.Controllers
                     }
                 }
             }
+        }
+
+        private static bool isLocked(this Item item)
+        {
+            if (item.PinLockState == EItemPinLockState.Locked)
+            {
+                LoggingController.LogWarning(item.LocalizedName() + " is locked", true);
+                return true;
+            }
+
+            GClass3113 parentSlot = item.Parent as GClass3113;
+            if ((parentSlot != null) && parentSlot.Slot.Locked)
+            {
+                LoggingController.LogWarning(item.LocalizedName() + " is locked inside " + parentSlot.ContainerName.Localized(), true);
+                return true;
+            }
+
+            GClass3114 parentStackSlot = item.Parent as GClass3114;
+            if (parentStackSlot != null)
+            {
+                // Weird EFT edge case with ammo boxes
+                if (parentStackSlot.StackSlot.Items.IndexOf(item) != parentStackSlot.StackSlot.Items.Count() - 1)
+                {
+                    LoggingController.LogWarning(item.LocalizedName() + " is locked inside stack " + parentStackSlot.ContainerName.Localized(), true);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void findNearbyContainters(Item lootItem, Models.LootInfo lootInfo)
@@ -883,7 +930,7 @@ namespace LateToTheParty.Controllers
             return true;
         }
 
-        private static void DestroyLoot(Item item, double raidET)
+        private static void DestroyLoot(Item item)
         {
             try
             {
@@ -902,27 +949,31 @@ namespace LateToTheParty.Controllers
                     }
                 }
 
-                var destroyResult = InteractionsHandlerClass.RemoveWithoutRestrictions(item, LootInfo[item].TraderController);
-                if (destroyResult.Failed)
+                // This method no longer exists in SPT 3.10
+                //LootInfo[item].TraderController.DestroyItem(item);
+
+                var resizeOperation = InteractionsHandlerClass.Resize_Helper(item, item.Parent, InteractionsHandlerClass.EResizeAction.Removal, false, true);
+                if (resizeOperation.Failed)
                 {
-                    LoggingController.LogError("Could not destroy " + item.LocalizedName() + " in " + LootInfo[item].ParentItem.LocalizedName());
+                    LoggingController.LogError("Could not manipulate " + item.LocalizedName() + ": " + resizeOperation.Error.ToString());
                     return;
                 }
 
-                //LootInfo[item].TraderController.DestroyItem(item);
-                LootInfo[item].IsDestroyed = true;
-                LootInfo[item].RaidETWhenDestroyed = raidET;
-                lastLootDestroyedTimer.Restart();
-                destroyedLootSlots += item.GetItemSlots();
+                var destroyOperation = item.Parent.Remove(item, true);
+                if (destroyOperation.Failed)
+                {
+                    LoggingController.LogError("Could not create destroy operation for " + item.LocalizedName() + ": " + destroyOperation.Error.ToString());
 
-                LoggingController.LogInfo(
-                    "Destroyed " + LootInfo[item].LootType + " loot"
-                    + (((LootInfo[item].ParentItem != null) && (LootInfo[item].ParentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].ParentItem.LocalizedName() : "")
-                    + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
-                    + ": " + item.LocalizedName()
-                );
+                    resizeOperation.Value.RollBack();
+                    return;
+                }
 
-                LootInfo[item].PathData.Clear();
+                var destroyTransaction = new GClass3131(item, item.Parent, LootInfo[item].TraderController, resizeOperation.Value, destroyOperation.Value, null, true);
+                var destroyTransactionCast = (GStruct446<GClass3131>)destroyTransaction;
+
+                LootInfo[item].TraderController.TryRunNetworkTransaction(destroyTransactionCast, (result) => networkTransactionCallback(result));
+
+                finishDestroyingItem(item);
             }
             catch (Exception ex)
             {
@@ -930,6 +981,33 @@ namespace LateToTheParty.Controllers
                 LoggingController.LogError(ex.ToString());
                 LootInfo.Remove(item);
             }
+        }
+
+        private static void networkTransactionCallback(IResult result)
+        {
+            if (result.Failed)
+            {
+                LoggingController.LogError("Received error during network transaction: " + result.Error);
+            }
+        }
+
+        private static void finishDestroyingItem(Item item)
+        {
+            float raidTimeElapsed = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
+
+            LootInfo[item].IsDestroyed = true;
+            LootInfo[item].RaidETWhenDestroyed = raidTimeElapsed;
+            lastLootDestroyedTimer.Restart();
+            destroyedLootSlots += item.GetItemSlots();
+
+            LoggingController.LogInfo(
+                "Destroyed " + LootInfo[item].LootType + " loot"
+                + (((LootInfo[item].ParentItem != null) && (LootInfo[item].ParentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].ParentItem.LocalizedName() : "")
+                + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
+                + ": " + item.LocalizedName()
+            );
+
+            LootInfo[item].PathData.Clear();
         }
 
         private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> removeItemsWithoutValidTemplates(this IEnumerable<KeyValuePair<Item, Models.LootInfo>> lootInfo)
