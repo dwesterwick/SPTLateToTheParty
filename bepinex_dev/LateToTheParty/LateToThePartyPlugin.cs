@@ -6,10 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Bootstrap;
+using LateToTheParty.Components;
 using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
+    [BepInIncompatibility("Jehree.LockableDoors")]
+    [BepInDependency("xyz.drakia.waypoints", "1.6.0")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
@@ -33,7 +36,7 @@ namespace LateToTheParty
             if (ConfigController.Config.Enabled)
             {
                 string loggingPath = ConfigController.GetLoggingPath();
-                LoggingController.InitializeLoggingBuffer(200, loggingPath, this.Info.Metadata.Name);
+                LoggingController.SetLoggingPath(loggingPath);
 
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
                 new Patches.ReadyToPlayPatch().Enable();
@@ -51,16 +54,11 @@ namespace LateToTheParty
                 LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
                 this.GetOrAddComponent<InteractiveObjectController>();
                 this.GetOrAddComponent<NavMeshController>();
-                this.GetOrAddComponent<PlayerMonitorController>();
+                this.GetOrAddComponent<PlayerMonitor>();
 
                 if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
                 {
                     this.GetOrAddComponent<LootDestroyerController>();
-                }
-
-                if (ConfigController.Config.AdjustBotSpawnChances.Enabled && ConfigController.Config.AdjustBotSpawnChances.AdjustPMCConversionChances)
-                {
-                    this.GetOrAddComponent<BotConversionController>();
                 }
 
                 if (ConfigController.Config.CarExtractDepartures.Enabled)
@@ -77,23 +75,10 @@ namespace LateToTheParty
                 if (ConfigController.Config.Debug.Enabled)
                 {
                     this.GetOrAddComponent<PathRender>();
-                    AppDomain.CurrentDomain.UnhandledException += LogAndThrowUnhandledException;
                 }
             }
 
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
-        }
-
-        private void LogAndThrowUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            Exception ex = (Exception)e.ExceptionObject;
-
-            LoggingController.LogError("[ UNHANDLED EXCEPTION - PLEASE RESTART THE GAME ASAP ]");
-            LoggingController.LogError(ex.ToString());
-
-            LoggingController.WriteMessagesToLogFile();
-
-            throw ex;
         }
 
         private bool confirmNoPreviousVersionExists()

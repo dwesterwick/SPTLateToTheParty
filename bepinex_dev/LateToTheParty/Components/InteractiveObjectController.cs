@@ -11,10 +11,11 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using LateToTheParty.Controllers;
 using LateToTheParty.CoroutineExtensions;
 using UnityEngine;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Components
 {
     public class InteractiveObjectController : MonoBehaviour
     {
@@ -33,6 +34,10 @@ namespace LateToTheParty.Controllers
         private static Stopwatch interactiveObjectOpeningsTimer = new Stopwatch();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
         private static int InteractiveObjectsToToggle = 1;
+
+        public static IReadOnlyList<WorldInteractiveObject> ToggleableInteractiveObjects => toggleableInteractiveObjects.AsReadOnly();
+        public static IEnumerable<Door> ToggleableDoors => toggleableInteractiveObjects.Where(o => o is Door).Select(o => o as Door);
+        public static IEnumerable<Door> ToggleableLockedDoors => ToggleableDoors.Where(d => d.DoorState == EDoorState.Locked);
 
         public static int ToggleableInteractiveObjectCount
         {
@@ -522,7 +527,7 @@ namespace LateToTheParty.Controllers
         private bool IsEligibleInteractiveObject(WorldInteractiveObject interactiveObject, bool logResult = false)
         {
             // Get all items to search for key ID's
-            Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
+            Dictionary<string, Item> allItems = Helpers.ItemHelpers.GetAllItems();
 
             if (interactiveObject.DoorState == EDoorState.Locked)
             {
@@ -573,7 +578,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Get all items to search for key ID's
-            Dictionary<string, Item> allItems = ItemHelpers.GetAllItems();
+            Dictionary<string, Item> allItems = Helpers.ItemHelpers.GetAllItems();
 
             if (interactiveObject.DoorState == EDoorState.Locked)
             {

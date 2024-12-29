@@ -36,8 +36,6 @@
 	"adjust_bot_spawn_chances": {
 		"enabled": true,
 		"adjust_bosses": true,
-		"adjust_pmc_conversion_chances": false,
-		"pmc_conversion_update_rate": 10,
 		"excluded_bosses": [ "sptBear", "sptUsec" ]
 	},
 	"only_make_changes_just_after_spawning": {
@@ -214,15 +212,6 @@
 		[0.85, 0.4],
 		[0.95, 0.2],
 		[1, 0]
-	],
-	"pmc_spawn_chance_multipliers": [
-		[0, 0],
-		[0.2, 0.1],
-		[0.6, 0.5],
-		[0.8, 0.7],
-		[0.9, 1],
-		[0.95, 1.5],
-		[1, 2.2]
 	],
 	"boss_spawn_chance_multipliers": [
 		[0, 0.4],

@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Interactive;
+using LateToTheParty.Controllers;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Components
 {
     public class NavMeshController: MonoBehaviour
     {
@@ -21,55 +22,12 @@ namespace LateToTheParty.Controllers
         public static bool IsUpdatingDoorsObstacles { get; private set; } = false;
 
         private static Dictionary<Vector3, Vector3> nearestNavMeshPoint = new Dictionary<Vector3, Vector3>();
-        private static Dictionary<Door, DoorObstacle> doorObstacles = new Dictionary<Door, DoorObstacle>();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.MaxCalcTimePerFrame);
         private static Stopwatch updateTimer = Stopwatch.StartNew();
 
         protected void OnDisable()
         {
             Clear();
-        }
-
-        protected void LateUpdate()
-        {
-            if (IsClearing)
-            {
-                return;
-            }
-
-            // Clear all arrays if not in a raid to reset them for the next raid
-            if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
-            {
-                StartCoroutine(Clear());
-                return;
-            }
-
-            // Ensure enough time has passed since the last check
-            if (IsUpdatingDoorsObstacles || (updateTimer.ElapsedMilliseconds < ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.DoorObstacleUpdateTime * 1000))
-            {
-                return;
-            }
-
-            if (doorObstacles.Count() > 0)
-            {
-                // Update the nav mesh to reflect the door state changes
-                StartCoroutine(UpdateDoorObstacles());
-                updateTimer.Restart();
-
-                return;
-            }
-
-            // Wait until DoorController is done finding doors
-            if (InteractiveObjectController.ToggleableInteractiveObjectCount == 0)
-            {
-                return;
-            }
-
-            // Search for all colliders attached to doors
-            foreach (Collider collider in FindObjectsOfType<Collider>())
-            {
-                CheckIfColliderIsDoor(collider);
-            }
         }
 
         public static IEnumerator Clear()
@@ -85,13 +43,6 @@ namespace LateToTheParty.Controllers
 
                 IsUpdatingDoorsObstacles = false;
             }
-
-            // Make sure the obstacle is removed from the map before deleting that record from the dictionary
-            foreach (DoorObstacle doorObstacle in doorObstacles.Values)
-            {
-                doorObstacle.Remove();
-            }
-            doorObstacles.Clear();
 
             nearestNavMeshPoint.Clear();
 
@@ -132,15 +83,9 @@ namespace LateToTheParty.Controllers
         {
             float closestDistance = float.MaxValue;
 
-            foreach (DoorObstacle obstacle in doorObstacles.Values)
+            foreach (Door door in InteractiveObjectController.ToggleableLockedDoors)
             {
-                // Make sure the door is locked (by checking if it has a DoorObstacle attached to it)
-                if (!obstacle.Position.HasValue)
-                {
-                    continue;
-                }
-
-                float distance = Vector3.Distance(position, obstacle.Position.Value);
+                float distance = Vector3.Distance(position, door.transform.position);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
@@ -148,39 +93,6 @@ namespace LateToTheParty.Controllers
             }
 
             return closestDistance;
-        }
-
-        public static void CheckIfColliderIsDoor(Collider collider)
-        {
-            if (collider.gameObject.layer != LayerMaskClass.DoorLayer)
-            {
-                return;
-            }
-
-            GameObject doorObject = collider.transform.parent.gameObject;
-            Door door = doorObject.GetComponent<Door>();
-            if (door == null)
-            {
-                return;
-            }
-
-            bool isToggleable = InteractiveObjectController.IsToggleableInteractiveObject(door);
-            doorObstacles.Add(door, new DoorObstacle(collider, door, isToggleable));
-        }
-
-        public static IEnumerator UpdateDoorObstacles()
-        {
-            IsUpdatingDoorsObstacles = true;
-
-            enumeratorWithTimeLimit.Reset();
-            yield return enumeratorWithTimeLimit.Run(doorObstacles.Keys.ToArray(), UpdateDoorObstacle);
-
-            IsUpdatingDoorsObstacles = false;
-        }
-
-        public static void UpdateDoorObstacle(Door door)
-        {
-            doorObstacles[door].Update();
         }
 
         public static Vector3? FindNearestNavMeshPosition(Vector3 position, float searchDistance)

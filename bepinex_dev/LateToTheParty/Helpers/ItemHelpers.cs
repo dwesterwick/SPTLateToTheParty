@@ -5,12 +5,76 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT.InventoryLogic;
+using LateToTheParty.Controllers;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Helpers
 {
     public static class ItemHelpers
     {
         private static Dictionary<string, Item> allItems = new Dictionary<string, Item>();
+
+        public static bool CanRemoveFrom(this Item item, Item parentItem)
+        {
+            if (item.TemplateId == parentItem.TemplateId)
+            {
+                return true;
+            }
+
+            CompoundItem compoundItem;
+            if ((compoundItem = (parentItem as CompoundItem)) == null)
+            {
+                return true;
+            }
+
+            foreach (Slot slot in compoundItem.Slots)
+            {
+                /*if (!slot.Required)
+                {
+                    continue;
+                }
+
+                if (slot.Items.Contains(item))
+                {
+                    return false;
+                }*/
+
+                if (slot.RemoveItem(true).Failed)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool IsLocked(this Item item)
+        {
+            if (item.PinLockState == EItemPinLockState.Locked)
+            {
+                //LoggingController.LogWarning(item.LocalizedName() + " is locked", true);
+                return true;
+            }
+
+            GClass3113 parentSlot = item.Parent as GClass3113;
+            if ((parentSlot != null) && parentSlot.Slot.Locked)
+            {
+                //LoggingController.LogWarning(item.LocalizedName() + " is locked inside " + parentSlot.ContainerName.Localized(), true);
+                return true;
+            }
+
+            GClass3114 parentStackSlot = item.Parent as GClass3114;
+            if (parentStackSlot != null)
+            {
+                // Weird EFT edge case with ammo boxes
+                if (parentStackSlot.StackSlot.Items.IndexOf(item) != parentStackSlot.StackSlot.Items.Count() - 1)
+                {
+                    //LoggingController.LogWarning(item.LocalizedName() + " is locked inside stack " + parentStackSlot.ContainerName.Localized(), true);
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public static IEnumerable<Item> FindAllItemsInContainer(this Item container, bool includeSelf = false)
         {
@@ -53,9 +117,9 @@ namespace LateToTheParty.Controllers
         public static int GetItemSlots(this Item item)
         {
             int itemSlots = 0;
-            if (ConfigController.LootRanking?.Items?.ContainsKey(item.TemplateId) == true)
+            if (Controllers.ConfigController.LootRanking?.Items?.ContainsKey(item.TemplateId) == true)
             {
-                itemSlots = (int)ConfigController.LootRanking.Items[item.TemplateId].Size;
+                itemSlots = (int)Controllers.ConfigController.LootRanking.Items[item.TemplateId].Size;
             }
             else
             {
@@ -64,29 +128,6 @@ namespace LateToTheParty.Controllers
             }
 
             return itemSlots;
-        }
-
-        public static IEnumerable<string> GetSecureContainerIDs()
-        {
-            ItemFactoryClass itemFactory = Singleton<ItemFactoryClass>.Instance;
-            if (itemFactory == null)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            // Find all possible secure containers
-            List<string> secureContainerIDs = new List<string>();
-            foreach (Item item in itemFactory.CreateAllItemsEver())
-            {
-                if (!EFT.UI.DragAndDrop.ItemViewFactory.IsSecureContainer(item))
-                {
-                    continue;
-                }
-
-                secureContainerIDs.Add(item.TemplateId);
-            }
-
-            return secureContainerIDs;
         }
 
         public static Dictionary<string, Item> GetAllItems()
@@ -107,7 +148,7 @@ namespace LateToTheParty.Controllers
                 allItems.Add(item.TemplateId, item);
             }
 
-            LoggingController.LogInfo("Created dictionary of " + allItems.Count + " items");
+            Controllers.LoggingController.LogInfo("Created dictionary of " + allItems.Count + " items");
             return allItems;
         }
     }

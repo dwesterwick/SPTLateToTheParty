@@ -5,9 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
+using LateToTheParty.Controllers;
 using UnityEngine;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Components
 {
     public class LootDestroyerController : MonoBehaviour
     {
@@ -77,7 +78,7 @@ namespace LateToTheParty.Controllers
 
             // Only run the script if you've traveled a minimum distance from the last update. Othewise, stuttering will occur. 
             // However, ignore this check initially so loot can be despawned at the very beginning of the raid before you start moving if you spawn in late
-            float maxDistanceTravelledByPlayers = Controllers.PlayerMonitorController.GetMostDistanceTravelledByPlayer();
+            float maxDistanceTravelledByPlayers = PlayerMonitor.GetMostDistanceTravelledByPlayer();
             if (
                 (updateTimer.ElapsedMilliseconds < ConfigController.Config.DestroyLootDuringRaid.MaxTimeBeforeUpdate)
                 && (maxDistanceTravelledByPlayers < ConfigController.Config.DestroyLootDuringRaid.MinDistanceTraveledForUpdate)
@@ -111,7 +112,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Spread the work out across multiple frames to avoid stuttering
-            IEnumerable<Vector3> alivePlayerPositions = Controllers.PlayerMonitorController.GetPlayerPositions();
+            IEnumerable<Vector3> alivePlayerPositions = PlayerMonitor.GetPlayerPositions();
             StartCoroutine(LootManager.FindAndDestroyLoot(alivePlayerPositions, timeRemainingFraction, raidTimeElapsed));
             updateTimer.Restart();
             lootDestructionTimer.Start();
