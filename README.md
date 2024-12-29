@@ -1,15 +1,16 @@
-Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. PMC's are more likely to spawn early in the raid, and much more!
+Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. Bosses will also be less likely to spawn during Scav raids. 
+
+**REQUIRES: [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-bot-patrols-and-navmesh/)**
+Not compatible with: [Lockable Doors](https://hub.sp-tarkov.com/files/file/2593-lockable-doors/)
+
+If you use both [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
 * Doors will randomly open and close throughout the raid to simulate players moving through the map (thanks to help from DrakiaXYZ!). If you're lucky, locked doors may be opened for you...
 * Switches will be toggled throughout the raid to simulate players turning on power switches, using extracts, etc. 
 * The car extract may leave at some point during the raid
-* Compared to vanilla SPT, PMC's are more likely to spawn toward the beginning of the raid and less likely to spawn toward the end of it. 
 * If you spawn into the map late as a Scav, bosses are less likely to spawn. 
-* Fence sells more items, including ammo, but most items are significantly less valuable than what he sells in the base game
-
-If you use both [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
 
 This mod is highly customizable by modifying the *config.json* file. Here are the settings you can change:
 
@@ -41,8 +42,6 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 
 * **adjust_bot_spawn_chances.enabled**: If the mod is allowed to change bot spawn-chance settings. This is **true** by default. 
 * **adjust_bot_spawn_chances.adjust_bosses**: If the mod is allowed to reduce boss spawn chances based on the time you spawn into the raid. This is **true** by default. 
-* **adjust_bot_spawn_chances.adjust_pmc_conversion_chances**: If the mod is allowed to change PMC-conversion chances. This is **false** by default. 
-* **adjust_bot_spawn_chances.pmc_conversion_update_rate**: The time (in seconds) that must elapse after the mod updates PMC conversion-rate chances before it updates them again.  
 * **adjust_bot_spawn_chances.excluded_bosses**: The names of bot types that should not be included when changing boss spawn chances. **Entries in this array should NOT be removed, or the mod may not work properly.** 
 
 * **only_make_changes_just_after_spawning.enabled**: Only allow changes to be made to **only_make_changes_just_after_spawning.affected_systems** for **only_make_changes_just_after_spawning.time_limit** seconds after you spawn into the raid. **This is highly recommend if you use [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/).**
@@ -128,7 +127,6 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 
 * **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid. A value of "1" means match the original loot amount. 
 * **fraction_of_players_full_of_loot**: [time_remaining_factor, players_full_of_loot_fraction] pairs describing the fraction of the maximum players allowed on the map who will be full of loot based on the fraction of time remaining in the raid. A value of "1" in the second column means that the entire starting (full) lobby of players will have looted **destroy_loot_during_raid.avg_slots_per_player** slots worth of loot by that time. This value can be greater than one to include player Scavs. 
-* **pmc_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the PMC-conversion chance should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 * **boss_spawn_chance_multipliers**: [time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid. A value of "1" means match the original setting. 
 
 The mod uses the following process to determine which loot is accessible:
