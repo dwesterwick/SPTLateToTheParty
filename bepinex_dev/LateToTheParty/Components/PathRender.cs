@@ -8,7 +8,7 @@ using Comfort.Common;
 using EFT;
 using UnityEngine;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Components
 {
     public class PathRender : MonoBehaviour
     {
@@ -99,14 +99,14 @@ namespace LateToTheParty.Controllers
         {
             if (data == null)
             {
-                LoggingController.LogInfo("Path data is null");
+                Controllers.LoggingController.LogInfo("Path data is null");
                 return false;
             }
 
             // In case the path isn't registered, erase it anyway
             if (!RemovePath(data.PathName))
             {
-                LoggingController.LogInfo("Path " + data.PathName + " not found");
+                Controllers.LoggingController.LogInfo("Path " + data.PathName + " not found");
                 data.Clear();
             }
 

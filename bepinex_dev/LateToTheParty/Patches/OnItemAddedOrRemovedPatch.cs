@@ -35,7 +35,7 @@ namespace LateToTheParty.Patches
 
             bool preventFromDespawning = false;
 
-            if (PlayerMonitorController.GetPlayerIDs().Contains(__instance.Profile.Id))
+            if (Components.PlayerMonitor.GetPlayerIDs().Contains(__instance.Profile.Id))
             {
                 if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
                 {

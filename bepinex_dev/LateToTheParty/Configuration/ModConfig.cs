@@ -42,9 +42,6 @@ namespace LateToTheParty.Configuration
         [JsonProperty("fraction_of_players_full_of_loot")]
         public double[][] FractionOfPlayersFullOfLoot { get; set; } = new double[0][];
 
-        [JsonProperty("pmc_spawn_chance_multipliers")]
-        public double[][] PMCSpawnChanceMultipliers { get; set; } = new double[0][];
-
         [JsonProperty("boss_spawn_chance_multipliers")]
         public double[][] BossSpawnChanceMultipliers { get; set; } = new double[0][];
 

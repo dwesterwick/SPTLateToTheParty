@@ -8,9 +8,9 @@ using Comfort.Common;
 using EFT;
 using UnityEngine;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Components
 {
-    public class PlayerMonitorController : MonoBehaviour
+    public class PlayerMonitor : MonoBehaviour
     {
         private static Dictionary<Player, Vector3> playerPositionsCurrent = new Dictionary<Player, Vector3>();
         private static Dictionary<Player, Vector3> playerPositionsLast = new Dictionary<Player, Vector3>();

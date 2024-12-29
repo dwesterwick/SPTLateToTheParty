@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
-import { BotConversionHelper } from "./BotConversionHelper";
 import { LootRankingGenerator } from "./LootRankingGenerator";
 
 import type { DependencyContainer } from "tsyringe";
@@ -15,7 +14,6 @@ import type { ILogger } from "@spt/models/spt/utils/ILogger";
 import type { ConfigServer } from "@spt/servers/ConfigServer";
 import type { ILocationConfig, ILootMultiplier } from "@spt/models/spt/config/ILocationConfig";
 import type { IInRaidConfig } from "@spt/models/spt/config/IInRaidConfig";
-import type { IPmcConfig } from "@spt/models/spt/config/IPmcConfig";
 import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
 import type { DatabaseServer } from "@spt/servers/DatabaseServer";
 import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
@@ -29,13 +27,11 @@ const modName = "LateToTheParty";
 class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
 {
     private commonUtils: CommonUtils
-    private botConversionHelper: BotConversionHelper
     private lootRankingGenerator: LootRankingGenerator
     
     private logger: ILogger;
     private locationConfig: ILocationConfig;
     private inRaidConfig: IInRaidConfig;
-    private iPmcConfig: IPmcConfig;
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
@@ -70,30 +66,15 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
         }
 
         // Game start
-        // Needed to initialize bot conversion helper instance and loot ranking generator after any other mods have potentially changed config settings
+        // Needed to initialize loot ranking generator after any other mods have potentially changed config settings
         staticRouterModService.registerStaticRouter(`StaticAkiGameStart${modName}`,
             [{
                 url: "/client/game/start",
                 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                 action: async (url: string, info: any, sessionId: string, output: string) => 
                 {
-                    this.botConversionHelper = new BotConversionHelper(this.commonUtils, this.iPmcConfig);
-
                     this.generateLootRankingData(sessionId);
 
-                    return output;
-                }
-            }], "aki"
-        );
-
-        // Game end
-        // Needed for disabling the recurring task that modifies PMC-conversion chances
-        staticRouterModService.registerStaticRouter(`StaticAkiRaidEnd${modName}`,
-            [{
-                url: "/client/match/offline/end",
-                action: async (output: string) => 
-                {
-                    BotConversionHelper.stopRaidTimer();                    
                     return output;
                 }
             }], "aki"
@@ -135,22 +116,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
                 }
             }], "SetLootMultiplier"
         );
-
-        // Sets the escape time for the map and the current time remaining
-        dynamicRouterModService.registerDynamicRouter(`DynamicSetEscapeTime${modName}`,
-            [{
-                url: "/LateToTheParty/EscapeTime/",
-                action: async (url: string) => 
-                {
-                    const urlParts = url.split("/");
-                    const escapeTime = Number(urlParts[urlParts.length - 2]);
-                    const timeRemaining = Number(urlParts[urlParts.length - 1]);
-                    
-                    this.botConversionHelper.setEscapeTime(escapeTime, timeRemaining);
-                    return JSON.stringify({ resp: "OK" });
-                }
-            }], "SetEscapeTime"
-        );
     }
 
     public postDBLoad(container: DependencyContainer): void
@@ -164,7 +129,6 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
 
         this.locationConfig = this.configServer.getConfig(ConfigTypes.LOCATION);
         this.inRaidConfig = this.configServer.getConfig(ConfigTypes.IN_RAID);
-        this.iPmcConfig = this.configServer.getConfig(ConfigTypes.PMC);
 
         this.databaseTables = this.databaseServer.getTables();
         this.commonUtils = new CommonUtils(this.logger, this.databaseTables, this.localeService);

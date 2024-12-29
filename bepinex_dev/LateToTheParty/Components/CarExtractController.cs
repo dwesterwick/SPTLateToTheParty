@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Interactive;
+using LateToTheParty.Controllers;
 using UnityEngine;
 
-namespace LateToTheParty.Controllers
+namespace LateToTheParty.Components
 {
     public class CarExtractController : MonoBehaviour
     {
@@ -91,7 +92,7 @@ namespace LateToTheParty.Controllers
                 }
             }
 
-            Player nearestPlayer = Controllers.PlayerMonitorController.GetNearestPlayer(VEXExfil.transform.position);
+            Player nearestPlayer = PlayerMonitor.GetNearestPlayer(VEXExfil.transform.position);
             if (nearestPlayer == null)
             {
                 LoggingController.LogWarning("Cannot find an alive player near the VEX");

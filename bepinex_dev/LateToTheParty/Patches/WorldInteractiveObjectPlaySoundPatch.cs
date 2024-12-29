@@ -19,7 +19,7 @@ namespace LateToTheParty.Patches
         [PatchPrefix]
         protected static bool PatchPrefix(WorldInteractiveObject __instance)
         {
-            if (!Controllers.SwitchController.HasToggledInitialSwitches)
+            if (!Components.SwitchController.HasToggledInitialSwitches)
             {
                 Controllers.LoggingController.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled");
 

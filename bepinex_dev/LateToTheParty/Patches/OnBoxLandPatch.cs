@@ -8,6 +8,7 @@ using EFT.Interactive;
 using EFT.SynchronizableObjects;
 using SPT.Reflection.Patching;
 using LateToTheParty.Controllers;
+using LateToTheParty.Helpers;
 
 namespace LateToTheParty.Patches
 {

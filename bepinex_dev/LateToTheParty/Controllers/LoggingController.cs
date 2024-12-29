@@ -1,9 +1,10 @@
-﻿using System;
+﻿using EFT.InventoryLogic;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LateToTheParty.Models;
 
 namespace LateToTheParty.Controllers
 {
@@ -12,12 +13,9 @@ namespace LateToTheParty.Controllers
         public static BepInEx.Logging.ManualLogSource Logger { get; set; } = null;
         public static string LoggingPath { get; private set; } = "";
 
-        private static LoggingBuffer loggingBuffer;
-
-        public static void InitializeLoggingBuffer(int length, string path, string filePrefix)
+        public static void SetLoggingPath(string path)
         {
             LoggingPath = path;
-            loggingBuffer = new LoggingBuffer(length, path, filePrefix);
         }
 
         public static void LogInfo(string message)
@@ -28,7 +26,6 @@ namespace LateToTheParty.Controllers
             }
 
             Logger.LogInfo(message);
-            loggingBuffer.AddMessage(GetMessagePrefix('I') +  message);
         }
 
         public static void LogWarning(string message, bool onlyForDebug = false)
@@ -39,7 +36,6 @@ namespace LateToTheParty.Controllers
             }
 
             Logger.LogWarning(message);
-            loggingBuffer.AddMessage(GetMessagePrefix('W') + message);
         }
 
         public static void LogError(string message, bool onlyForDebug = false)
@@ -50,7 +46,6 @@ namespace LateToTheParty.Controllers
             }
 
             Logger.LogError(message);
-            loggingBuffer.AddMessage(GetMessagePrefix('E') + message);
         }
 
         public static void LogErrorToServerConsole(string message)
@@ -59,14 +54,46 @@ namespace LateToTheParty.Controllers
             ConfigController.ReportErrorToServer(message);
         }
 
-        public static void WriteMessagesToLogFile()
+        public static void WriteLootLogFile(Dictionary<Item, Models.LootInfo.AbstractLootInfo> lootInfo, string currentLocationName)
         {
-            loggingBuffer.WriteMessagesToLogFile();
-        }
+            LogInfo("Writing loot log file...");
 
-        private static string GetMessagePrefix(char messageType)
-        {
-            return "[" + messageType + "] " + DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + ": ";
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed,Accessible");
+            foreach (Item item in lootInfo.Keys)
+            {
+                sb.Append(item.LocalizedName().Replace(",", "") + ",");
+                sb.Append(item.TemplateId + ",");
+                sb.Append(ConfigController.LootRanking.Items[item.TemplateId].Value + ",");
+                sb.Append((lootInfo[item].RaidETWhenFound.HasValue ? lootInfo[item].RaidETWhenFound : 0) + ",");
+                sb.Append(lootInfo[item].RaidETWhenDestroyed.HasValue ? lootInfo[item].RaidETWhenDestroyed.ToString() : "");
+                sb.AppendLine("," + lootInfo[item].PathData.IsAccessible.ToString());
+            }
+
+            string filename = LoggingPath
+                + "loot_"
+                + currentLocationName.Replace(" ", "")
+                + "_"
+                + DateTime.Now.ToFileTimeUtc()
+                + ".csv";
+
+            try
+            {
+                if (!Directory.Exists(LoggingPath))
+                {
+                    Directory.CreateDirectory(LoggingPath);
+                }
+
+                File.WriteAllText(filename, sb.ToString());
+
+                LogInfo("Writing loot log file...done.");
+            }
+            catch (Exception e)
+            {
+                e.Data.Add("Filename", filename);
+                LogError("Writing loot log file...failed!");
+                LogError(e.ToString());
+            }
         }
     }
 }

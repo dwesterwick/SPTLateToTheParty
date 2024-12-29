@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -12,7 +11,8 @@ using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.CoroutineExtensions;
-using LateToTheParty.Models;
+using LateToTheParty.Helpers;
+using LateToTheParty.Models.LootInfo;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -26,29 +26,18 @@ namespace LateToTheParty.Controllers
         private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
         private static object lootableContainerLock = new object();
 
-        private static Dictionary<Item, Models.LootInfo> LootInfo = new Dictionary<Item, Models.LootInfo>();
+        private static Dictionary<Item, Models.LootInfo.AbstractLootInfo> LootInfo = new Dictionary<Item, Models.LootInfo.AbstractLootInfo>();
         private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
-        private static string[] secureContainerIDs = new string[0];
         private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
         private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
         private static string currentLocationName = "";
         private static int destroyedLootSlots = 0;
-        private static double lootValueRandomFactor = 0;
 
-        public static int LootableContainerCount
-        {
-            get { return AllLootableContainers.Count; }
-        }
+        public static int LootableContainerCount => AllLootableContainers.Count;
+        public static int TotalLootItemsCount => LootInfo.Count;
+        public static int RemainingLootItemsCount => LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count();
 
-        public static int TotalLootItemsCount
-        {
-            get { return LootInfo.Count; }
-        }
-
-        public static int RemainingLootItemsCount
-        {
-            get { return LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count(); }
-        }
+        public static bool WasDroppedByPlayer(this Item item) => ItemsDroppedByMainPlayer.Contains(item);
 
         public static IEnumerator Clear()
         {
@@ -64,10 +53,10 @@ namespace LateToTheParty.Controllers
 
             if (ConfigController.Config.Debug.Enabled && (LootInfo.Count > 0))
             {
-                WriteLootLogFile();
+                LoggingController.WriteLootLogFile(LootInfo, currentLocationName);
             }
 
-            PathRender.Clear();
+            Components.PathRender.Clear();
 
             lock (lootableContainerLock)
             {
@@ -80,9 +69,31 @@ namespace LateToTheParty.Controllers
             HasInitialLootBeenDestroyed = false;
             currentLocationName = "";
             destroyedLootSlots = 0;
-            lootValueRandomFactor = 0;
+
+            LootRankingHelpers.ResetLootValueRandomFactor();
 
             lastLootDestroyedTimer.Restart();
+        }
+
+        public static AbstractLootInfo FindLootInfo(this Item item)
+        {
+            if (!LootInfo.ContainsKey(item))
+            {
+                return null;
+            }
+
+            return LootInfo[item];
+        }
+
+        public static void AddLootInfo(Item item, AbstractLootInfo lootInfo)
+        {
+            if (LootInfo.ContainsKey(item))
+            {
+                throw new InvalidOperationException("An entry already exists for item " + item.Id);
+            }
+
+            LootInfo.Add(item, lootInfo);
+            //LoggingController.LogInfo("Found loot item: " + item.LocalizedName());
         }
 
         public static int FindAllLootableContainers(string _currentMapName)
@@ -188,13 +199,13 @@ namespace LateToTheParty.Controllers
                 // Find all loose loot
                 LootItem[] allLootItems = Singleton<GameWorld>.Instance.LootList.OfType<LootItem>().ToArray();
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(allLootItems, ProcessFoundLooseLootItem, firstLootSearch ? 0 : raidET);
+                yield return enumeratorWithTimeLimit.Run(allLootItems, LootDiscoveryHelpers.ProcessFoundLooseLootItem, firstLootSearch ? 0 : raidET);
 
                 // Search all lootable containers for loot
                 enumeratorWithTimeLimit.Reset();
                 lock (lootableContainerLock)
                 {
-                    yield return enumeratorWithTimeLimit.Run(AllLootableContainers, ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
+                    yield return enumeratorWithTimeLimit.Run(AllLootableContainers, LootDiscoveryHelpers.ProcessStaticLootContainer, firstLootSearch ? 0 : raidET);
                 }
 
                 // Ensure there is still loot on the map
@@ -254,28 +265,28 @@ namespace LateToTheParty.Controllers
                 }
 
                 // Enumerate loot that hasn't been destroyed and hasn't previously been deemed accessible
-                IEnumerable<KeyValuePair<Item, LootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory);
+                IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> remainingItems = LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory);
                 Item[] inaccessibleItems = remainingItems.Where(l => !l.Value.PathData.IsAccessible).Select(l => l.Key).ToArray();
 
                 // Check which items are accessible
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(inaccessibleItems, UpdateLootAccessibility);
+                yield return enumeratorWithTimeLimit.Run(inaccessibleItems, LootAccessibilityHelpers.UpdateAccessibility);
 
                 // Determine which loot is eligible to destroy
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), UpdateLootEligibility, playerPositions, raidET);
+                yield return enumeratorWithTimeLimit.Run(LootInfo.Keys.ToArray(), LootDestructionHelpers.UpdateLootEligibility, playerPositions, raidET);
 
                 // Sort eligible loot
-                IEnumerable <KeyValuePair<Item, Models.LootInfo>> eligibleItems = LootInfo
-                    .Where(l => l.Value.CanDestroy && l.Value.PathData.IsAccessible)
-                    .removeItemsWithoutValidTemplates();
+                IEnumerable <KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> eligibleItems = LootInfo
+                    .Where(l => !l.Value.CannotBeDestroyed && l.Value.EligibleForDestruction && l.Value.PathData.IsAccessible)
+                    .RemoveItemsWithoutValidTemplates();
                 
-                Item[] sortedLoot = SortLoot(eligibleItems).Select(i => i.Key).ToArray();
+                Item[] sortedLoot = eligibleItems.Sort().Select(i => i.Key).ToArray();
 
                 // Identify items to destroy
                 List<Item> itemsToDestroy = new List<Item>();
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(sortedLoot, FindItemsToDestroy, lootItemsToDestroy, targetLootSlotsToDestroy, itemsToDestroy);
+                yield return enumeratorWithTimeLimit.Run(sortedLoot, LootDestructionHelpers.FindChildItemsToDestroy, lootItemsToDestroy, targetLootSlotsToDestroy, itemsToDestroy);
                 
                 // Show the percentage of accessible loot before destroying any of it
                 if (itemsToDestroy.Count > 0)
@@ -291,7 +302,7 @@ namespace LateToTheParty.Controllers
 
                 // Destroy items
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, DestroyLoot);
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, LootDestructionHelpers.DestroyLoot);
 
                 itemsToDestroy.Clear();
             }
@@ -299,165 +310,6 @@ namespace LateToTheParty.Controllers
             {
                 IsFindingAndDestroyingLoot = false;
             }
-        }
-
-        private static void ProcessFoundLooseLootItem(LootItem lootItem, double raidET)
-        {
-            // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((Camera.main == null) || (lootItem.transform == null))
-            {
-                return;
-            }
-
-            // Ignore quest items like the bronze pocket watch for "Checking"
-            if (lootItem.Item.QuestItem)
-            {
-                return;
-            }
-
-            // Find the nearest spawn point. If none is found, the map is invalid or the raid has ended
-            Vector3? nearestSpawnPoint = LocationSettingsController.GetNearestSpawnPointPosition(lootItem.transform.position, EPlayerSideMask.Pmc);
-            if (!nearestSpawnPoint.HasValue)
-            {
-                return;
-            }
-            double distanceToNearestSpawnPoint = Vector3.Distance(lootItem.transform.position, nearestSpawnPoint.Value);
-
-            // Find all items associated with lootItem that are eligible for despawning
-            IEnumerable<Item> allItems = lootItem.Item.FindAllItemsInContainer(true).RemoveExcludedItems().RemoveItemsDroppedByPlayer();
-            foreach (Item item in allItems)
-            {
-                if (item.isLocked())
-                {
-                    ItemsDroppedByMainPlayer.Add(item);
-                    continue;
-                }
-
-                if (!LootInfo.ContainsKey(item))
-                {
-                    Models.LootInfo newLoot = new Models.LootInfo(
-                            Models.ELootType.Loose,
-                            lootItem.ItemOwner,
-                            lootItem.transform,
-                            distanceToNearestSpawnPoint,
-                            GetLootFoundTime(raidET)
-                    );
-
-                    findNearbyContainters(item, newLoot);
-
-                    LootInfo.Add(item, newLoot);
-                    //LoggingController.LogInfo("Found loose loot item: " + item.LocalizedName());
-                }
-            }
-        }
-
-        private static void ProcessStaticLootContainer(LootableContainer lootableContainer, double raidET)
-        {
-            if (lootableContainer.ItemOwner == null)
-            {
-                return;
-            }
-
-            // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((Camera.main == null) || (lootableContainer.transform == null))
-            {
-                return;
-            }
-
-            // Find the nearest spawn point. If none is found, the map is invalid or the raid has ended
-            Vector3? nearestSpawnPoint = LocationSettingsController.GetNearestSpawnPointPosition(lootableContainer.transform.position, EPlayerSideMask.Pmc);
-            if (!nearestSpawnPoint.HasValue)
-            {
-                return;
-            }
-            double distanceToNearestSpawnPoint = Vector3.Distance(lootableContainer.transform.position, nearestSpawnPoint.Value);
-
-            // NOTE: This level is for containers like weapon boxes, not like backpacks
-            foreach (Item containerItem in lootableContainer.ItemOwner.Items)
-            {
-                foreach (Item item in containerItem.FindAllItemsInContainer().RemoveItemsDroppedByPlayer())
-                {
-                    if (item.isLocked())
-                    {
-                        ItemsDroppedByMainPlayer.Add(item);
-                        continue;
-                    }
-
-                    if (!LootInfo.ContainsKey(item))
-                    {
-                        Models.LootInfo newLoot = new Models.LootInfo(
-                            Models.ELootType.Static,
-                            lootableContainer.ItemOwner,
-                            lootableContainer.transform,
-                            distanceToNearestSpawnPoint,
-                            GetLootFoundTime(raidET)
-                        );
-
-                        if (lootableContainer.DoorState == EDoorState.Locked)
-                        {
-                            newLoot.ParentContainer = lootableContainer;
-                        }
-
-                        findNearbyContainters(item, newLoot);
-
-                        LootInfo.Add(item, newLoot);
-                    }
-                }
-            }
-        }
-
-        private static bool isLocked(this Item item)
-        {
-            if (item.PinLockState == EItemPinLockState.Locked)
-            {
-                LoggingController.LogWarning(item.LocalizedName() + " is locked", true);
-                return true;
-            }
-
-            GClass3113 parentSlot = item.Parent as GClass3113;
-            if ((parentSlot != null) && parentSlot.Slot.Locked)
-            {
-                LoggingController.LogWarning(item.LocalizedName() + " is locked inside " + parentSlot.ContainerName.Localized(), true);
-                return true;
-            }
-
-            GClass3114 parentStackSlot = item.Parent as GClass3114;
-            if (parentStackSlot != null)
-            {
-                // Weird EFT edge case with ammo boxes
-                if (parentStackSlot.StackSlot.Items.IndexOf(item) != parentStackSlot.StackSlot.Items.Count() - 1)
-                {
-                    LoggingController.LogWarning(item.LocalizedName() + " is locked inside stack " + parentStackSlot.ContainerName.Localized(), true);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static void findNearbyContainters(Item lootItem, Models.LootInfo lootInfo)
-        {
-            Type typeToSearch = ConfigController.Config.DestroyLootDuringRaid.OnlySearchForNearbyTrunks ? typeof(Trunk) : typeof(WorldInteractiveObject);
-
-            IEnumerable <WorldInteractiveObject> nearbyInteractiveObjects = InteractiveObjectController
-                .FindNearbyInteractiveObjects(lootInfo.Transform.position, ConfigController.Config.DestroyLootDuringRaid.NearbyInteractiveObjectSearchDistance, typeToSearch)
-                .OrderBy(o => Vector3.Distance(lootInfo.Transform.position, o.transform.position));
-
-            if (nearbyInteractiveObjects.Any())
-            {
-                lootInfo.NearbyInteractiveObject = nearbyInteractiveObjects.First();
-                LoggingController.LogInfo(lootItem.LocalizedName() + " is nearby " + lootInfo.NearbyInteractiveObject.GetType().Name + " " + lootInfo.NearbyInteractiveObject.Id);
-            }
-        }
-
-        private static double GetLootFoundTime(double raidET)
-        {
-            return raidET == 0 ? -1.0 * ConfigController.Config.DestroyLootDuringRaid.MinLootAge : raidET;
-        }
-
-        private static void UpdateLootEligibility(Item item, IEnumerable<Vector3> playerPositions, double raidET)
-        {
-            LootInfo[item].CanDestroy = CanDestroyItem(item, playerPositions, raidET);
         }
 
         private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
@@ -468,7 +320,7 @@ namespace LateToTheParty.Controllers
             //LoggingController.LogInfo("Target loot remaining: " + targetLootRemainingFraction + ", Current loot remaining: " + GetCurrentLootRemainingFraction());
 
             // Calculate the number of loot items to destroy
-            IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
+            IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
             int lootItemsToDestroy = (int)Math.Floor(Math.Max(0, lootFractionToDestroy) * accessibleItems.Count());
 
             return lootItemsToDestroy;
@@ -476,8 +328,8 @@ namespace LateToTheParty.Controllers
 
         private static double GetCurrentLootRemainingFraction()
         {
-            IEnumerable<KeyValuePair<Item, Models.LootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
-            IEnumerable<KeyValuePair<Item, Models.LootInfo>> remainingItems = accessibleItems
+            IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
+            IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> remainingItems = accessibleItems
                 .Where(v => !v.Value.IsDestroyed)
                 .Where(v => !v.Value.IsInPlayerInventory)
                 .Where(v => !ItemsDroppedByMainPlayer.Contains(v.Key));
@@ -495,608 +347,29 @@ namespace LateToTheParty.Controllers
             return destroyedLootSlots + collectedItems.Select(i => i.GetItemSlots()).Count();
         }
 
-        private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> SortLoot(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
+        public static void ConfirmItemDestruction(Item item)
         {
-            System.Random random = new System.Random();
-
-            // Get the loot ranking data from the server, but this only needs to be done once
-            if (ConfigController.LootRanking == null)
+            AbstractLootInfo lootInfo = item.FindLootInfo();
+            if (lootInfo == null)
             {
-                ConfigController.GetLootRankingData();
+                throw new InvalidOperationException("Loot has not been found");
             }
 
-            // If loot ranking is disabled or invalid, simply sort the loot randomly
-            if
-            (
-                !ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled
-                || (ConfigController.LootRanking == null)
-                || (ConfigController.LootRanking.Items.Count == 0)
-            )
-            {
-                return loot.OrderBy(i => random.NextDouble());
-            }
-
-            // Determine how much randomness to apply to loot sorting
-            if (lootValueRandomFactor == 0)
-            {
-                double lootValueRange = getLootValueRange(loot);
-                lootValueRandomFactor = lootValueRange * ConfigController.Config.DestroyLootDuringRaid.LootRanking.Randomness / 100.0;
-            }
-
-            //LoggingController.LogInfo("Randomness factor: " + lootValueRandomFactor);
-
-            // Return loot sorted by value but with randomness applied
-            IEnumerable<KeyValuePair<Item, Models.LootInfo>> sortedLoot = loot.OrderByDescending(i => ConfigController.LootRanking.Items[i.Key.TemplateId].Value + (random.Range(-1, 1) * lootValueRandomFactor));
-            return sortedLoot.Skip(ConfigController.Config.DestroyLootDuringRaid.LootRanking.TopValueRetainCount);
-        }
-
-        private static double getLootValueRange(IEnumerable<KeyValuePair<Item, Models.LootInfo>> loot)
-        {
-            // Calculate the values of all of the loot on the map
-            List<double> lootValues = new List<double>();
-            foreach (KeyValuePair<Item, Models.LootInfo> lootItem in loot)
-            {
-                if (!ConfigController.LootRanking.Items.ContainsKey(lootItem.Key.TemplateId))
-                {
-                    LoggingController.LogWarning("Cannot find " + lootItem.Key.LocalizedName() + " in loot-ranking data.");
-                    continue;
-                }
-
-                double? value = ConfigController.LootRanking.Items[lootItem.Key.TemplateId].Value;
-                if (!value.HasValue)
-                {
-                    LoggingController.LogWarning("The value of " + lootItem.Key.LocalizedName() + " is null in the loot-ranking data.");
-                    continue;
-                }
-
-                lootValues.Add(value.Value);
-            }
-
-            // Calculate the standard deviation of the loot values on the map
-            double lootValueAvg = lootValues.Average();
-            double lootValueStdev = 0;
-            foreach (double val in lootValues)
-            {
-                lootValueStdev += Math.Pow(val - lootValueAvg, 2);
-            }
-            lootValueStdev = Math.Sqrt(lootValueStdev / lootValues.Count);
-
-            // Return the range of 2*sigma of the loot values on the map
-            return lootValueStdev * 4;
-        }
-
-        private static bool CanDestroyItem(this Item item, IEnumerable<Vector3> playerPositions, double raidET)
-        {
-            if (!LootInfo.ContainsKey(item))
-            {
-                return false;
-            }
-
-            if (LootInfo[item].IsDestroyed || LootInfo[item].IsInPlayerInventory || ItemsDroppedByMainPlayer.Contains(item))
-            {
-                return false;
-            }
-
-            // Ensure enough time has elapsed since the loot was first placed on the map (to prevent loot on dead bots from being destroyed too soon)
-            double lootAge = raidET - LootInfo[item].RaidETWhenFound;
-            if (lootAge < ConfigController.Config.DestroyLootDuringRaid.MinLootAge)
-            {
-                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot age: " + lootAge + ")");
-                return false;
-            }
-
-            // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((Camera.main == null) || (LootInfo[item].Transform == null))
-            {
-                return false;
-            }
-
-            // Ignore loot that's too close to a player
-            if (playerPositions.Any(p => Vector3.Distance(p, LootInfo[item].Transform.position) < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadius))
-            {
-                return false;
-            }
-
-            // Ignore loot that's too close to bots
-            Player nearestPlayer = NavMeshController.GetNearestPlayer(LootInfo[item].Transform.position);
-            if (nearestPlayer == null)
-            {
-                return false;
-            }
-            float lootDist = Vector3.Distance(nearestPlayer.Position, LootInfo[item].Transform.position);
-            if (lootDist < ConfigController.Config.DestroyLootDuringRaid.ExclusionRadiusBots)
-            {
-                return false;
-            }
-
-            // Ignore loot that players couldn't have possibly reached yet
-            double maxBotRunDistance = raidET * ConfigController.Config.DestroyLootDuringRaid.MapTraversalSpeed;
-            if (maxBotRunDistance < LootInfo[item].DistanceToNearestSpawnPoint)
-            {
-                //LoggingController.LogInfo("Ignoring " + item.LocalizedName() + " (Loot Distance: " + LootInfo[item].DistanceToNearestSpawnPoint + ", Current Distance: " + maxBotRunDistance + ")");
-                return false;
-            }
-
-            return true;
-        }
-
-        private static void UpdateLootAccessibility(Item item)
-        {
-            if (!Singleton<GameWorld>.Instantiated)
-            {
-                return;
-            }
-
-            string lootPathName = GetLootPathName(item);
-            Vector3 itemPosition = LootInfo[item].Transform.position;            
-            
-            // Draw a sphere around the loot item
-            if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
-            {
-                Vector3[] targetCirclePoints = PathRender.GetSpherePoints
-                (
-                    itemPosition,
-                    ConfigController.Config.Debug.LootPathVisualization.LootOutlineRadius,
-                    ConfigController.Config.Debug.LootPathVisualization.PointsPerCircle
-                );
-                PathVisualizationData lootOutline = new PathVisualizationData(lootPathName + "_itemOutline", targetCirclePoints, Color.white);
-                if (LootInfo[item].PathData.LootOutlineData == null)
-                {
-                    LootInfo[item].PathData.LootOutlineData = lootOutline;
-                }
-                else
-                {
-                    LootInfo[item].PathData.LootOutlineData.Replace(lootOutline);
-                }
-                LootInfo[item].PathData.Update();
-            }
-
-            // Mark the loot as inaccessible if it is inside a locked container
-            if ((LootInfo[item].ParentContainer != null) && (LootInfo[item].ParentContainer.DoorState == EDoorState.Locked))
-            {
-                LootInfo[item].PathData.IsAccessible = false;
-
-                if (LootInfo[item].PathData.LootOutlineData != null)
-                {
-                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
-                }
-                LootInfo[item].PathData.Clear(true);
-                LootInfo[item].PathData.Update();
-
-                return;
-            }
-
-            // Mark the loot as inaccessible if it is likely behind a locked interactive object
-            if ((LootInfo[item].NearbyInteractiveObject != null) && (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Locked))
-            {
-                LootInfo[item].PathData.IsAccessible = false;
-
-                if (LootInfo[item].PathData.LootOutlineData != null)
-                {
-                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.red;
-                }
-                LootInfo[item].PathData.Clear(true);
-                LootInfo[item].PathData.Update();
-
-                return;
-            }
-
-            // Make everything accessible if the accessibility-checking system is disabled
-            if (!ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.Enabled)
-            {
-                LootInfo[item].PathData.IsAccessible = true;
-
-                if (LootInfo[item].PathData.LootOutlineData != null)
-                {
-                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.green;
-                }
-
-                LootInfo[item].PathData.Clear(true);
-                LootInfo[item].PathData.Update();
-
-                return;
-            }
-
-            // If the item appeared after the start of the raid, assume it must be accessible (it's likely on a dead bot)
-            if (LootInfo[item].RaidETWhenFound > 0)
-            {
-                LootInfo[item].PathData.IsAccessible = true;
-
-                if (LootInfo[item].PathData.LootOutlineData != null)
-                {
-                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.green;
-                }
-
-                LootInfo[item].PathData.Clear(true);
-                LootInfo[item].PathData.Update();
-
-                return;
-            }
-
-            // Check if the loot is near a locked door. If not, assume it's accessible. 
-            float distanceToNearestLockedDoor = NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
-            if
-            (
-                (distanceToNearestLockedDoor < float.MaxValue)
-                && (distanceToNearestLockedDoor > ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.ExclusionRadius)
-            )
-            {
-                LootInfo[item].PathData.IsAccessible = true;
-
-                if (LootInfo[item].PathData.LootOutlineData != null)
-                {
-                    LootInfo[item].PathData.LootOutlineData.LineColor = Color.green;
-                }
-
-                LootInfo[item].PathData.Clear(true);
-                LootInfo[item].PathData.Update();
-
-                return;
-            }
-
-            // Find the nearest position where a player could realistically exist
-            Player nearestPlayer = NavMeshController.GetNearestPlayer(itemPosition);
-            if (nearestPlayer == null)
-            {
-                return;
-            }
-            Vector3? nearestSpawnPointPosition = LocationSettingsController.GetNearestSpawnPointPosition(itemPosition);
-            Vector3 nearestPosition = nearestPlayer.Transform.position;
-            if (nearestSpawnPointPosition.HasValue && (Vector3.Distance(itemPosition, nearestSpawnPointPosition.Value) < Vector3.Distance(itemPosition, nearestPosition)))
-            {
-                nearestPosition = nearestSpawnPointPosition.Value;
-            }
-
-            // Do not try finding a NavMesh path if the item is too far away due to performance concerns
-            if (Vector3.Distance(nearestPosition, itemPosition) > ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.MaxPathSearchDistance)
-            {
-                return;
-            }
-
-            // Try to find a path to the loot item via the NavMesh from the nearest realistic position determined above
-            PathAccessibilityData fullAccessibilityData = NavMeshController.GetPathAccessibilityData(nearestPosition, itemPosition, lootPathName);
-            LootInfo[item].PathData.Merge(fullAccessibilityData);
-
-            // If the last search resulted in an incomplete path, remove the marker for the previous target NavMesh position
-            if (LootInfo[item].PathData.IsAccessible && (LootInfo[item].PathData.LastNavPointOutline != null))
-            {
-                LootInfo[item].PathData.LastNavPointOutline.Clear();
-            }
-
-            LootInfo[item].PathData.Update();
-        }
-
-        private static string GetLootPathName(Item item)
-        {
-            return item.LocalizedName() + "_" + item.Id;
-        }
-
-        private static void FindItemsToDestroy(Item item, int totalItemsToDestroy, int lootSlotsToDestroy, List<Item> allItemsToDestroy)
-        {
-            // Do not search for more items if enough have already been identified
-            if (allItemsToDestroy.Count >= totalItemsToDestroy)
-            {
-                return;
-            }
-
-            // Make sure the item isn't already in the queue to be destroyed
-            if (allItemsToDestroy.Contains(item))
-            {
-                return;
-            }
-
-            // Do not search for more items if enough slots will be destroyed for the items in the queue
-            if (allItemsToDestroy.Sum(i => i.GetItemSlots()) >= lootSlotsToDestroy)
-            {
-                return;
-            }
-
-            // Find all parents of the item. Need to do this in case the item is (for example) a gun. If only the gun item is destroyed,
-            // all of the mods, magazines, etc. on it will be orphaned and cause errors
-            IEnumerable<Item> parentItems = item.ToEnumerable();
-            try
-            {
-                IEnumerable<Item> _parentItems = item.GetAllParentItems();
-                parentItems = parentItems.Concat(_parentItems);
-            }
-            catch (Exception)
-            {
-                LoggingController.LogError("Could not get parents of " + item.LocalizedName() + " (" + item.TemplateId + ")");
-                throw;
-            }
-
-            // Remove all invalid items from the parent list (secure containers, fixed loot containers, etc.)
-            try
-            {
-                parentItems = parentItems.RemoveExcludedItems();
-            }
-            catch (Exception)
-            {
-                LoggingController.LogError("Could not removed excluded items from " + string.Join(",", parentItems.Select(i => i.LocalizedName())));
-                throw;
-            }
-
-            // Check if there aren't any items remaining after filtering
-            if (parentItems.Count() == 0)
-            {
-                return;
-            }
-
-            // Get all child items of the parent item. The array needs to be reversed to prevent any of the items from becoming orphaned. 
-            Item parentItem = parentItems.Last();
-
-            // Check if the item cannot be removed from its parent
-            Item[] allItems;
-            if (CanRemoveItemFromParent(item, parentItem))
-            {
-                allItems = item.GetAllItems().Reverse().ToArray();                
-                if (allItems.Length > ConfigController.Config.DestroyLootDuringRaid.LootRanking.ChildItemLimits.Count)
-                {
-                    LoggingController.LogInfo(item.LocalizedName() + " has too many child items to destroy.");
-                    return;
-                }
-
-                double allItemsWeight = allItems.Select(i => i.Weight).Sum();
-                if ((allItems.Length > 1) && (allItemsWeight > ConfigController.Config.DestroyLootDuringRaid.LootRanking.ChildItemLimits.TotalWeight))
-                {
-                    LoggingController.LogInfo(item.LocalizedName() + " and its child items are too heavy to destroy.");
-                    return;
-                }
-
-                AddItemsToDespawnList(allItems, item, allItemsToDestroy);
-                return;
-            }
-            LoggingController.LogInfo(item.LocalizedName() + " cannot be removed from " + parentItem.LocalizedName() + ". Destroying parent item and all children.");
-
-            // Get all children of the parent item and add them to the despawn list
-            allItems = parentItem.GetAllItems().Reverse().ToArray();
-            AddItemsToDespawnList(allItems, parentItem, allItemsToDestroy);
-        }
-
-        private static bool CanRemoveItemFromParent(Item item, Item parentItem)
-        {
-            if (item.TemplateId == parentItem.TemplateId)
-            {
-                return true;
-            }
-
-            CompoundItem compoundItem;
-            if ((compoundItem = (parentItem as CompoundItem)) == null)
-            {
-                return true;
-            }
-
-            foreach(Slot slot in compoundItem.Slots)
-            {
-                /*if (!slot.Required)
-                {
-                    continue;
-                }
-
-                if (slot.Items.Contains(item))
-                {
-                    return false;
-                }*/
-
-                if (slot.RemoveItem(true).Failed)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static int AddItemsToDespawnList(Item[] items, Item parentItem, List<Item> allItemsToDestroy)
-        {
-            int despawnCount = 0;
-            foreach (Item item in items)
-            {
-                despawnCount += AddItemToDespawnList(item, parentItem, allItemsToDestroy) ? 1: 0;
-            }
-            return despawnCount;
-        }
-
-        private static bool AddItemToDespawnList(Item item, Item parentItem, List<Item> allItemsToDestroy)
-        {
-            if (allItemsToDestroy.Contains(item))
-            {
-                return false;
-            }
-
-            if (!LootInfo.ContainsKey(item))
-            {
-                LoggingController.LogWarning("Could not find entry for " + item.LocalizedName());
-                return false;
-            }
-
-            if (item.CurrentAddress == null)
-            {
-                LoggingController.LogWarning("Invalid parent for " + item.LocalizedName());
-                return false;
-            }
-
-            // Ensure child items are destroyed before parent items
-            LootInfo[item].ParentItem = parentItem;
-            if ((item.Parent.Container.ParentItem != null) && allItemsToDestroy.Contains(item.Parent.Container.ParentItem))
-            {
-                allItemsToDestroy.Insert(allItemsToDestroy.IndexOf(item.Parent.Container.ParentItem), item);
-            }
-            else
-            {
-                allItemsToDestroy.Add(item);
-            }
-
-            return true;
-        }
-
-        private static void DestroyLoot(Item item)
-        {
-            try
-            {
-                // If the item is likely behind an interactive object, open it first
-                if (LootInfo[item].NearbyInteractiveObject != null)
-                {
-                    if (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Locked)
-                    {
-                        throw new InvalidOperationException("Cannot destroy loot behind a locked interactive object");
-                    }
-
-                    if (LootInfo[item].NearbyInteractiveObject.DoorState == EDoorState.Shut)
-                    {
-                        LoggingController.LogInfo("Opening interactive object: " + LootInfo[item].NearbyInteractiveObject.Id + "...");
-                        LootInfo[item].NearbyInteractiveObject.Interact(new InteractionResult(EInteractionType.Open));
-                    }
-                }
-
-                // This method no longer exists in SPT 3.10
-                //LootInfo[item].TraderController.DestroyItem(item);
-
-                var resizeOperation = InteractionsHandlerClass.Resize_Helper(item, item.Parent, InteractionsHandlerClass.EResizeAction.Removal, false, true);
-                if (resizeOperation.Failed)
-                {
-                    LoggingController.LogError("Could not manipulate " + item.LocalizedName() + ": " + resizeOperation.Error.ToString());
-                    return;
-                }
-
-                var destroyOperation = item.Parent.Remove(item, true);
-                if (destroyOperation.Failed)
-                {
-                    LoggingController.LogError("Could not create destroy operation for " + item.LocalizedName() + ": " + destroyOperation.Error.ToString());
-
-                    resizeOperation.Value.RollBack();
-                    return;
-                }
-
-                var destroyTransaction = new GClass3131(item, item.Parent, LootInfo[item].TraderController, resizeOperation.Value, destroyOperation.Value, null, true);
-                var destroyTransactionCast = (GStruct446<GClass3131>)destroyTransaction;
-
-                LootInfo[item].TraderController.TryRunNetworkTransaction(destroyTransactionCast, (result) => networkTransactionCallback(result));
-
-                finishDestroyingItem(item);
-            }
-            catch (Exception ex)
-            {
-                LoggingController.LogError("Could not destroy " + item.LocalizedName());
-                LoggingController.LogError(ex.ToString());
-                LootInfo.Remove(item);
-            }
-        }
-
-        private static void networkTransactionCallback(IResult result)
-        {
-            if (result.Failed)
-            {
-                LoggingController.LogError("Received error during network transaction: " + result.Error);
-            }
-        }
-
-        private static void finishDestroyingItem(Item item)
-        {
             float raidTimeElapsed = SPT.SinglePlayer.Utils.InRaid.RaidTimeUtil.GetElapsedRaidSeconds();
 
-            LootInfo[item].IsDestroyed = true;
-            LootInfo[item].RaidETWhenDestroyed = raidTimeElapsed;
+            lootInfo.IsDestroyed = true;
+            lootInfo.RaidETWhenDestroyed = raidTimeElapsed;
             lastLootDestroyedTimer.Restart();
             destroyedLootSlots += item.GetItemSlots();
 
             LoggingController.LogInfo(
-                "Destroyed " + LootInfo[item].LootType + " loot"
-                + (((LootInfo[item].ParentItem != null) && (LootInfo[item].ParentItem.TemplateId != item.TemplateId)) ? " in " + LootInfo[item].ParentItem.LocalizedName() : "")
+                "Destroyed " + lootInfo.LootTypeName
+                + (((lootInfo.ParentItem != null) && (lootInfo.ParentItem.TemplateId != item.TemplateId)) ? " in " + lootInfo.ParentItem.LocalizedName() : "")
                 + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
                 + ": " + item.LocalizedName()
             );
 
-            LootInfo[item].PathData.Clear();
-        }
-
-        private static IEnumerable<KeyValuePair<Item, Models.LootInfo>> removeItemsWithoutValidTemplates(this IEnumerable<KeyValuePair<Item, Models.LootInfo>> lootInfo)
-        {
-            // If loot ranking is disabled or invalid, this cannot be performed
-            if
-            (
-                !ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled
-                || (ConfigController.LootRanking == null)
-                || (ConfigController.LootRanking.Items.Count == 0)
-            )
-            {
-                return LootInfo;
-            }
-
-            foreach (KeyValuePair<Item, Models.LootInfo> item in lootInfo)
-            {
-                if (ConfigController.LootRanking.Items.ContainsKey(item.Key.TemplateId))
-                {
-                    continue;
-                }
-
-                LoggingController.LogWarning("Preventing " + item.Key.LocalizedName() + " from being destroyed because it does not have a valid template (" + item.Key.TemplateId + ")");
-            }
-
-            return lootInfo.Where(l => ConfigController.LootRanking.Items.ContainsKey(l.Key.TemplateId));
-        }
-
-        private static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items)
-        {
-            return items.Where(i => !ItemsDroppedByMainPlayer.Contains(i));
-        }
-
-        private static IEnumerable<Item> RemoveExcludedItems(this IEnumerable<Item> items)
-        {
-            // This should only be run once to generate the array of secure container ID's
-            if (secureContainerIDs.Length == 0)
-            {
-                secureContainerIDs = ItemHelpers.GetSecureContainerIDs().ToArray();
-            }
-
-            IEnumerable<Item> filteredItems = items
-                .Where(i => i.Template.Parent == null || !ConfigController.Config.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
-                .Where(i => !ConfigController.Config.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
-                .Where(i => !secureContainerIDs.Contains(i.TemplateId.ToString()));
-
-            return filteredItems;
-        }
-
-        private static void WriteLootLogFile()
-        {
-            LoggingController.LogInfo("Writing loot log file...");
-
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed,Accessible");
-            foreach(Item item in LootInfo.Keys)
-            {
-                sb.Append(item.LocalizedName().Replace(",", "") + ",");
-                sb.Append(item.TemplateId + ",");
-                sb.Append(ConfigController.LootRanking.Items[item.TemplateId].Value + ",");
-                sb.Append((LootInfo[item].RaidETWhenFound >= 0 ? LootInfo[item].RaidETWhenFound : 0) + ",");
-                sb.Append(LootInfo[item].RaidETWhenDestroyed >= 0 ? LootInfo[item].RaidETWhenDestroyed.ToString() : "");
-                sb.AppendLine("," + LootInfo[item].PathData.IsAccessible.ToString());
-            }
-
-            string filename = LoggingController.LoggingPath
-                + "loot_"
-                + currentLocationName.Replace(" ", "")
-                + "_"
-                + DateTime.Now.ToFileTimeUtc()
-                + ".csv";
-
-            try
-            {
-                if (!Directory.Exists(LoggingController.LoggingPath))
-                {
-                    Directory.CreateDirectory(LoggingController.LoggingPath);
-                }
-
-                File.WriteAllText(filename, sb.ToString());
-
-                LoggingController.LogInfo("Writing loot log file...done.");
-            }
-            catch (Exception e)
-            {
-                e.Data.Add("Filename", filename);
-                LoggingController.LogError("Writing loot log file...failed!");
-                LoggingController.LogError(e.ToString());
-            }
+            lootInfo.PathData.Clear();
         }
     }
 }

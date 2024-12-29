@@ -70,16 +70,6 @@ namespace LateToTheParty.Controllers
             return _names;
         }
 
-        public static void ShareEscapeTime(int escapeTime, double timeRemaining)
-        {
-            RequestHandler.GetJson("/LateToTheParty/EscapeTime/" + escapeTime + "/" + timeRemaining);
-        }
-
-        public static void ShareQuestStatusChange(string questID, string newStatus)
-        {
-            RequestHandler.GetJson("/LateToTheParty/QuestStatusChange/" + questID + "/" + newStatus);
-        }
-
         public static void ReportInfoToServer(string message)
         {
             SPT.Common.Utils.ServerLog.Info("Late to the Party", message);
