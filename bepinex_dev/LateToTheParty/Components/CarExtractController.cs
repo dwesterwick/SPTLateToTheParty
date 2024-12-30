@@ -95,7 +95,6 @@ namespace LateToTheParty.Components
             Player nearestPlayer = PlayerMonitor.GetNearestPlayer(VEXExfil.transform.position);
             if (nearestPlayer == null)
             {
-                LoggingController.LogWarning("Cannot find an alive player near the VEX");
                 return;
             }
 

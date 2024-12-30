@@ -12,6 +12,7 @@ using LateToTheParty.Controllers;
 namespace LateToTheParty
 {
     [BepInIncompatibility("Jehree.LockableDoors")]
+    [BepInIncompatibility("com.fika.core")]
     [BepInDependency("xyz.drakia.waypoints", "1.6.0")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin

@@ -254,11 +254,24 @@ namespace LateToTheParty.Helpers
                 throw new InvalidOperationException("Cannot destroy loot behind a locked interactive object");
             }
 
-            if (lootInfo.NearbyInteractiveObject.DoorState == EDoorState.Shut)
+            // This should be checked after ensuring the door is not locked as a sanity check
+            if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
             {
-                LoggingController.LogInfo("Opening interactive object: " + lootInfo.NearbyInteractiveObject.Id + "...");
-                lootInfo.NearbyInteractiveObject.Interact(new InteractionResult(EInteractionType.Open));
+                return;
             }
+
+            if (lootInfo.NearbyInteractiveObject.DoorState == EDoorState.Open)
+            {
+                return;
+            }
+
+            if (lootInfo.NearbyInteractiveObject.DoorState != EDoorState.Shut)
+            {
+                LoggingController.LogWarning("Cannot open door " + lootInfo.NearbyInteractiveObject.Id + " because its state is " + lootInfo.NearbyInteractiveObject.DoorState);
+                return;
+            }
+
+            lootInfo.NearbyInteractiveObject.ExecuteInteraction(new InteractionResult(EInteractionType.Open));
         }
 
         private static void runNetworkTransactionToDestroy(this Item item)
@@ -266,32 +279,20 @@ namespace LateToTheParty.Helpers
             AbstractLootInfo lootInfo = item.FindLootInfo();
             if (lootInfo == null)
             {
-                throw new InvalidOperationException("Cannot destroy loot that has not been found");
+                throw new InvalidOperationException(item.LocalizedName() + " cannot be destroyed because it has not yet been discovered");
             }
 
             // This method no longer exists in SPT 3.10
             //lootInfo.TraderController.DestroyItem(item);
 
-            var resizeOperation = InteractionsHandlerClass.Resize_Helper(item, item.Parent, InteractionsHandlerClass.EResizeAction.Removal, false, true);
-            if (resizeOperation.Failed)
+            var discardTransaction = InteractionsHandlerClass.Discard(item, lootInfo.TraderController, true);
+            if (discardTransaction.Failed)
             {
-                LoggingController.LogError("Could not manipulate " + item.LocalizedName() + ": " + resizeOperation.Error.ToString());
-                return;
+                string message = "Could not discard " + item.LocalizedName() + ": " + discardTransaction.Error.ToString();
+                throw new InvalidOperationException(message);
             }
 
-            var destroyOperation = item.Parent.Remove(item, true);
-            if (destroyOperation.Failed)
-            {
-                LoggingController.LogError("Could not create destroy operation for " + item.LocalizedName() + ": " + destroyOperation.Error.ToString());
-
-                resizeOperation.Value.RollBack();
-                return;
-            }
-
-            var destroyTransaction = new GClass3131(item, item.Parent, lootInfo.TraderController, resizeOperation.Value, destroyOperation.Value, null, true);
-            var destroyTransactionCast = (GStruct446<GClass3131>)destroyTransaction;
-
-            lootInfo.TraderController.TryRunNetworkTransaction(destroyTransactionCast, (result) => networkTransactionCallback(result));
+            lootInfo.TraderController.TryRunNetworkTransaction(discardTransaction, networkTransactionCallback);
 
             LootManager.ConfirmItemDestruction(item);
         }

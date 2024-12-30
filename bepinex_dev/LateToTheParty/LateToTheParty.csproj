@@ -128,12 +128,14 @@
     <Compile Include="Components\PlayerMonitor.cs" />
     <Compile Include="Components\SwitchController.cs" />
     <Compile Include="CoroutineExtensions\EnumeratorWithTimeLimit.cs" />
+    <Compile Include="Helpers\InteractiveObjectHelpers.cs" />
     <Compile Include="Helpers\ItemHelpers.cs" />
     <Compile Include="Helpers\LootAccessibilityHelpers.cs" />
     <Compile Include="Helpers\LootDestructionHelpers.cs" />
     <Compile Include="Helpers\LootDiscoveryHelpers.cs" />
     <Compile Include="Helpers\LootFilteringHelpers.cs" />
     <Compile Include="Helpers\LootRankingHelpers.cs" />
+    <Compile Include="Helpers\ObjectHelpers.cs" />
     <Compile Include="Models\LootInfo\ContainerLootInfo.cs" />
     <Compile Include="Models\LootInfo\LooseLootInfo.cs" />
     <Compile Include="Models\PathAccessibilityData.cs" />

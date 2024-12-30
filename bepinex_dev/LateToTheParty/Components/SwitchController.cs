@@ -10,6 +10,7 @@ using EFT;
 using EFT.Interactive;
 using LateToTheParty.Controllers;
 using LateToTheParty.CoroutineExtensions;
+using LateToTheParty.Helpers;
 using UnityEngine;
 
 namespace LateToTheParty.Components
@@ -271,8 +272,7 @@ namespace LateToTheParty.Components
                 return;
             }
 
-            LoggingController.LogInfo("Toggling switch " + GetSwitchText(sw) + "...");
-            sw.Interact(new InteractionResult(EInteractionType.Open));
+            sw.ExecuteInteraction(new InteractionResult(EInteractionType.Open));
 
             if (hasToggledSwitch.ContainsKey(sw))
             {

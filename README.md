@@ -2,7 +2,9 @@ Make your SPT experience closer to live Tarkov with loot disappearing, doors ope
 
 **REQUIRES: [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-bot-patrols-and-navmesh/)**
 
-Not compatible with: [Lockable Doors](https://hub.sp-tarkov.com/files/file/2593-lockable-doors/)
+Not compatible with:
+* Fika
+* [Lockable Doors](https://hub.sp-tarkov.com/files/file/2593-lockable-doors/)
 
 If you use both [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
 
@@ -119,7 +121,7 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 
 * **toggle_switches_during_raid.enabled**: If the mod can turn on switches throughout the raid. This is **true** by default. 
 * **toggle_switches_during_raid.time_between_events_ms**: The mod will check for switches to toggle at regular intervals of this many milliseconds throughout the raid (**3000** ms by default).
-* **toggle_switches_during_raid.exclusion_radius**: Switches will not be allowed to be toggled if they're within this distance (in meters) of you. This is **150** m by default.
+* **toggle_switches_during_raid.exclusion_radius**: Switches will not be allowed to be toggled if they're within this distance (in meters) of you. This is **75** m by default.
 * **toggle_switches_during_raid.min_raid_ET_for_exfil_switches**: If a switch controls the ability for players to use extraction points (i.e. the power switch on Customs or elevator buttons on Labs), it will not be allowed to be toggled until this many seconds has elapsed since the beginning of the raid (before its shortened for Scav runs). This is **600** s by default.
  * **toggle_switches_during_raid.delay_after_pressing_prereq_switch_s_per_m**: After switches have been initially toggled for Scav raids, the mod will not toggle any switches if prerequisite switches must be toggled before them (i.e. the elevator power switches on Labs). In this case, the mod won't attempt to toggle the switch until a certain amount of time has elapsed after the prerequisite switch is toggled. This delay is calculated using this parameter (in seconds/meter) and the distance between the switches. The purpose of this delay is to simulate the time needed for a player to toggle the prerequisite switch and then travel to the first switch. This is **1** s/m by default.
   * **toggle_switches_during_raid.raid_fraction_when_toggling.min/max**: The minimum and maximum fractions of the overall raid time (before they're reduced for Scav runs) that switches are allowed to be toggled.

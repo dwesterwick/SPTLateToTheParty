@@ -13,6 +13,7 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.Controllers;
 using LateToTheParty.CoroutineExtensions;
+using LateToTheParty.Helpers;
 using UnityEngine;
 
 namespace LateToTheParty.Components
@@ -260,10 +261,7 @@ namespace LateToTheParty.Components
                     return true;
                 }
 
-                LoggingController.LogInfo("Opening interactive object: " + interactiveObject.Id);
-
-                // This plays the opening noise and animation
-                interactiveObject.Interact(new InteractionResult(EInteractionType.Open));
+                interactiveObject.ExecuteInteraction(new InteractionResult(EInteractionType.Open));
                 return true;
             }
 
@@ -275,10 +273,7 @@ namespace LateToTheParty.Components
                     return true;
                 }
 
-                LoggingController.LogInfo("Closing interactive object: " + interactiveObject.Id);
-
-                // This plays the opening noise and animation
-                interactiveObject.Interact(new InteractionResult(EInteractionType.Close));
+                interactiveObject.ExecuteInteraction(new InteractionResult(EInteractionType.Close));
                 return true;
             }
 
@@ -303,7 +298,7 @@ namespace LateToTheParty.Components
                 }
 
                 // Check if the interactive object is the correct type
-                if (!checkIfObjectIsSubclassOfType(obj, interactiveObjectType))
+                if (!obj.IsSubclassOfType(interactiveObjectType))
                 {
                     continue;
                 }
@@ -312,23 +307,6 @@ namespace LateToTheParty.Components
             }
 
             return nearbyInteractiveObjects;
-        }
-
-        private static bool checkIfObjectIsSubclassOfType(object obj, Type type)
-        {
-            Type objType = obj.GetType();
-
-            if (objType == type)
-            {
-                return true;
-            }
-
-            if (objType.IsSubclassOf(type))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         private IEnumerator ToggleRandomInteractiveObjects(int interactiveObjectsToToggle)
