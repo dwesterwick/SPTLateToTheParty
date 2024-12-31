@@ -2,9 +2,9 @@ Make your SPT experience closer to live Tarkov with loot disappearing, doors ope
 
 **REQUIRES: [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-bot-patrols-and-navmesh/)**
 
-Not compatible with:
-* Fika
-* [Lockable Doors](https://hub.sp-tarkov.com/files/file/2593-lockable-doors/)
+Not compatible with: Fika
+
+Partially compatible with: [Lockable Doors](https://hub.sp-tarkov.com/files/file/2593-lockable-doors/) (loot may despawn behind doors you lock during the raid)
 
 If you use both [Questing Bots](https://hub.sp-tarkov.com/files/file/1534-questing-bots/) and [Looting Bots](https://hub.sp-tarkov.com/files/file/1096-looting-bots/), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
 
