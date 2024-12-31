@@ -48,6 +48,12 @@ namespace LateToTheParty.Controllers
             Logger.LogError(message);
         }
 
+        public static void LogWarningToServerConsole(string message)
+        {
+            LogWarning(message);
+            ConfigController.ReportWarningToServer(message);
+        }
+
         public static void LogErrorToServerConsole(string message)
         {
             LogError(message);

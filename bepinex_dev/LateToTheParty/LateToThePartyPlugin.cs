@@ -11,7 +11,6 @@ using LateToTheParty.Controllers;
 
 namespace LateToTheParty
 {
-    [BepInIncompatibility("Jehree.LockableDoors")]
     [BepInIncompatibility("com.fika.core")]
     [BepInDependency("xyz.drakia.waypoints", "1.6.0")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.0.0")]
@@ -22,6 +21,9 @@ namespace LateToTheParty
         protected void Awake()
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
+
+            Patches.TarkovInitPatch.MinVersion = "3.10.0.0";
+            Patches.TarkovInitPatch.MaxVersion = "3.10.99.0";
 
             Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ConfigController.GetConfig();
@@ -44,6 +46,8 @@ namespace LateToTheParty
                 new Patches.StartLocalGamePatch().Enable();
                 new Patches.GameWorldOnDestroyPatch().Enable();
                 new Patches.OnGameStartedPatch().Enable();
+                new Patches.TarkovInitPatch().Enable();
+                new Patches.MenuShowPatch().Enable();
                 
                 if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
                 {
