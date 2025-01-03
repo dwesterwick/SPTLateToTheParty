@@ -8,12 +8,12 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using LateToTheParty.Components;
 using LateToTheParty.Controllers;
+using LateToTheParty.Helpers;
 
 namespace LateToTheParty
 {
-    [BepInIncompatibility("com.fika.core")]
     [BepInDependency("xyz.drakia.waypoints", "1.6.0")]
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static string ModName { get; private set; } = "???";

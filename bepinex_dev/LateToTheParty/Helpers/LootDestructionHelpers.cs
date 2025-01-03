@@ -271,7 +271,7 @@ namespace LateToTheParty.Helpers
                 return;
             }
 
-            lootInfo.NearbyInteractiveObject.ExecuteInteraction(new InteractionResult(EInteractionType.Open));
+            lootInfo.NearbyInteractiveObject.StartExecuteInteraction(new InteractionResult(EInteractionType.Open));
         }
 
         private static void runNetworkTransactionToDestroy(this Item item)

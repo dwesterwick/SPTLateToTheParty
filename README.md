@@ -2,7 +2,7 @@ Make your SPT experience closer to live Tarkov with loot disappearing, doors ope
 
 **REQUIRES: [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-bot-patrols-and-navmesh/) (1.6.0 or later)**
 
-Not compatible with: Fika
+**If you use Fika, you must also install *[Unreleased plugin]* for door and switch states to sync between clients.**
 
 Partially compatible with: [Lockable Doors](https://hub.sp-tarkov.com/files/file/2593-lockable-doors/) (loot may despawn behind doors you lock during the raid)
 

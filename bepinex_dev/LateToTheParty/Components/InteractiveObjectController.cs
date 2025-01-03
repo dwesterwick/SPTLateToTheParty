@@ -221,7 +221,7 @@ namespace LateToTheParty.Components
                         return false;
                     }
 
-                    LoggingController.LogInfo("Unlocking interactive object: " + interactiveObject.Id + " (Key ID: " + interactiveObject.KeyId + ")");
+                    LoggingController.LogInfo("Preparing to unlock interactive object: " + interactiveObject.Id + " (Key ID: " + interactiveObject.KeyId + ")");
                 }
                 else
                 {
@@ -243,8 +243,7 @@ namespace LateToTheParty.Components
                     }
                 }
 
-                interactiveObject.DoorState = EDoorState.Shut;
-                interactiveObject.OnEnable();
+                interactiveObject.StartForceDoorState(EDoorState.Shut);
             }
 
             // Ignore doors that are currently being opened/closed
@@ -261,7 +260,7 @@ namespace LateToTheParty.Components
                     return true;
                 }
 
-                interactiveObject.ExecuteInteraction(new InteractionResult(EInteractionType.Open));
+                interactiveObject.StartExecuteInteraction(new InteractionResult(EInteractionType.Open));
                 return true;
             }
 
@@ -273,7 +272,7 @@ namespace LateToTheParty.Components
                     return true;
                 }
 
-                interactiveObject.ExecuteInteraction(new InteractionResult(EInteractionType.Close));
+                interactiveObject.StartExecuteInteraction(new InteractionResult(EInteractionType.Close));
                 return true;
             }
 

@@ -272,7 +272,7 @@ namespace LateToTheParty.Components
                 return;
             }
 
-            sw.ExecuteInteraction(new InteractionResult(EInteractionType.Open));
+            sw.StartExecuteInteraction(new InteractionResult(EInteractionType.Open));
 
             if (hasToggledSwitch.ContainsKey(sw))
             {
