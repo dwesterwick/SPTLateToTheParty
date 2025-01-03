@@ -1,6 +1,6 @@
 Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. Bosses will also be less likely to spawn during Scav raids. 
 
-**REQUIRES: [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-bot-patrols-and-navmesh/)**
+**REQUIRES: [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-bot-patrols-and-navmesh/) (1.6.0 or later)**
 
 Not compatible with: Fika
 
@@ -123,10 +123,10 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **toggle_switches_during_raid.time_between_events_ms**: The mod will check for switches to toggle at regular intervals of this many milliseconds throughout the raid (**3000** ms by default).
 * **toggle_switches_during_raid.exclusion_radius**: Switches will not be allowed to be toggled if they're within this distance (in meters) of you. This is **75** m by default.
 * **toggle_switches_during_raid.min_raid_ET_for_exfil_switches**: If a switch controls the ability for players to use extraction points (i.e. the power switch on Customs or elevator buttons on Labs), it will not be allowed to be toggled until this many seconds has elapsed since the beginning of the raid (before its shortened for Scav runs). This is **600** s by default.
- * **toggle_switches_during_raid.delay_after_pressing_prereq_switch_s_per_m**: After switches have been initially toggled for Scav raids, the mod will not toggle any switches if prerequisite switches must be toggled before them (i.e. the elevator power switches on Labs). In this case, the mod won't attempt to toggle the switch until a certain amount of time has elapsed after the prerequisite switch is toggled. This delay is calculated using this parameter (in seconds/meter) and the distance between the switches. The purpose of this delay is to simulate the time needed for a player to toggle the prerequisite switch and then travel to the first switch. This is **1** s/m by default.
-  * **toggle_switches_during_raid.raid_fraction_when_toggling.min/max**: The minimum and maximum fractions of the overall raid time (before they're reduced for Scav runs) that switches are allowed to be toggled.
-  * **toggle_switches_during_raid.fraction_of_switches_to_toggle.min/max**: The minimum and maximum fractions of switches that will be toggled throughout the raid. These values are fractions of the total number of switches on the map that can be toggled by players.
-  * **toggle_switches_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run switch-toggling procedures per frame. By default this is set to **3ms**, and delays of <15ms are basically imperceptible. 
+* **toggle_switches_during_raid.delay_after_pressing_prereq_switch_s_per_m**: After switches have been initially toggled for Scav raids, the mod will not toggle any switches if prerequisite switches must be toggled before them (i.e. the elevator power switches on Labs). In this case, the mod won't attempt to toggle the switch until a certain amount of time has elapsed after the prerequisite switch is toggled. This delay is calculated using this parameter (in seconds/meter) and the distance between the switches. The purpose of this delay is to simulate the time needed for a player to toggle the prerequisite switch and then travel to the first switch. This is **1** s/m by default.
+* **toggle_switches_during_raid.raid_fraction_when_toggling.min/max**: The minimum and maximum fractions of the overall raid time (before they're reduced for Scav runs) that switches are allowed to be toggled.
+* **toggle_switches_during_raid.fraction_of_switches_to_toggle.min/max**: The minimum and maximum fractions of switches that will be toggled throughout the raid. These values are fractions of the total number of switches on the map that can be toggled by players.
+* **toggle_switches_during_raid.max_calc_time_per_frame_ms**: The maximum amount of time (in milliseconds) the mod is allowed to run switch-toggling procedures per frame. By default this is set to **3ms**, and delays of <15ms are basically imperceptible. 
 
 * **loot_multipliers**: [time_remaining_factor, reduction_factor] pairs describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid. A value of "1" means match the original loot amount. 
 * **fraction_of_players_full_of_loot**: [time_remaining_factor, players_full_of_loot_fraction] pairs describing the fraction of the maximum players allowed on the map who will be full of loot based on the fraction of time remaining in the raid. A value of "1" in the second column means that the entire starting (full) lobby of players will have looted **destroy_loot_during_raid.avg_slots_per_player** slots worth of loot by that time. This value can be greater than one to include player Scavs. 
@@ -140,7 +140,7 @@ The mod uses the following process to determine which loot is accessible:
 5. If the loot is more than **destroy_loot_during_raid.check_loot_accessibility.exclusion_radius** meters from any locked/inaccessible doors, it's considered accessible.
 6. If the accessibility of the loot is still unknown, the mod finds the nearest location on the map from the following:
     * Spawn points (both Scav and PMC)
-    * You
+    * Human players
     * Alive bots
 7. If the loot is within **destroy_loot_during_raid.check_loot_accessibility.max_path_search_distance** meters of any of the locations above, the mod checks if the one nearest to the loot item is within **destroy_loot_during_raid.check_loot_accessibility.navmesh_search_max_distance_player** meters from the NavMesh. If either check fails, the mod assumes the loot is inaccessible. 
 8. The mod checks if the loot is within **destroy_loot_during_raid.check_loot_accessibility.navmesh_search_max_distance_loot** meters from the NavMesh. If not, the mod assumes the loot is inaccessible. 
