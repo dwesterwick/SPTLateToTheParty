@@ -4,6 +4,9 @@
 const csharpDevFolder = "bepinex_dev";
 const csharpBuildFolder = "Debug";
 
+const lateToThePartyFikaSyncFolder = "bepinex_dev\\LateToThePartyFikaSync\\bin\\Release";
+const lateToThePartyFikaSyncPluginName = "LateToThePartyFikaSync.dll";
+
 const lootRankingReaderFolder = "bepinex_dev\\LookRankingDataReader\\bin\\Debug\\net6.0-windows";
 const configEditorFolder = "bepinex_dev\\LTTPConfigEditor\\bin\\Debug";
 
@@ -51,7 +54,8 @@ const ignoreList = [
     "tsconfig.json",
     "db/",
     `${csharpDevFolder}/`,
-    "config/configEditorInfo.json"
+    "config/configEditorInfo.json",
+    "dist_LateToThePartyFikaSync"
 ];
 const exclude = glob.sync(`{${ignoreList.join(",")}}`, { realpath: true, dot: true, absolute:true });
 

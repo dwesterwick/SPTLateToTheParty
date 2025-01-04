@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SphereOverlapTest", "..\Sph
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LTTPConfigEditor", "..\LTTPConfigEditor\LTTPConfigEditor.csproj", "{58528123-9369-4D8D-8AE0-641AAFBBE2E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToThePartyFikaSync", "..\LateToThePartyFikaSync\LateToThePartyFikaSync.csproj", "{ECDFF2EA-5E5A-4E02-AFB4-7F9C90078D83}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{58528123-9369-4D8D-8AE0-641AAFBBE2E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58528123-9369-4D8D-8AE0-641AAFBBE2E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58528123-9369-4D8D-8AE0-641AAFBBE2E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECDFF2EA-5E5A-4E02-AFB4-7F9C90078D83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECDFF2EA-5E5A-4E02-AFB4-7F9C90078D83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECDFF2EA-5E5A-4E02-AFB4-7F9C90078D83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECDFF2EA-5E5A-4E02-AFB4-7F9C90078D83}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
