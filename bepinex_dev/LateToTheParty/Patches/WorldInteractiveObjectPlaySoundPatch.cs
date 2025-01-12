@@ -4,8 +4,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SPT.Reflection.Patching;
+using Comfort.Common;
 using EFT.Interactive;
+using EFT;
+using LateToTheParty.Components;
+using SPT.Reflection.Patching;
 
 namespace LateToTheParty.Patches
 {
@@ -19,7 +22,7 @@ namespace LateToTheParty.Patches
         [PatchPrefix]
         protected static bool PatchPrefix(WorldInteractiveObject __instance)
         {
-            if (!Components.SwitchController.HasToggledInitialSwitches)
+            if (!Singleton<SwitchTogglingComponent>.Instance.HasToggledInitialSwitches)
             {
                 Controllers.LoggingController.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled");
 

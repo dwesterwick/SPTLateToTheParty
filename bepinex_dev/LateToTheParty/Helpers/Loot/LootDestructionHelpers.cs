@@ -10,14 +10,15 @@ using EFT.InventoryLogic;
 using LateToTheParty.Controllers;
 using LateToTheParty.Models.LootInfo;
 using UnityEngine;
+using LateToTheParty.Components;
 
-namespace LateToTheParty.Helpers
+namespace LateToTheParty.Helpers.Loot
 {
     public static class LootDestructionHelpers
     {
         public static void UpdateLootEligibility(Item item, IEnumerable<Vector3> playerPositions, double raidET)
         {
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 throw new InvalidOperationException("Cannot update eligibility for loot that has not been found");
@@ -28,13 +29,13 @@ namespace LateToTheParty.Helpers
 
         public static bool IsEligibleForDestruction(this Item item, IEnumerable<Vector3> playerPositions, double raidET)
         {
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 return false;
             }
 
-            if (lootInfo.IsDestroyed || lootInfo.IsInPlayerInventory || item.WasDroppedByPlayer())
+            if (lootInfo.IsDestroyed || lootInfo.IsInPlayerInventory || Singleton<LootDestroyerComponent>.Instance.LootManager.WasDroppedByPlayer(item))
             {
                 return false;
             }
@@ -60,7 +61,7 @@ namespace LateToTheParty.Helpers
             }
 
             // Ignore loot that's too close to bots
-            Player nearestPlayer = Components.NavMeshController.GetNearestPlayer(lootInfo.Transform.position);
+            Player nearestPlayer = NavMeshHelpers.GetNearestPlayer(lootInfo.Transform.position);
             if (nearestPlayer == null)
             {
                 return false;
@@ -181,7 +182,7 @@ namespace LateToTheParty.Helpers
                 return false;
             }
 
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 LoggingController.LogWarning("Could not find entry for " + item.LocalizedName());
@@ -216,7 +217,7 @@ namespace LateToTheParty.Helpers
 
         public static void DestroyLoot(Item item)
         {
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 throw new InvalidOperationException("Cannot destroy loot that has not been found");
@@ -237,7 +238,7 @@ namespace LateToTheParty.Helpers
 
         private static void openNearbyDoorForLoot(this Item item)
         {
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 throw new InvalidOperationException("Cannot destroy loot that has not been found");
@@ -276,7 +277,7 @@ namespace LateToTheParty.Helpers
 
         private static void runNetworkTransactionToDestroy(this Item item)
         {
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 throw new InvalidOperationException(item.LocalizedName() + " cannot be destroyed because it has not yet been discovered");
@@ -294,7 +295,7 @@ namespace LateToTheParty.Helpers
 
             lootInfo.TraderController.TryRunNetworkTransaction(discardTransaction, networkTransactionCallback);
 
-            LootManager.ConfirmItemDestruction(item);
+            Singleton<LootDestroyerComponent>.Instance.LootManager.ConfirmItemDestruction(item);
         }
 
         private static void networkTransactionCallback(IResult result)

@@ -30,6 +30,8 @@ namespace LateToThePartyFikaSync
             PluginLogger = Logger;
             PluginLogger.LogInfo($"{nameof(LateToThePartyFikaSyncPlugin)} has been loaded.");
 
+            new GameWorldInitLevelPatch().Enable();
+
             InteractiveObjectHelpers.OnExecuteInteraction += InteractiveObjectHelpers_OnExecuteInteraction;
             InteractiveObjectHelpers.OnForceDoorState += InteractiveObjectHelpers_OnForceDoorState;
 

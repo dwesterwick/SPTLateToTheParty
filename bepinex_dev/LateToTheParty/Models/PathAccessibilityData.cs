@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Comfort.Common;
 using LateToTheParty.Components;
 
 namespace LateToTheParty.Models
@@ -10,6 +11,7 @@ namespace LateToTheParty.Models
     public class PathAccessibilityData
     {
         public bool IsAccessible { get; set; } = false;
+        public PathRenderer pathRenderer;
         public PathVisualizationData PathData { get; set; }
         public PathVisualizationData LastNavPointOutline { get; set; }
         public PathVisualizationData PathEndPointData { get; set; }
@@ -19,11 +21,16 @@ namespace LateToTheParty.Models
 
         public PathAccessibilityData()
         {
-
+            pathRenderer = Singleton<PathRenderer>.Instance;
         }
 
         public void Merge(PathAccessibilityData other)
         {
+            if (pathRenderer == null)
+            {
+                return;
+            }
+
             IsAccessible |= other.IsAccessible;
 
             if (other.PathData != null)
@@ -75,7 +82,7 @@ namespace LateToTheParty.Models
             {
                 foreach (PathVisualizationData data in BoundingBoxes)
                 {
-                    PathRender.RemovePath(data);
+                    pathRenderer.RemovePath(data);
                 }
                 BoundingBoxes.Clear();
                 foreach (PathVisualizationData data in other.BoundingBoxes)
@@ -88,7 +95,7 @@ namespace LateToTheParty.Models
             {
                 foreach (PathVisualizationData data in RaycastHitMarkers)
                 {
-                    PathRender.RemovePath(data);
+                    pathRenderer.RemovePath(data);
                 }
                 RaycastHitMarkers.Clear();
                 foreach (PathVisualizationData data in other.RaycastHitMarkers)
@@ -106,36 +113,46 @@ namespace LateToTheParty.Models
 
         public void Update()
         {
-            PathRender.AddOrUpdatePath(PathData);
-            PathRender.AddOrUpdatePath(LastNavPointOutline);
-            PathRender.AddOrUpdatePath(PathEndPointData);
-            PathRender.AddOrUpdatePath(LootOutlineData);
+            if (pathRenderer == null)
+            {
+                return;
+            }
+
+            pathRenderer.AddOrUpdatePath(PathData);
+            pathRenderer.AddOrUpdatePath(LastNavPointOutline);
+            pathRenderer.AddOrUpdatePath(PathEndPointData);
+            pathRenderer.AddOrUpdatePath(LootOutlineData);
 
             foreach (PathVisualizationData data in BoundingBoxes)
             {
-                PathRender.AddOrUpdatePath(data);
+                pathRenderer.AddOrUpdatePath(data);
             }
             foreach (PathVisualizationData data in RaycastHitMarkers)
             {
-                PathRender.AddOrUpdatePath(data);
+                pathRenderer.AddOrUpdatePath(data);
             }
         }
 
         public void Clear(bool keepLootOutline = false)
         {
+            if (pathRenderer == null)
+            {
+                return;
+            }
+
             if (PathData != null)
             {
-                PathRender.RemovePath(PathData);
+                pathRenderer.RemovePath(PathData);
                 PathData.Clear();
             }
             if (LastNavPointOutline != null)
             {
-                PathRender.RemovePath(LastNavPointOutline);
+                pathRenderer.RemovePath(LastNavPointOutline);
                 LastNavPointOutline.Clear();
             }
             if (PathEndPointData != null)
             {
-                PathRender.RemovePath(PathEndPointData);
+                pathRenderer.RemovePath(PathEndPointData);
                 PathEndPointData.Clear();
             }
 
@@ -143,21 +160,21 @@ namespace LateToTheParty.Models
             {
                 if (LootOutlineData != null)
                 {
-                    PathRender.RemovePath(LootOutlineData);
+                    pathRenderer.RemovePath(LootOutlineData);
                     LootOutlineData.Clear();
                 }
             }
 
             foreach (PathVisualizationData data in BoundingBoxes)
             {
-                PathRender.RemovePath(data);
+                pathRenderer.RemovePath(data);
                 data.Clear();
             }
             BoundingBoxes.Clear();
 
             foreach (PathVisualizationData data in RaycastHitMarkers)
             {
-                PathRender.RemovePath(data);
+                pathRenderer.RemovePath(data);
                 data.Clear();
             }
             RaycastHitMarkers.Clear();

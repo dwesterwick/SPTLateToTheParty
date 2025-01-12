@@ -4,10 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SPT.Reflection.Patching;
+using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using LateToTheParty.Controllers;
+using LateToTheParty.Components;
+using SPT.Reflection.Patching;
 
 namespace LateToTheParty.Patches
 {
@@ -27,7 +29,11 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsOnDeadBots.OnlyIfYouKilledThem && !Components.PlayerMonitor.GetPlayerIDs().Contains(aggressor.Profile.Id))
+            if
+            (
+                ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsOnDeadBots.OnlyIfYouKilledThem
+                && !Singleton<PlayerMonitor>.Instance.GetPlayerIDs().Contains(aggressor.Profile.Id)
+            )
             {
                 LoggingController.LogInfo("Player " + __instance.Profile.Nickname + " was killed by " + aggressor.Profile.Nickname + " (allowing their loot to despawn because a human player didn't kill them)");
                 return;
@@ -37,7 +43,7 @@ namespace LateToTheParty.Patches
             IEnumerable<Item> allPlayerItems = __instance.Profile.Inventory.Equipment.GetAllItems();
             foreach (Item item in allPlayerItems)
             {
-                LootManager.RegisterItemDroppedByPlayer(item, true);
+                Singleton<LootDestroyerComponent>.Instance.LootManager.RegisterItemDroppedByPlayer(item, true);
             }
         }
     }

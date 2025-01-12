@@ -4,11 +4,14 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Comfort.Common;
 using EFT.Interactive;
 using EFT.SynchronizableObjects;
 using SPT.Reflection.Patching;
 using LateToTheParty.Controllers;
 using LateToTheParty.Helpers;
+using EFT;
+using LateToTheParty.Components;
 
 namespace LateToTheParty.Patches
 {
@@ -29,7 +32,7 @@ namespace LateToTheParty.Patches
             IEnumerable<EFT.InventoryLogic.Item> airdropItems = airdropContainer.ItemOwner.Items.FindAllItemsInContainers();
             LoggingController.LogInfo("Found " + airdropType + " airdrop with " + airdropItems.Count() + " items");
 
-            LootManager.AddLootableContainer(airdropContainer);
+            Singleton<LootDestroyerComponent>.Instance.LootManager.AddLootableContainer(airdropContainer);
         }
     }
 }

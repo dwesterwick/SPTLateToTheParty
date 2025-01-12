@@ -12,70 +12,38 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Helpers;
+using LateToTheParty.Helpers.Loot;
 using LateToTheParty.Models.LootInfo;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
 {
-    public static class LootManager
+    public class LootManager
     {
-        public static bool IsClearing { get; private set; } = false;
-        public static bool IsFindingAndDestroyingLoot { get; private set; } = false;
-        public static bool HasInitialLootBeenDestroyed { get; private set; } = false;
+        public bool IsFindingAndDestroyingLoot { get; private set; } = false;
+        public bool HasInitialLootBeenDestroyed { get; private set; } = false;
 
-        private static List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
-        private static object lootableContainerLock = new object();
+        private List<LootableContainer> AllLootableContainers = new List<LootableContainer>();
+        private object lootableContainerLock = new object();
 
-        private static Dictionary<Item, Models.LootInfo.AbstractLootInfo> LootInfo = new Dictionary<Item, Models.LootInfo.AbstractLootInfo>();
-        private static List<Item> ItemsDroppedByMainPlayer = new List<Item>();
-        private static Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
-        private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
-        private static string currentLocationName = "";
-        private static int destroyedLootSlots = 0;
+        private Dictionary<Item, Models.LootInfo.AbstractLootInfo> LootInfo = new Dictionary<Item, Models.LootInfo.AbstractLootInfo>();
+        private List<Item> ItemsDroppedByMainPlayer = new List<Item>();
+        private Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
+        private EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.MaxCalcTimePerFrame);
+        private int destroyedLootSlots = 0;
 
-        public static int LootableContainerCount => AllLootableContainers.Count;
-        public static int TotalLootItemsCount => LootInfo.Count;
-        public static int RemainingLootItemsCount => LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count();
+        public int LootableContainerCount => AllLootableContainers.Count;
+        public int TotalLootItemsCount => LootInfo.Count;
+        public int RemainingLootItemsCount => LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count();
 
-        public static bool WasDroppedByPlayer(this Item item) => ItemsDroppedByMainPlayer.Contains(item);
+        public bool WasDroppedByPlayer(Item item) => ItemsDroppedByMainPlayer.Contains(item);
 
-        public static IEnumerator Clear()
+        public LootManager()
         {
-            if (IsFindingAndDestroyingLoot)
-            {
-                enumeratorWithTimeLimit.Abort();
 
-                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsFindingAndDestroyingLoot, nameof(IsFindingAndDestroyingLoot), 3000);
-
-                IsFindingAndDestroyingLoot = false;
-            }
-
-            if (ConfigController.Config.Debug.Enabled && (LootInfo.Count > 0))
-            {
-                LoggingController.WriteLootLogFile(LootInfo, currentLocationName);
-            }
-
-            Components.PathRender.Clear();
-
-            lock (lootableContainerLock)
-            {
-                AllLootableContainers.Clear();
-            }
-
-            LootInfo.Clear();
-            ItemsDroppedByMainPlayer.Clear();
-
-            HasInitialLootBeenDestroyed = false;
-            currentLocationName = "";
-            destroyedLootSlots = 0;
-
-            LootRankingHelpers.ResetLootValueRandomFactor();
-
-            lastLootDestroyedTimer.Restart();
         }
 
-        public static AbstractLootInfo FindLootInfo(this Item item)
+        public AbstractLootInfo FindLootInfo(Item item)
         {
             if (!LootInfo.ContainsKey(item))
             {
@@ -85,7 +53,7 @@ namespace LateToTheParty.Controllers
             return LootInfo[item];
         }
 
-        public static void AddLootInfo(Item item, AbstractLootInfo lootInfo)
+        public void AddLootInfo(Item item, AbstractLootInfo lootInfo)
         {
             if (LootInfo.ContainsKey(item))
             {
@@ -96,24 +64,16 @@ namespace LateToTheParty.Controllers
             //LoggingController.LogInfo("Found loot item: " + item.LocalizedName());
         }
 
-        public static int FindAllLootableContainers(string _currentMapName)
+        public int FindAllLootableContainers()
         {
-            // Only run this once per map
-            if (currentLocationName == _currentMapName)
-            {
-                return LootableContainerCount;
-            }
-
             LoggingController.LogInfo("Searching for lootable containers in the map...");
             AllLootableContainers = GameWorld.FindObjectsOfType<LootableContainer>().ToList();
             LoggingController.LogInfo("Searching for lootable containers in the map...found " + LootableContainerCount + " lootable containers.");
 
-            currentLocationName = _currentMapName;
-
             return LootableContainerCount;
         }
 
-        public static void AddLootableContainer(LootableContainer container)
+        public void AddLootableContainer(LootableContainer container)
         {
             if (AllLootableContainers.Contains(container))
             {
@@ -128,7 +88,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static void RegisterItemDroppedByPlayer(Item item, bool preventFromDespawning = false)
+        public void RegisterItemDroppedByPlayer(Item item, bool preventFromDespawning = false)
         {
             if (item == null)
             {
@@ -153,7 +113,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static void RegisterItemPickedUpByPlayer(Item item)
+        public void RegisterItemPickedUpByPlayer(Item item)
         {
             if (item == null)
             {
@@ -187,7 +147,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static IEnumerator FindAndDestroyLoot(IEnumerable<Vector3> playerPositions, float timeRemainingFraction, double raidET)
+        public IEnumerator FindAndDestroyLoot(IEnumerable<Vector3> playerPositions, float timeRemainingFraction, double raidET)
         {
             try
             {
@@ -312,7 +272,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        private static int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
+        private int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)
         {
             // Calculate the fraction of loot that should be removed from the map
             double currentLootRemainingFraction = GetCurrentLootRemainingFraction();
@@ -326,7 +286,7 @@ namespace LateToTheParty.Controllers
             return lootItemsToDestroy;
         }
 
-        private static double GetCurrentLootRemainingFraction()
+        private double GetCurrentLootRemainingFraction()
         {
             IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> accessibleItems = LootInfo.Where(l => l.Value.PathData.IsAccessible);
             IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> remainingItems = accessibleItems
@@ -337,7 +297,7 @@ namespace LateToTheParty.Controllers
             return (double)remainingItems.Count() / accessibleItems.Count();
         }
 
-        private static int GetTotalDestroyedSlots()
+        private int GetTotalDestroyedSlots()
         {
             IEnumerable<Item> collectedItems = LootInfo
                 .Where(i => i.Value.IsInPlayerInventory)
@@ -347,9 +307,9 @@ namespace LateToTheParty.Controllers
             return destroyedLootSlots + collectedItems.Select(i => i.GetItemSlots()).Count();
         }
 
-        public static void ConfirmItemDestruction(Item item)
+        public void ConfirmItemDestruction(Item item)
         {
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = FindLootInfo(item);
             if (lootInfo == null)
             {
                 throw new InvalidOperationException("Loot has not been found");

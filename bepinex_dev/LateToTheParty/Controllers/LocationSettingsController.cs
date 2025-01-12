@@ -4,10 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
-using EFT.Interactive;
+using LateToTheParty.Helpers;
 using UnityEngine;
 
 namespace LateToTheParty.Controllers
@@ -17,7 +16,6 @@ namespace LateToTheParty.Controllers
         public static bool HasRaidStarted { get; set; } = false;
         public static LocationSettingsClass.Location CurrentLocation { get; private set; } = null;
 
-        private static string[] CarExtractNames = new string[0];
         private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
         private static Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>> nearestSpawnPointPositions = new Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>>();
         
@@ -83,42 +81,14 @@ namespace LateToTheParty.Controllers
             return nearestPosition;
         }
 
-        public static double InterpolateForFirstCol(double[][] array, double value)
-        {
-            if (array.Length == 1)
-            {
-                return array.Last()[1];
-            }
-
-            if (value <= array[0][0])
-            {
-                return array[0][1];
-            }
-
-            for (int i = 1; i < array.Length; i++)
-            {
-                if (array[i][0] >= value)
-                {
-                    if (array[i][0] - array[i - 1][0] == 0)
-                    {
-                        return array[i][1];
-                    }
-
-                    return array[i - 1][1] + (value - array[i - 1][0]) * (array[i][1] - array[i - 1][1]) / (array[i][0] - array[i - 1][0]);
-                }
-            }
-
-            return array.Last()[1];
-        }
-
         public static double GetLootRemainingFactor(double timeRemainingFactor)
         {
-            return InterpolateForFirstCol(ConfigController.Config.LootMultipliers, timeRemainingFactor);
+            return ConfigController.InterpolateForFirstCol(ConfigController.Config.LootMultipliers, timeRemainingFactor);
         }
 
         public static double GetTargetPlayersFullOfLoot(double timeRemainingFactor)
         {
-            double fraction = InterpolateForFirstCol(ConfigController.Config.FractionOfPlayersFullOfLoot, timeRemainingFactor);
+            double fraction = ConfigController.InterpolateForFirstCol(ConfigController.Config.FractionOfPlayersFullOfLoot, timeRemainingFactor);
             
             // Reduce the amount of loot "slots" that can be destroyed if player Scavs are not allowed to spwan into the map
             if (CurrentLocation.DisabledForScav)
@@ -142,15 +112,9 @@ namespace LateToTheParty.Controllers
 
         public static void AdjustVExChance(LocationSettingsClass.Location location, float chance)
         {
-            if (CarExtractNames.Length == 0)
-            {
-                LoggingController.Logger.LogInfo("Getting car extract names...");
-                CarExtractNames = ConfigController.GetCarExtractNames();
-            }
-
             foreach (LocationExitClass exit in location.exits)
             {
-                if (CarExtractNames.Contains(exit.Name))
+                if (CarExtractHelpers.IsCarExtract(exit.Name))
                 {
                     exit.Chance = chance;
                     LoggingController.LogInfo("Vehicle extract " + exit.Name + " chance adjusted to " + Math.Round(exit.Chance, 1) + "%");
@@ -166,7 +130,7 @@ namespace LateToTheParty.Controllers
             }
 
             // Calculate the reduction in boss spawn chances
-            float reductionFactor = (float)InterpolateForFirstCol(ConfigController.Config.BossSpawnChanceMultipliers, timeReductionFactor);
+            float reductionFactor = (float)ConfigController.InterpolateForFirstCol(ConfigController.Config.BossSpawnChanceMultipliers, timeReductionFactor);
 
             foreach (BossLocationSpawn bossLocation in location.BossLocationSpawn)
             {
@@ -190,7 +154,7 @@ namespace LateToTheParty.Controllers
 
                 foreach (LocationExitClass exit in location.exits)
                 {
-                    if (CarExtractNames.Contains(exit.Name))
+                    if (CarExtractHelpers.IsCarExtract(exit.Name))
                     {
                         exit.Chance = OriginalSettings[location.Id].VExChance;
                         LoggingController.LogInfo("Recalling original raid settings for " + location.Name + "...Restored VEX chance to " + exit.Chance);
@@ -217,7 +181,7 @@ namespace LateToTheParty.Controllers
             
             foreach (LocationExitClass exit in location.exits)
             {
-                if (CarExtractNames.Contains(exit.Name))
+                if (CarExtractHelpers.IsCarExtract(exit.Name))
                 {
                     settings.VExChance = exit.Chance;
                 }
@@ -236,66 +200,6 @@ namespace LateToTheParty.Controllers
             }
 
             throw new InvalidOperationException("The original settings for " + location.Id + " were never stored");
-        }
-
-        public static ExfiltrationPoint FindVEX()
-        {
-            if (Singleton<GameWorld>.Instance?.ExfiltrationController?.ExfiltrationPoints == null)
-            {
-                return null;
-            }
-
-            return FindVEX(Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints);
-        }
-
-        public static ExfiltrationPoint FindVEX(ExfiltrationPoint[] allExfils)
-        {
-            if (CarExtractNames.Length == 0)
-            {
-                LoggingController.Logger.LogInfo("Getting car extract names...");
-                CarExtractNames = ConfigController.GetCarExtractNames();
-            }
-
-            foreach (ExfiltrationPoint exfil in allExfils)
-            {
-                if (CarExtractNames.Contains(exfil.Settings.Name))
-                {
-                    return exfil;
-                }
-            }
-
-            return null;
-        }
-
-        public static void ActivateExfilForPlayer(ExfiltrationPoint exfil, IPlayer player)
-        {
-            // Needed to start the car extract
-            exfil.OnItemTransferred(player);
-
-            // Copied from the end of ExfiltrationPoint.Proceed()
-            if (exfil.Status == EExfiltrationStatus.UncompleteRequirements)
-            {
-                switch (exfil.Settings.ExfiltrationType)
-                {
-                    case EExfiltrationType.Individual:
-                        exfil.SetStatusLogged(EExfiltrationStatus.RegularMode, "Proceed-3");
-                        break;
-                    case EExfiltrationType.SharedTimer:
-                        exfil.SetStatusLogged(EExfiltrationStatus.Countdown, "Proceed-1");
-                        break;
-                    case EExfiltrationType.Manual:
-                        exfil.SetStatusLogged(EExfiltrationStatus.AwaitsManualActivation, "Proceed-2");
-                        break;
-                }
-            }
-
-            LoggingController.LogInfo("Extract " + exfil.Settings.Name + " activated for player " + player.Profile.Nickname);
-        }
-
-        public static void DeactivateExfilForPlayer(ExfiltrationPoint exfil, IPlayer player)
-        {
-            exfil.method_5(player);
-            LoggingController.LogInfo("Extract " + exfil.Settings.Name + " deactivated for player " + player.Profile.Nickname);
         }
     }
 }

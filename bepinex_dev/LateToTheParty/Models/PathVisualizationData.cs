@@ -56,7 +56,7 @@ namespace LateToTheParty.Models
 
         public void Update()
         {
-            if (!ConfigController.Config.Debug.Enabled || !ConfigController.Config.Debug.LootPathVisualization.Enabled)
+            if (!ConfigController.Config.Debug.LootPathVisualization.Enabled)
             {
                 return;
             }

@@ -18,81 +18,66 @@ using UnityEngine;
 
 namespace LateToTheParty.Components
 {
-    public class InteractiveObjectController : MonoBehaviour
+    public class DoorTogglingComponent : MonoBehaviour
     {
-        public static bool IsClearing { get; private set; } = false;
-        public static bool IsTogglingInteractiveObjescts { get; private set; } = false;
-        public static bool IsFindingInteractiveObjects { get; private set; } = false;
-        public static bool HasToggledInitialInteractiveObjects { get; private set; } = false;
+        public bool IsTogglingInteractiveObjects { get; private set; } = false;
+        public bool IsFindingInteractiveObjects { get; private set; } = false;
+        public bool HasToggledInitialInteractiveObjects { get; private set; } = false;
 
-        private static List<WorldInteractiveObject> toggleableInteractiveObjects = new List<WorldInteractiveObject>();
-        private static List<WorldInteractiveObject> eligibleInteractiveObjects = new List<WorldInteractiveObject>();
-        private static NoPowerTip[] allNoPowerTips = new NoPowerTip[0];
-        private static Dictionary<WorldInteractiveObject, bool> allowedToToggleInteractiveObject = new Dictionary<WorldInteractiveObject, bool>();
-        private static Dictionary<WorldInteractiveObject, NoPowerTip> noPowerTipsForInteractiveObjects = new Dictionary<WorldInteractiveObject, NoPowerTip>();
+        private List<WorldInteractiveObject> toggleableInteractiveObjects = new List<WorldInteractiveObject>();
+        private List<WorldInteractiveObject> eligibleInteractiveObjects = new List<WorldInteractiveObject>();
+        private NoPowerTip[] allNoPowerTips = new NoPowerTip[0];
+        private Dictionary<WorldInteractiveObject, bool> allowedToToggleInteractiveObject = new Dictionary<WorldInteractiveObject, bool>();
+        private Dictionary<WorldInteractiveObject, NoPowerTip> noPowerTipsForInteractiveObjects = new Dictionary<WorldInteractiveObject, NoPowerTip>();
         private GamePlayerOwner gamePlayerOwner = null;
-        private static Stopwatch updateTimer = Stopwatch.StartNew();
-        private static Stopwatch interactiveObjectOpeningsTimer = new Stopwatch();
-        private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
-        private static int InteractiveObjectsToToggle = 1;
+        private Stopwatch updateTimer = Stopwatch.StartNew();
+        private Stopwatch interactiveObjectOpeningsTimer = new Stopwatch();
+        private EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.OpenDoorsDuringRaid.MaxCalcTimePerFrame);
+        private int InteractiveObjectsToToggle = 1;
 
-        public static IReadOnlyList<WorldInteractiveObject> ToggleableInteractiveObjects => toggleableInteractiveObjects.AsReadOnly();
-        public static IEnumerable<Door> ToggleableDoors => toggleableInteractiveObjects.Where(o => o is Door).Select(o => o as Door);
-        public static IEnumerable<Door> ToggleableLockedDoors => ToggleableDoors.Where(d => d.DoorState == EDoorState.Locked);
+        public IReadOnlyList<WorldInteractiveObject> ToggleableInteractiveObjects => toggleableInteractiveObjects.AsReadOnly();
+        public IEnumerable<Door> ToggleableDoors => toggleableInteractiveObjects.Where(o => o is Door).Select(o => o as Door);
+        public IEnumerable<Door> ToggleableLockedDoors => ToggleableDoors.Where(d => d.DoorState == EDoorState.Locked);
 
-        public static int ToggleableInteractiveObjectCount
+        public int ToggleableInteractiveObjectCount
         {
             get { return IsFindingInteractiveObjects ? 0 : toggleableInteractiveObjects.Count; }
         }
 
-        protected void OnDisable()
+        protected void Awake()
         {
-            Clear();
-        }
-
-        protected void Update()
-        {
-            if (IsClearing)
-            {
-                return;
-            }
-
             if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
             {
                 // Need to do this or it will prevent loot from being despawned
                 HasToggledInitialInteractiveObjects = true;
-
                 return;
             }
 
-            // Clear all arrays if not in a raid to reset them for the next raid
-            if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
-            {
-                StartCoroutine(Clear());
-                interactiveObjectOpeningsTimer.Reset();
+            gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
+            StartCoroutine(FindAllEligibleInteractiveObjects());
+        }
 
-                return;
-            }
-
-            if (!LocationSettingsController.HasRaidStarted)
+        protected void Update()
+        {
+            if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
             {
                 return;
             }
 
             // Wait until the previous task completes
-            if (IsTogglingInteractiveObjescts || IsFindingInteractiveObjects)
+            if (IsTogglingInteractiveObjects || IsFindingInteractiveObjects)
+            {
+                return;
+            }
+
+            // Ensure there are doors to toggle
+            if (InteractiveObjectsToToggle == 0)
             {
                 return;
             }
 
             // Ensure enough time has passed since the last door event
             if (HasToggledInitialInteractiveObjects && (updateTimer.ElapsedMilliseconds < ConfigController.Config.OpenDoorsDuringRaid.TimeBetweenEvents * 1000))
-            {
-                return;
-            }
-
-            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
-            //if (!Aki.SinglePlayer.Utils.InRaid.RaidTimeUtil.HasRaidStarted())
             {
                 return;
             }
@@ -107,16 +92,8 @@ namespace LateToTheParty.Components
             }
 
             // Don't check for door eligibility until initial switches have been toggled. Otherwise, some that need to be powered will not be allowed to be opened. 
-            if (!SwitchController.HasToggledInitialSwitches)
+            if (!Singleton<SwitchTogglingComponent>.Instance.HasToggledInitialSwitches)
             {
-                return;
-            }
-
-            // Only find doors once per raid
-            if (ToggleableInteractiveObjectCount == 0)
-            {
-                gamePlayerOwner = FindObjectOfType<GamePlayerOwner>();
-                StartCoroutine(FindAllEligibleInteractiveObjects());
                 return;
             }
 
@@ -140,53 +117,13 @@ namespace LateToTheParty.Components
                 return;
             }
 
-            // Ensure there are doors to toggle
-            if (InteractiveObjectsToToggle == 0)
-            {
-                return;
-            }
-
             // Try to change the state of doors
             StartCoroutine(ToggleRandomInteractiveObjects(InteractiveObjectsToToggle));
             updateTimer.Restart();
             interactiveObjectOpeningsTimer.Start();
         }
 
-        public static IEnumerator Clear()
-        {
-            IsClearing = true;
-
-            if (IsFindingInteractiveObjects)
-            {
-                enumeratorWithTimeLimit.Abort();
-
-                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsFindingInteractiveObjects, nameof(IsFindingInteractiveObjects), 3000);
-
-                IsFindingInteractiveObjects = false;
-            }
-            if (IsTogglingInteractiveObjescts)
-            {
-                enumeratorWithTimeLimit.Abort();
-
-                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsTogglingInteractiveObjescts, nameof(IsTogglingInteractiveObjescts), 3000);
-
-                IsTogglingInteractiveObjescts = false;
-            }
-
-            toggleableInteractiveObjects.Clear();
-            eligibleInteractiveObjects.Clear();
-            allowedToToggleInteractiveObject.Clear();
-            noPowerTipsForInteractiveObjects.Clear();
-            updateTimer.Restart();
-
-            HasToggledInitialInteractiveObjects = false;
-
-            IsClearing = false;
-        }
-
-        public static bool IsToggleableInteractiveObject(WorldInteractiveObject interactiveObject)
+        public bool IsToggleableInteractiveObject(WorldInteractiveObject interactiveObject)
         {
             return toggleableInteractiveObjects.Any(d => d.Id == interactiveObject.Id);
         }
@@ -279,12 +216,12 @@ namespace LateToTheParty.Components
             return false;
         }
 
-        public static IEnumerable<WorldInteractiveObject> FindNearbyInteractiveObjects(Vector3 position, float maxDistance)
+        public IEnumerable<WorldInteractiveObject> FindNearbyInteractiveObjects(Vector3 position, float maxDistance)
         {
             return FindNearbyInteractiveObjects(position, maxDistance, typeof(WorldInteractiveObject));
         }
 
-        public static IEnumerable<WorldInteractiveObject> FindNearbyInteractiveObjects(Vector3 position, float maxDistance, Type interactiveObjectType)
+        public IEnumerable<WorldInteractiveObject> FindNearbyInteractiveObjects(Vector3 position, float maxDistance, Type interactiveObjectType)
         {
             List<WorldInteractiveObject> nearbyInteractiveObjects = new List<WorldInteractiveObject>();
 
@@ -312,7 +249,7 @@ namespace LateToTheParty.Components
         {
             try
             {
-                IsTogglingInteractiveObjescts = true;
+                IsTogglingInteractiveObjects = true;
 
                 // Check which doors are eligible to be toggled
                 enumeratorWithTimeLimit.Reset();
@@ -325,7 +262,7 @@ namespace LateToTheParty.Components
             }
             finally
             {
-                IsTogglingInteractiveObjescts = false;
+                IsTogglingInteractiveObjects = false;
                 HasToggledInitialInteractiveObjects = true;
             }
         }
@@ -599,7 +536,7 @@ namespace LateToTheParty.Components
             }
         }
 
-        private static bool shouldlimitEvents()
+        private bool shouldlimitEvents()
         {
             bool shouldLimit = HasToggledInitialInteractiveObjects
                 && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled

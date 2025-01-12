@@ -234,75 +234,6 @@ export class LootRankingGenerator
         return data;
     }
 
-    /**
-     * [DEPRECATED] Generate a random weapon using the SPT botWeaponGenerator.generateWeaponByTpl method.
-     * @param item the base weapon template
-     * @param sessionId the sessionId from the HTTP router
-     * @returns a weapon represented by an array of Item objects
-     */
-    private generateRandomWeapon(item: ITemplateItem, sessionId: string): IItem[]
-    {
-        if (!this.weaponPresetExists(item))
-        {
-            return [];
-        }
-
-        const iterations = 5;
-        const botType = "assault";
-        const possibleSlots: string[] = [
-            "FirstPrimaryWeapon",
-            "SecondPrimaryWeapon",
-            "Holster"
-        ];
-        
-        let weapon: IItem[] = [];
-        let randomWeapon: IGenerateWeaponResult;
-        for (const possibleSlot in possibleSlots)
-        {
-            for (let iteration = 0; iteration < iterations; iteration++)
-            {
-                randomWeapon = this.botWeaponGenerator.generateWeaponByTpl(
-                    sessionId,
-                    item._id,
-                    possibleSlots[possibleSlot],
-                    this.databaseTables.bots.types[botType].inventory,
-                    item._parent,
-                    this.databaseTables.bots.types[botType].chances.weaponMods,
-                    botType,
-                    false,
-                    1
-                );
-                
-                // If the random weapon is invalid, don't bother running more iterations; the weapon slot is wrong
-                if ((randomWeapon.weapon === undefined) && (randomWeapon.weapon.length === 0))
-                {
-                    break;
-                }
-
-                // Store the initial weapon selection
-                if (weapon.length === 0)
-                {
-                    weapon = randomWeapon.weapon;
-                    continue;
-                }
-
-                // Determine if the weapon is better than the previous one found
-                if (this.weaponBaseValue(item, randomWeapon.weapon) > this.weaponBaseValue(item, weapon))
-                {
-                    weapon = randomWeapon.weapon;
-                }
-            }
-
-            // Check if a valid weapon was generated
-            if (weapon.length > 0)
-            {
-                break;
-            }
-        }
-
-        return weapon;
-    }
-
     private findBestWeaponInPresets(item: ITemplateItem): IItem[]
     {
         let weapon: IItem[] = [];
@@ -334,19 +265,6 @@ export class LootRankingGenerator
         }
 
         return weapon;
-    }
-
-    private weaponPresetExists(item: ITemplateItem): boolean
-    {
-        for (const presetID in this.databaseTables.globals.ItemPresets)
-        {
-            if (this.databaseTables.globals.ItemPresets[presetID]._items[0]._tpl === item._id)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private generateWeaponPreset(item: ITemplateItem): IPreset
@@ -533,6 +451,11 @@ export class LootRankingGenerator
      */
     private getWeaponProperties(baseWeaponItem: ITemplateItem, weaponParts: IItem[]): [number, number, number]
     {
+        if (baseWeaponItem._props === undefined)
+        {
+            this.commonUtils.logError(`The properties of ${baseWeaponItem._id} (${this.commonUtils.getItemName(baseWeaponItem._id)}) are undefined. Cannot create loot value.`);
+        }
+
         let width = baseWeaponItem._props.Width;
         let height = baseWeaponItem._props.Height;
         let weight = baseWeaponItem._props.Weight;

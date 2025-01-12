@@ -3,11 +3,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SPT.Reflection.Patching;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using LateToTheParty.Components;
 using LateToTheParty.Controllers;
+using SPT.Reflection.Patching;
 
 namespace LateToTheParty.Patches
 {
@@ -29,13 +30,13 @@ namespace LateToTheParty.Patches
             // If a player picked up an item, it needs to be tracked to prevent it from being randomly despawned while in the player's inventory
             if (added)
             {
-                LootManager.RegisterItemPickedUpByPlayer(item);
+                Singleton<LootDestroyerComponent>.Instance.LootManager.RegisterItemPickedUpByPlayer(item);
                 return;
             }
 
             bool preventFromDespawning = false;
 
-            if (Components.PlayerMonitor.GetPlayerIDs().Contains(__instance.Profile.Id))
+            if (Singleton<GameWorld>.Instance.gameObject.GetComponent<Components.PlayerMonitor>().GetPlayerIDs().Contains(__instance.Profile.Id))
             {
                 if (ConfigController.Config.DestroyLootDuringRaid.IgnoreItemsDroppedByPlayer.Enabled)
                 {
@@ -48,7 +49,7 @@ namespace LateToTheParty.Patches
                 }
             }
 
-            LootManager.RegisterItemDroppedByPlayer(item, preventFromDespawning);
+            Singleton<LootDestroyerComponent>.Instance.LootManager.RegisterItemDroppedByPlayer(item, preventFromDespawning);
         }
     }
 }

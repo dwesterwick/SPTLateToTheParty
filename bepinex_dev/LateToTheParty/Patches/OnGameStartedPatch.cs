@@ -4,8 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SPT.Reflection.Patching;
+using Comfort.Common;
 using EFT;
+using LateToTheParty.Components;
+using LateToTheParty.Controllers;
+using SPT.Reflection.Patching;
+using UnityEngine;
 
 namespace LateToTheParty.Patches
 {
@@ -20,6 +24,34 @@ namespace LateToTheParty.Patches
         protected static void PatchPostfix(GameWorld __instance)
         {
             Controllers.LocationSettingsController.HasRaidStarted = true;
+
+            addComponents();
+        }
+
+        private static void addComponents()
+        {
+            Controllers.LoggingController.LogInfo("Adding components...");
+
+            GameObject gameWorld = Singleton<GameWorld>.Instance.gameObject;
+
+            Singleton<DoorTogglingComponent>.Create(gameWorld.GetOrAddComponent<DoorTogglingComponent>());
+            Singleton<SwitchTogglingComponent>.Create(gameWorld.GetOrAddComponent<SwitchTogglingComponent>());
+            Singleton<PlayerMonitor>.Create(gameWorld.GetOrAddComponent<PlayerMonitor>());
+
+            if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
+            {
+                Singleton<LootDestroyerComponent>.Create(gameWorld.GetOrAddComponent<LootDestroyerComponent>());
+            }
+
+            if (ConfigController.Config.CarExtractDepartures.Enabled)
+            {
+                Singleton<CarExtractComponent>.Create(gameWorld.GetOrAddComponent<CarExtractComponent>());
+            }
+
+            if (ConfigController.Config.Debug.Enabled)
+            {
+                Singleton<PathRenderer>.Create(gameWorld.GetOrAddComponent<PathRenderer>());
+            }
         }
     }
 }

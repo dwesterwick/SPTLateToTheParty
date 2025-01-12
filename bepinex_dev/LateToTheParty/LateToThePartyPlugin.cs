@@ -2,21 +2,36 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Bootstrap;
-using LateToTheParty.Components;
 using LateToTheParty.Controllers;
-using LateToTheParty.Helpers;
+using SPT.Reflection.Patching;
 
 namespace LateToTheParty
 {
     [BepInDependency("xyz.drakia.waypoints", "1.6.0")]
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.7.1.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.8.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static string ModName { get; private set; } = "???";
+
+        private static List<ModulePatch> patches = new List<ModulePatch>();
+
+        public static void Disable()
+        {
+            if (!ConfigController.Config.Enabled)
+            {
+                return;
+            }
+
+            disablePatches();
+
+            ConfigController.Config.Enabled = false;
+        }
 
         protected void Awake()
         {
@@ -41,46 +56,7 @@ namespace LateToTheParty
                 string loggingPath = ConfigController.GetLoggingPath();
                 LoggingController.SetLoggingPath(loggingPath);
 
-                LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
-                new Patches.ReadyToPlayPatch().Enable();
-                new Patches.StartLocalGamePatch().Enable();
-                new Patches.GameWorldOnDestroyPatch().Enable();
-                new Patches.OnGameStartedPatch().Enable();
-                new Patches.TarkovInitPatch().Enable();
-                new Patches.MenuShowPatch().Enable();
-                
-                if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
-                {
-                    new Patches.OnItemAddedOrRemovedPatch().Enable();
-                    new Patches.OnBeenKilledByAggressorPatch().Enable();
-                    new Patches.OnBoxLandPatch().Enable();
-                }
-
-                LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling controllers...");
-                this.GetOrAddComponent<InteractiveObjectController>();
-                this.GetOrAddComponent<NavMeshController>();
-                this.GetOrAddComponent<PlayerMonitor>();
-
-                if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
-                {
-                    this.GetOrAddComponent<LootDestroyerController>();
-                }
-
-                if (ConfigController.Config.CarExtractDepartures.Enabled)
-                {
-                    this.GetOrAddComponent<CarExtractController>();
-                }
-
-                if (ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
-                {
-                    this.GetOrAddComponent<SwitchController>();
-                    new Patches.WorldInteractiveObjectPlaySoundPatch().Enable();
-                }
-
-                if (ConfigController.Config.Debug.Enabled)
-                {
-                    this.GetOrAddComponent<PathRender>();
-                }
+                enablePatches();
             }
 
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
@@ -95,6 +71,45 @@ namespace LateToTheParty
             }
 
             return true;
+        }
+
+        private static void enablePatches()
+        {
+            LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
+
+            patches.Add(new Patches.ReadyToPlayPatch());
+            patches.Add(new Patches.StartLocalGamePatch());
+            patches.Add(new Patches.GameWorldOnDestroyPatch());
+            patches.Add(new Patches.OnGameStartedPatch());
+            patches.Add(new Patches.TarkovInitPatch());
+            patches.Add(new Patches.MenuShowPatch());
+
+            if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
+            {
+                patches.Add(new Patches.OnItemAddedOrRemovedPatch());
+                patches.Add(new Patches.OnBeenKilledByAggressorPatch());
+                patches.Add(new Patches.OnBoxLandPatch());
+            }
+
+            if (ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
+            {
+                patches.Add(new Patches.WorldInteractiveObjectPlaySoundPatch());
+            }
+
+            foreach (ModulePatch patch in patches)
+            {
+                patch.Enable();
+            }
+        }
+
+        private static void disablePatches()
+        {
+            LoggingController.LogWarning("Disabling all patches...");
+
+            foreach (ModulePatch patch in patches)
+            {
+                patch.Disable();
+            }
         }
     }
 }

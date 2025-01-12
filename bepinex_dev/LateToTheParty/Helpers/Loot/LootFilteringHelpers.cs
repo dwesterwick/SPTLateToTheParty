@@ -4,16 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
+using LateToTheParty.Components;
 using LateToTheParty.Controllers;
 
-namespace LateToTheParty.Helpers
+namespace LateToTheParty.Helpers.Loot
 {
     internal static class LootFilteringHelpers
     {
         private static string[] secureContainerIDs = new string[0];
 
-        public static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items) => items.Where(i => !i.WasDroppedByPlayer());
+        public static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items) => items.Where(i => !Singleton<LootDestroyerComponent>.Instance.LootManager.WasDroppedByPlayer(i));
 
         public static IEnumerable<Item> RemoveExcludedItems(this IEnumerable<Item> items)
         {

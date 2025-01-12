@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Comfort.Common;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using EFT;
 using LateToTheParty.Controllers;
 using UnityEngine;
+using LateToTheParty.Components;
 
-namespace LateToTheParty.Helpers
+namespace LateToTheParty.Helpers.Loot
 {
     public static class LootDiscoveryHelpers
     {
@@ -39,7 +41,7 @@ namespace LateToTheParty.Helpers
             IEnumerable<Item> allItems = lootItem.Item.FindAllItemsInContainer(true).RemoveExcludedItems().RemoveItemsDroppedByPlayer();
             foreach (Item item in allItems)
             {
-                if (item.FindLootInfo() != null)
+                if (Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item) != null)
                 {
                     continue;
                 }
@@ -53,7 +55,7 @@ namespace LateToTheParty.Helpers
                     newLoot.CannotBeDestroyed = true;
                 }
 
-                LootManager.AddLootInfo(item, newLoot);
+                Singleton<LootDestroyerComponent>.Instance.LootManager.AddLootInfo(item, newLoot);
             }
         }
 
@@ -83,7 +85,7 @@ namespace LateToTheParty.Helpers
             {
                 foreach (Item item in containerItem.FindAllItemsInContainer().RemoveItemsDroppedByPlayer())
                 {
-                    if (item.FindLootInfo() != null)
+                    if (Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item) != null)
                     {
                         continue;
                     }
@@ -102,7 +104,7 @@ namespace LateToTheParty.Helpers
                         newLoot.CannotBeDestroyed = true;
                     }
 
-                    LootManager.AddLootInfo(item, newLoot);
+                    Singleton<LootDestroyerComponent>.Instance.LootManager.AddLootInfo(item, newLoot);
                 }
             }
         }
@@ -111,7 +113,7 @@ namespace LateToTheParty.Helpers
         {
             Type typeToSearch = ConfigController.Config.DestroyLootDuringRaid.OnlySearchForNearbyTrunks ? typeof(Trunk) : typeof(WorldInteractiveObject);
 
-            IEnumerable<WorldInteractiveObject> nearbyInteractiveObjects = Components.InteractiveObjectController
+            IEnumerable<WorldInteractiveObject> nearbyInteractiveObjects = Singleton<DoorTogglingComponent>.Instance
                 .FindNearbyInteractiveObjects(lootInfo.Transform.position, ConfigController.Config.DestroyLootDuringRaid.NearbyInteractiveObjectSearchDistance, typeToSearch)
                 .OrderBy(o => Vector3.Distance(lootInfo.Transform.position, o.transform.position));
 

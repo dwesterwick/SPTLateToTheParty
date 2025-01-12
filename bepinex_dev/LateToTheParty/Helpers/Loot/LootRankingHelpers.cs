@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using LateToTheParty.Controllers;
 
-namespace LateToTheParty.Helpers
+namespace LateToTheParty.Helpers.Loot
 {
     public static class LootRankingHelpers
     {

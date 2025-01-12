@@ -11,8 +11,9 @@ using LateToTheParty.Controllers;
 using LateToTheParty.Models;
 using UnityEngine;
 using LateToTheParty.Models.LootInfo;
+using LateToTheParty.Components;
 
-namespace LateToTheParty.Helpers
+namespace LateToTheParty.Helpers.Loot
 {
     public static class LootAccessibilityHelpers
     {
@@ -23,7 +24,7 @@ namespace LateToTheParty.Helpers
                 return;
             }
 
-            AbstractLootInfo lootInfo = item.FindLootInfo();
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
             if (lootInfo == null)
             {
                 throw new InvalidOperationException("Cannot destroy loot that has not been found");
@@ -35,7 +36,7 @@ namespace LateToTheParty.Helpers
             // Draw a sphere around the loot item
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
             {
-                Vector3[] targetCirclePoints = Components.PathRender.GetSpherePoints
+                Vector3[] targetCirclePoints = DebugHelpers.GetSpherePoints
                 (
                     itemPosition,
                     ConfigController.Config.Debug.LootPathVisualization.LootOutlineRadius,
@@ -82,7 +83,7 @@ namespace LateToTheParty.Helpers
             }
 
             // Check if the loot is near a locked door. If not, assume it's accessible. 
-            float distanceToNearestLockedDoor = Components.NavMeshController.GetDistanceToNearestLockedDoor(itemPosition);
+            float distanceToNearestLockedDoor = NavMeshHelpers.GetDistanceToNearestLockedDoor(itemPosition);
             if
             (
                 (distanceToNearestLockedDoor < float.MaxValue)
@@ -94,7 +95,7 @@ namespace LateToTheParty.Helpers
             }
 
             // Find the nearest position where a player could realistically exist
-            Player nearestPlayer = Components.NavMeshController.GetNearestPlayer(itemPosition);
+            Player nearestPlayer = NavMeshHelpers.GetNearestPlayer(itemPosition);
             if (nearestPlayer == null)
             {
                 return;
@@ -113,7 +114,7 @@ namespace LateToTheParty.Helpers
             }
 
             // Try to find a path to the loot item via the NavMesh from the nearest realistic position determined above
-            PathAccessibilityData fullAccessibilityData = Components.NavMeshController.GetPathAccessibilityData(nearestPosition, itemPosition, lootPathName);
+            PathAccessibilityData fullAccessibilityData = NavMeshHelpers.GetPathAccessibilityData(nearestPosition, itemPosition, lootPathName);
             lootInfo.PathData.Merge(fullAccessibilityData);
 
             // If the last search resulted in an incomplete path, remove the marker for the previous target NavMesh position

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using EFT.Interactive;
 using LateToTheParty.Controllers;
+using UnityEngine;
 
 namespace LateToTheParty.Helpers
 {
@@ -12,6 +13,9 @@ namespace LateToTheParty.Helpers
     {
         public static event Action<WorldInteractiveObject, InteractionResult> OnExecuteInteraction;
         public static event Action<WorldInteractiveObject, EDoorState> OnForceDoorState;
+
+        public static string GetText(this WorldInteractiveObject obj) => obj.Id + " (" + (obj.gameObject?.name ?? "???") + ")";
+        public static bool CanToggle(this WorldInteractiveObject obj) => obj.Operatable && (obj.gameObject.layer == LayerMask.NameToLayer("Interactive"));
 
         public static void StartExecuteInteraction(this WorldInteractiveObject interactiveObject, InteractionResult interactionResult)
         {
@@ -47,6 +51,13 @@ namespace LateToTheParty.Helpers
 
             interactiveObject.DoorState = doorState;
             interactiveObject.OnEnable();
+        }
+
+        public static float GetSwitchTogglingDelayTime(EFT.Interactive.Switch sw1, EFT.Interactive.Switch sw2)
+        {
+            // Get the delay (in seconds) for one switch to be toggled after another one
+            float distance = Vector3.Distance(sw1.transform.position, sw2.transform.position);
+            return ConfigController.Config.ToggleSwitchesDuringRaid.DelayAfterPressingPrereqSwitch * distance;
         }
     }
 }

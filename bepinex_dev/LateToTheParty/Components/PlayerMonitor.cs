@@ -12,18 +12,12 @@ namespace LateToTheParty.Components
 {
     public class PlayerMonitor : MonoBehaviour
     {
-        private static Dictionary<Player, Vector3> playerPositionsCurrent = new Dictionary<Player, Vector3>();
-        private static Dictionary<Player, Vector3> playerPositionsLast = new Dictionary<Player, Vector3>();
-        private static Stopwatch updateTimer = Stopwatch.StartNew();
+        private Dictionary<Player, Vector3> playerPositionsCurrent = new Dictionary<Player, Vector3>();
+        private Dictionary<Player, Vector3> playerPositionsLast = new Dictionary<Player, Vector3>();
+        private Stopwatch updateTimer = Stopwatch.StartNew();
 
         protected void Update()
         {
-            if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
-            {
-                Clear();
-                return;
-            }
-
             if (updateTimer.ElapsedMilliseconds < 100)
             {
                 return;
@@ -46,27 +40,21 @@ namespace LateToTheParty.Components
             updateTimer.Restart();
         }
 
-        public static void Clear()
-        {
-            playerPositionsCurrent.Clear();
-            playerPositionsLast.Clear();
-        }
-
-        public static IEnumerable<Vector3> GetPlayerPositions(bool onlyAlive = true)
+        public IEnumerable<Vector3> GetPlayerPositions(bool onlyAlive = true)
         {
             return playerPositionsCurrent
                 .Where(p => !onlyAlive || p.Key.HealthController.IsAlive)
                 .Select(p => p.Key.Position);
         }
 
-        public static IEnumerable<string> GetPlayerIDs(bool onlyAlive = true)
+        public IEnumerable<string> GetPlayerIDs(bool onlyAlive = true)
         {
             return playerPositionsCurrent
                 .Where(p => !onlyAlive || p.Key.HealthController.IsAlive)
                 .Select(p => p.Key.Profile.Id);
         }
 
-        public static float GetMostDistanceTravelledByPlayer()
+        public float GetMostDistanceTravelledByPlayer()
         {
             IEnumerable<float> distancesTravelled = playerPositionsCurrent
                 .Select(p => Vector3.Distance(playerPositionsCurrent[p.Key], playerPositionsLast[p.Key]));
@@ -84,7 +72,7 @@ namespace LateToTheParty.Components
             return distancesTravelled.Max();
         }
 
-        public static Player GetNearestPlayer(Vector3 position, bool onlyAlive = true)
+        public Player GetNearestPlayer(Vector3 position, bool onlyAlive = true)
         {
             float minDistance = float.MaxValue;
             Player nearestPlayer = null;
@@ -107,7 +95,7 @@ namespace LateToTheParty.Components
             return nearestPlayer;
         }
 
-        public static float GetDistanceFromNearestPlayer(Vector3 position, bool onlyAlive = true)
+        public float GetDistanceFromNearestPlayer(Vector3 position, bool onlyAlive = true)
         {
             Player nearestPlayer = GetNearestPlayer(position, onlyAlive);
             if (nearestPlayer == null)

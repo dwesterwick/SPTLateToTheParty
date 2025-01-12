@@ -8,48 +8,17 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Interactive;
+using LateToTheParty.Components;
 using LateToTheParty.Controllers;
-using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Models;
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace LateToTheParty.Components
+namespace LateToTheParty.Helpers
 {
-    public class NavMeshController: MonoBehaviour
+    public static class NavMeshHelpers
     {
-        public static bool IsClearing { get; private set; } = false;
-        public static bool IsUpdatingDoorsObstacles { get; private set; } = false;
-
         private static Dictionary<Vector3, Vector3> nearestNavMeshPoint = new Dictionary<Vector3, Vector3>();
-        private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.MaxCalcTimePerFrame);
-        private static Stopwatch updateTimer = Stopwatch.StartNew();
-
-        protected void OnDisable()
-        {
-            Clear();
-        }
-
-        public static IEnumerator Clear()
-        {
-            IsClearing = true;
-
-            if (IsUpdatingDoorsObstacles)
-            {
-                enumeratorWithTimeLimit.Abort();
-
-                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsUpdatingDoorsObstacles, nameof(IsUpdatingDoorsObstacles), 3000);
-
-                IsUpdatingDoorsObstacles = false;
-            }
-
-            nearestNavMeshPoint.Clear();
-
-            updateTimer.Restart();
-
-            IsClearing = false;
-        }
 
         public static Player GetNearestPlayer(Vector3 position)
         {
@@ -83,7 +52,7 @@ namespace LateToTheParty.Components
         {
             float closestDistance = float.MaxValue;
 
-            foreach (Door door in InteractiveObjectController.ToggleableLockedDoors)
+            foreach (Door door in Singleton<DoorTogglingComponent>.Instance.ToggleableLockedDoors)
             {
                 float distance = Vector3.Distance(position, door.transform.position);
                 if (distance < closestDistance)
@@ -118,7 +87,7 @@ namespace LateToTheParty.Components
             // Draw a sphere around the loot item (white = accessibility is undetermined)
             if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineLoot)
             {
-                Vector3[] targetCirclePoints = PathRender.GetSpherePoints
+                Vector3[] targetCirclePoints = DebugHelpers.GetSpherePoints
                 (
                     targetPosition,
                     ConfigController.Config.Debug.LootPathVisualization.LootOutlineRadius,
@@ -172,7 +141,7 @@ namespace LateToTheParty.Components
                         targetNearestPoint.Value.y + ConfigController.Config.DestroyLootDuringRaid.CheckLootAccessibility.NavMeshHeightOffsetIncomplete,
                         targetNearestPoint.Value.z
                     );
-                    Vector3[] targetCirclePoints = PathRender.GetSpherePoints
+                    Vector3[] targetCirclePoints = DebugHelpers.GetSpherePoints
                     (
                         targetNavMeshPosition,
                         ConfigController.Config.Debug.LootPathVisualization.CollisionPointRadius,
@@ -206,7 +175,7 @@ namespace LateToTheParty.Components
             {
                 for (int ray = 0; ray < targetRaycastHits.Length; ray++)
                 {
-                    Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHits[ray].collider.bounds);
+                    Vector3[] boundingBoxPoints = targetRaycastHits[ray].collider.bounds.GetBoundingBoxPoints();
                     accessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBox" + ray, boundingBoxPoints, Color.magenta));
 
                     /*LoggingController.LogInfo(
@@ -234,13 +203,13 @@ namespace LateToTheParty.Components
                 {
                     if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.OutlineObstacles)
                     {
-                        Vector3[] boundingBoxPoints = PathRender.GetBoundingBoxPoints(targetRaycastHitsFiltered[ray].collider.bounds);
+                        Vector3[] boundingBoxPoints = targetRaycastHitsFiltered[ray].collider.bounds.GetBoundingBoxPoints();
                         accessibilityData.BoundingBoxes.Add(new PathVisualizationData(targetPositionName + "_boundingBoxFiltered" + ray, boundingBoxPoints, Color.red));
                     }
 
                     if (ConfigController.Config.Debug.LootPathVisualization.Enabled && ConfigController.Config.Debug.LootPathVisualization.ShowObstacleCollisionPoints)
                     {
-                        Vector3[] circlepoints = PathRender.GetSpherePoints
+                        Vector3[] circlepoints = DebugHelpers.GetSpherePoints
                         (
                             targetRaycastHitsFiltered[ray].point,
                             ConfigController.Config.Debug.LootPathVisualization.CollisionPointRadius,

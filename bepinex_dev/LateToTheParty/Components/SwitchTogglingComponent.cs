@@ -15,36 +15,46 @@ using UnityEngine;
 
 namespace LateToTheParty.Components
 {
-    public class SwitchController : MonoBehaviour
+    public class SwitchTogglingComponent : MonoBehaviour
     {
-        public static bool IsClearing { get; private set; } = false;
-        public static bool HasFoundSwitches { get; private set; } = false;
-        public static bool IsTogglingSwitches { get; private set; } = false;
-        public static bool HasToggledInitialSwitches { get; private set; } = true;
+        public bool IsTogglingSwitches { get; private set; } = false;
+        public bool HasToggledInitialSwitches { get; private set; } = false;
 
-        private static Dictionary<EFT.Interactive.Switch, bool> hasToggledSwitch = new Dictionary<EFT.Interactive.Switch, bool>();
-        private static Dictionary<EFT.Interactive.Switch, double> raidTimeRemainingToToggleSwitch = new Dictionary<EFT.Interactive.Switch, double>();
+        private Dictionary<EFT.Interactive.Switch, bool> hasToggledSwitch = new Dictionary<EFT.Interactive.Switch, bool>();
+        private Dictionary<EFT.Interactive.Switch, double> raidTimeRemainingToToggleSwitch = new Dictionary<EFT.Interactive.Switch, double>();
 
-        private static EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.ToggleSwitchesDuringRaid.MaxCalcTimePerFrame);
-        private static Stopwatch switchTogglingTimer = Stopwatch.StartNew();
-        private static Stopwatch updateTimer = Stopwatch.StartNew();
-        private static System.Random staticRandomGen = new System.Random();
+        private EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(ConfigController.Config.ToggleSwitchesDuringRaid.MaxCalcTimePerFrame);
+        private Stopwatch switchTogglingTimer = Stopwatch.StartNew();
+        private Stopwatch updateTimer = Stopwatch.StartNew();
+        private System.Random staticRandomGen = new System.Random();
 
-        public static string GetSwitchText(EFT.Interactive.Switch sw) => sw.Id + " (" + (sw.gameObject?.name ?? "???") + ")";
-        public static bool CanToggleSwitch(EFT.Interactive.Switch sw) => sw.Operatable && (sw.gameObject.layer == LayerMask.NameToLayer("Interactive"));
-
-        protected void Update()
+        protected void Awake()
         {
-            if (IsClearing)
+            if (!ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
             {
+                HasToggledInitialSwitches = true;
+
                 return;
             }
 
-            if ((!Singleton<GameWorld>.Instantiated) || (Camera.main == null))
+            try
             {
-                StartCoroutine(Clear());
-                switchTogglingTimer.Restart();
+                findSwitches();
+            }
+            catch (Exception)
+            {
+                // If findSwitches() fails for some reason, HasToggledInitialSwitches must be set to true or all sounds from WorldInteractiveObjects will
+                // be suppressed by WorldInteractiveObjectPlaySoundPatch
+                HasToggledInitialSwitches = true;
 
+                throw;
+            }
+        }
+
+        protected void Update()
+        {
+            if (!ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
+            {
                 return;
             }
 
@@ -53,30 +63,6 @@ namespace LateToTheParty.Components
                 return;
             }
             updateTimer.Restart();
-
-            // Need to wait until the raid starts or Singleton<GameWorld>.Instance.ExfiltrationController will be null
-            if (!Singleton<AbstractGame>.Instance.GameTimer.Started())
-            {
-                switchTogglingTimer.Restart();
-                return;
-            }
-
-            if (!HasFoundSwitches)
-            {
-                try
-                {
-                    findSwitches();
-                }
-                catch (Exception)
-                {
-                    // If findSwitches() fails for some reason, HasToggledInitialSwitches must be set to true or all sounds from WorldInteractiveObjects will\
-                    // be suppressed by WorldInteractiveObjectPlaySoundPatch
-                    HasFoundSwitches = true;
-                    HasToggledInitialSwitches = true;
-                    
-                    throw;
-                }
-            }
 
             if (!HasToggledInitialSwitches && shouldlimitEvents())
             {
@@ -89,35 +75,11 @@ namespace LateToTheParty.Components
             }
         }
 
-        public static IEnumerator Clear()
-        {
-            IsClearing = true;
-
-            if (IsTogglingSwitches)
-            {
-                enumeratorWithTimeLimit.Abort();
-
-                EnumeratorWithTimeLimit conditionWaiter = new EnumeratorWithTimeLimit(1);
-                yield return conditionWaiter.WaitForCondition(() => !IsTogglingSwitches, nameof(IsTogglingSwitches), 3000);
-
-                IsTogglingSwitches = false;
-            }
-
-            HasFoundSwitches = false;
-            IsTogglingSwitches = false;
-            HasToggledInitialSwitches = false;
-
-            hasToggledSwitch.Clear();
-            raidTimeRemainingToToggleSwitch.Clear();
-
-            IsClearing = false;
-        }
-
-        private static void findSwitches()
+        private void findSwitches()
         {
             // Randomly sort all switches that players can toggle
             EFT.Interactive.Switch[] allSwitches = FindObjectsOfType<EFT.Interactive.Switch>()
-                .Where(s => CanToggleSwitch(s))
+                .Where(s => s.CanToggle())
                 .OrderBy(x => staticRandomGen.NextDouble())
                 .ToArray();
 
@@ -132,11 +94,9 @@ namespace LateToTheParty.Components
                 hasToggledSwitch.Add(allSwitches[i], false);
                 setTimeToToggleSwitch(allSwitches[i], 0, i >= switchesToToggle);
             }
-
-            HasFoundSwitches = true;
         }
 
-        private static void setTimeToToggleSwitch(EFT.Interactive.Switch sw, float minTimeFromNow = 0, bool neverToggle = false)
+        private void setTimeToToggleSwitch(EFT.Interactive.Switch sw, float minTimeFromNow = 0, bool neverToggle = false)
         {
             // Select a random time during the raid to toggle the switch
             Configuration.MinMaxConfig raidFractionWhenTogglingRange = ConfigController.Config.ToggleSwitchesDuringRaid.RaidFractionWhenToggling;
@@ -150,7 +110,7 @@ namespace LateToTheParty.Components
             // If the switch controls an extract point (i.e. the Labs cargo elevator), don't toggle it until after a certain time
             if (Singleton<GameWorld>.Instance.ExfiltrationController.ExfiltrationPoints.Any(x => x.Switch == sw))
             {
-                LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " is used for an extract point");
+                LoggingController.LogInfo("Switch " + sw.GetText() + " is used for an extract point");
 
                 float maxTimeRemainingToToggle = SPT.SinglePlayer.Utils.InRaid.RaidChangesUtil.OriginalEscapeTimeSeconds - ConfigController.Config.ToggleSwitchesDuringRaid.MinRaidETForExfilSwitches;
                 timeRemainingToToggle = Math.Min(timeRemainingToToggle, maxTimeRemainingToToggle);
@@ -173,17 +133,10 @@ namespace LateToTheParty.Components
             {
                 raidTimeRemainingToToggleSwitch.Add(sw, timeRemainingToToggle);
             }
-            LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " will be toggled at " + TimeSpan.FromSeconds(timeRemainingToToggle).ToString("mm':'ss"));
+            LoggingController.LogInfo("Switch " + sw.GetText() + " will be toggled at " + TimeSpan.FromSeconds(timeRemainingToToggle).ToString("mm':'ss"));
         }
 
-        private static float getSwitchDelayTime(EFT.Interactive.Switch sw1, EFT.Interactive.Switch sw2)
-        {
-            // Get the delay (in seconds) for one switch to be toggled after another one
-            float distance = Vector3.Distance(sw1.transform.position, sw2.transform.position);
-            return ConfigController.Config.ToggleSwitchesDuringRaid.DelayAfterPressingPrereqSwitch * distance;
-        }
-
-        private static IEnumerator tryToggleAllSwitches()
+        private IEnumerator tryToggleAllSwitches()
         {
             try
             {
@@ -211,7 +164,7 @@ namespace LateToTheParty.Components
             }
         }
 
-        private static void tryToggleSwitch(EFT.Interactive.Switch sw)
+        private void tryToggleSwitch(EFT.Interactive.Switch sw)
         {
             if (sw.DoorState == EDoorState.Interacting)
             {
@@ -230,19 +183,19 @@ namespace LateToTheParty.Components
                 return;
             }
 
-            if ((sw.DoorState == EDoorState.Locked) || !CanToggleSwitch(sw))
+            if ((sw.DoorState == EDoorState.Locked) || !sw.CanToggle())
             {
                 // Check if another switch needs to be toggled first before this one is available
                 if (sw.PreviousSwitch != null)
                 {
-                    LoggingController.LogInfo("Switch " + GetSwitchText(sw.PreviousSwitch) + " must be toggled before switch " + sw.Id);
+                    LoggingController.LogInfo("Switch " + sw.PreviousSwitch.GetText() + " must be toggled before switch " + sw.Id);
 
                     tryToggleSwitch(sw.PreviousSwitch);
 
                     // If this is beginning of a Scav raid, toggle the switch immediately after the prerequisite switch. Otherwise, add a minimum delay. 
                     if (HasToggledInitialSwitches)
                     {
-                        float delayBeforeSwitchCanBeToggled = getSwitchDelayTime(sw, sw.PreviousSwitch);
+                        float delayBeforeSwitchCanBeToggled = InteractiveObjectHelpers.GetSwitchTogglingDelayTime(sw, sw.PreviousSwitch);
                         //LoggingController.LogInfo("Switch " + GetSwitchText(sw) + " cannot be toggled for another " + delayBeforeSwitchCanBeToggled + "s");
 
                         setTimeToToggleSwitch(sw, delayBeforeSwitchCanBeToggled, false);
@@ -252,12 +205,12 @@ namespace LateToTheParty.Components
                 }
                 else
                 {
-                    LoggingController.LogWarning("Cannot toggle switch " + GetSwitchText(sw));
+                    LoggingController.LogWarning("Cannot toggle switch " + sw.GetText());
                 }
             }
 
             // Check if the switch is too close to a human player to toggle
-            Player nearestPlayer = PlayerMonitor.GetNearestPlayer(sw.transform.position);
+            Player nearestPlayer = Singleton<PlayerMonitor>.Instance.GetNearestPlayer(sw.transform.position);
             if (nearestPlayer == null)
             {
                 LoggingController.LogWarning("Cannot find an alive player near the switch " + sw.Id);
@@ -280,7 +233,7 @@ namespace LateToTheParty.Components
             }
         }
 
-        private static bool shouldlimitEvents()
+        private bool shouldlimitEvents()
         {
             bool shouldLimit = ConfigController.Config.OnlyMakeChangesJustAfterSpawning.AffectedSystems.TogglingSwitches
                 && ConfigController.Config.OnlyMakeChangesJustAfterSpawning.Enabled
