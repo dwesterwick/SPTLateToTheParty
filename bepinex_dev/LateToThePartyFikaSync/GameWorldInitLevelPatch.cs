@@ -23,11 +23,13 @@ namespace LateToThePartyFikaSync
         {
             if (FikaBackendUtils.IsServer)
             {
+                Logger.LogWarning("Enabling LateToTheParty plugin for host machine...");
+                LateToThePartyPlugin.Enable();
+
                 return;
             }
 
             Logger.LogWarning("Disabling LateToTheParty plugin for client machine...");
-
             LateToThePartyPlugin.Disable();
         }
     }

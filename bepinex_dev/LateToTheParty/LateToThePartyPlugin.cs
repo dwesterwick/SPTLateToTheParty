@@ -19,19 +19,10 @@ namespace LateToTheParty
     {
         public static string ModName { get; private set; } = "???";
 
-        private static List<ModulePatch> patches = new List<ModulePatch>();
+        private static List<ModulePatch> hostOnlyPatches = new List<ModulePatch>();
 
-        public static void Disable()
-        {
-            if (!ConfigController.Config.Enabled)
-            {
-                return;
-            }
-
-            disablePatches();
-
-            ConfigController.Config.Enabled = false;
-        }
+        public static void Enable() => enableHostOnlyPatches();
+        public static void Disable() => disableHostOnlyPatches();
 
         protected void Awake()
         {
@@ -56,7 +47,9 @@ namespace LateToTheParty
                 string loggingPath = ConfigController.GetLoggingPath();
                 LoggingController.SetLoggingPath(loggingPath);
 
-                enablePatches();
+                createHostOnlyPatches();
+                enableAllClientPathes();
+                enableHostOnlyPatches();
             }
 
             Logger.LogInfo("Loading LateToThePartyPlugin...done.");
@@ -73,40 +66,49 @@ namespace LateToTheParty
             return true;
         }
 
-        private static void enablePatches()
+        private static void createHostOnlyPatches()
         {
-            LoggingController.LogInfo("Loading LateToThePartyPlugin...enabling patches...");
-
-            patches.Add(new Patches.ReadyToPlayPatch());
-            patches.Add(new Patches.StartLocalGamePatch());
-            patches.Add(new Patches.GameWorldOnDestroyPatch());
-            patches.Add(new Patches.OnGameStartedPatch());
-            patches.Add(new Patches.TarkovInitPatch());
-            patches.Add(new Patches.MenuShowPatch());
+            hostOnlyPatches.Add(new Patches.StartLocalGamePatch());
+            hostOnlyPatches.Add(new Patches.OnGameStartedPatch());
 
             if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
             {
-                patches.Add(new Patches.OnItemAddedOrRemovedPatch());
-                patches.Add(new Patches.OnBeenKilledByAggressorPatch());
-                patches.Add(new Patches.OnBoxLandPatch());
+                hostOnlyPatches.Add(new Patches.OnItemAddedOrRemovedPatch());
+                hostOnlyPatches.Add(new Patches.OnBeenKilledByAggressorPatch());
+                hostOnlyPatches.Add(new Patches.OnBoxLandPatch());
             }
 
             if (ConfigController.Config.ToggleSwitchesDuringRaid.Enabled)
             {
-                patches.Add(new Patches.WorldInteractiveObjectPlaySoundPatch());
+                hostOnlyPatches.Add(new Patches.WorldInteractiveObjectPlaySoundPatch());
             }
+        }
 
-            foreach (ModulePatch patch in patches)
+        private static void enableAllClientPathes()
+        {
+            LoggingController.LogInfo("Enabling patches used by all client machines...");
+
+            new Patches.MenuShowPatch().Enable();
+            new Patches.TarkovInitPatch().Enable();
+            new Patches.ReadyToPlayPatch().Enable();
+            new Patches.GameWorldOnDestroyPatch().Enable();
+        }
+
+        private static void enableHostOnlyPatches()
+        {
+            LoggingController.LogInfo("Enabling patches only used for the host machine...");
+
+            foreach (ModulePatch patch in hostOnlyPatches)
             {
                 patch.Enable();
             }
         }
 
-        private static void disablePatches()
+        private static void disableHostOnlyPatches()
         {
-            LoggingController.LogWarning("Disabling all patches...");
+            LoggingController.LogWarning("Disabling patches only used for the host machine...");
 
-            foreach (ModulePatch patch in patches)
+            foreach (ModulePatch patch in hostOnlyPatches)
             {
                 patch.Disable();
             }
