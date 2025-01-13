@@ -39,7 +39,6 @@ namespace LateToTheParty.Helpers
             {
                 if (exfil.Status == EExfiltrationStatus.NotPresent)
                 {
-                    LoggingController.LogInfo("Found a car exfil, but it's not present");
                     continue;
                 }
 

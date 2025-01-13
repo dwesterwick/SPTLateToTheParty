@@ -19,7 +19,7 @@ namespace LateToTheParty.Helpers.Loot
             System.Random random = new System.Random();
 
             // Get the loot ranking data from the server, but this only needs to be done once
-            if (ConfigController.LootRanking == null)
+            if (ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled && (ConfigController.LootRanking == null))
             {
                 ConfigController.GetLootRankingData();
             }

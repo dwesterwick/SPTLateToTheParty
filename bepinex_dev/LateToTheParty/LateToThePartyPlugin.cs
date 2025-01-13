@@ -28,8 +28,10 @@ namespace LateToTheParty
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
 
-            Patches.TarkovInitPatch.MinVersion = "3.10.0.0";
-            Patches.TarkovInitPatch.MaxVersion = "3.10.99.0";
+            Patches.TarkovInitPatch.MinSPTVersion = "3.10.0.0";
+            Patches.TarkovInitPatch.MaxSPTVersion = "3.10.99.0";
+
+            Helpers.VersionCheckHelper.MinFikaSyncPluginVersion = "1.0.0.0";
 
             Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ConfigController.GetConfig();

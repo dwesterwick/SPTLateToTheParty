@@ -13,8 +13,8 @@ namespace LateToTheParty.Patches
 {
     public class TarkovInitPatch : ModulePatch
     {
-        public static string MinVersion { get; set; } = "0.0.0.0";
-        public static string MaxVersion { get; set; } = "999999.999999.999999.999999";
+        public static string MinSPTVersion { get; set; } = "0.0.0.0";
+        public static string MaxSPTVersion { get; set; } = "999999.999999.999999.999999";
 
         protected override MethodBase GetTargetMethod()
         {
@@ -24,31 +24,44 @@ namespace LateToTheParty.Patches
         [PatchPostfix]
         protected static void PatchPostfix(IAssetsManager assetsManager, InputTree inputTree)
         {
-            if (!Helpers.VersionCheckHelper.IsSPTWithinVersionRange(MinVersion, MaxVersion, out string currentVersion))
+            if (!Helpers.VersionCheckHelper.IsSPTWithinVersionRange(MinSPTVersion, MaxSPTVersion, out string currentVersion))
             {
-                string errorMessage = "Could not load " + LateToThePartyPlugin.ModName + " because it requires SPT ";
-                
-                if (MinVersion == MaxVersion)
-                {
-                    errorMessage += MinVersion;
-                }
-                else if (MaxVersion == "999999.999999.999999.999999")
-                {
-                    errorMessage += MinVersion + " or later";
-                }
-                else if (MinVersion == "0.0.0.0")
-                {
-                    errorMessage += MaxVersion + " or older";
-                }
-                else
-                {
-                    errorMessage += "between versions " + MinVersion + " and " + MaxVersion;
-                }
-
-                errorMessage += ". The current version is " + currentVersion + ".";
-
+                string errorMessage = createSPTVersionErrorMessage(currentVersion);
                 Chainloader.DependencyErrors.Add(errorMessage);
+                return;
             }
+
+            if (!Helpers.VersionCheckHelper.IsFikaSyncPluginCompatible())
+            {
+                Chainloader.DependencyErrors.Add("Please update your LTTP Fika Sync Plugin to the latest version.");
+                return;
+            }
+        }
+
+        private static string createSPTVersionErrorMessage(string currentVersion)
+        {
+            string errorMessage = "Could not load " + LateToThePartyPlugin.ModName + " because it requires SPT ";
+
+            if (MinSPTVersion == MaxSPTVersion)
+            {
+                errorMessage += MinSPTVersion;
+            }
+            else if (MaxSPTVersion == "999999.999999.999999.999999")
+            {
+                errorMessage += MinSPTVersion + " or later";
+            }
+            else if (MinSPTVersion == "0.0.0.0")
+            {
+                errorMessage += MaxSPTVersion + " or older";
+            }
+            else
+            {
+                errorMessage += "between versions " + MinSPTVersion + " and " + MaxSPTVersion;
+            }
+
+            errorMessage += ". The current version is " + currentVersion + ".";
+
+            return errorMessage;
         }
     }
 }

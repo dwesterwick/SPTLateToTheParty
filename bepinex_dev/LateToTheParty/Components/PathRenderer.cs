@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -80,7 +79,7 @@ namespace LateToTheParty.Components
             // In case the path isn't registered, erase it anyway
             if (!RemovePath(data.PathName))
             {
-                Controllers.LoggingController.LogInfo("Path " + data.PathName + " not found");
+                //Controllers.LoggingController.LogInfo("Path " + data.PathName + " not found");
                 data.Clear();
             }
 

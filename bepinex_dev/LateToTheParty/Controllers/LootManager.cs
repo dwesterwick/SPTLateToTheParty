@@ -37,10 +37,11 @@ namespace LateToTheParty.Controllers
         public int RemainingLootItemsCount => LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count();
 
         public bool WasDroppedByPlayer(Item item) => ItemsDroppedByMainPlayer.Contains(item);
+        public void WriteLootLogFile(string locationName) => LoggingController.WriteLootLogFile(LootInfo, locationName);
 
         public LootManager()
         {
-
+            
         }
 
         public AbstractLootInfo FindLootInfo(Item item)
@@ -186,7 +187,7 @@ namespace LateToTheParty.Controllers
                 int lootItemsToDestroy = (int)Math.Min(GetNumberOfLootItemsToDestroy(targetLootRemainingFraction), maxItemsToDestroy);
                 if (lootItemsToDestroy > ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items)
                 {
-                    LoggingController.LogInfo("Limiting the number of items to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items);
+                    //LoggingController.LogInfo("Limiting the number of items to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items);
                     lootItemsToDestroy = ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Items;
                 }
                 if ((lootItemsToDestroy == 0) && (lastLootDestroyedTimer.ElapsedMilliseconds >= ConfigController.Config.DestroyLootDuringRaid.MaxTimeWithoutDestroyingAnyLoot * 1000.0))
@@ -210,7 +211,7 @@ namespace LateToTheParty.Controllers
                 int targetLootSlotsToDestroy = targetTotalLootSlotsDestroyed - GetTotalDestroyedSlots();
                 if (targetLootSlotsToDestroy > ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots)
                 {
-                    LoggingController.LogInfo("Limiting the number of item slots to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots);
+                    //LoggingController.LogInfo("Limiting the number of item slots to destroy to " + ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots);
                     targetLootSlotsToDestroy = ConfigController.Config.DestroyLootDuringRaid.DestructionEventLimits.Slots;
                 }
                 if (targetLootSlotsToDestroy <= 0)
@@ -322,12 +323,19 @@ namespace LateToTheParty.Controllers
             lastLootDestroyedTimer.Restart();
             destroyedLootSlots += item.GetItemSlots();
 
-            LoggingController.LogInfo(
-                "Destroyed " + lootInfo.LootTypeName
-                + (((lootInfo.ParentItem != null) && (lootInfo.ParentItem.TemplateId != item.TemplateId)) ? " in " + lootInfo.ParentItem.LocalizedName() : "")
-                + (ConfigController.LootRanking.Items.ContainsKey(item.TemplateId) ? " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")" : "")
-                + ": " + item.LocalizedName()
-            );
+            string parentItemText = "";
+            if ((lootInfo.ParentItem != null) && (lootInfo.ParentItem.TemplateId != item.TemplateId))
+            {
+                parentItemText = " in " + lootInfo.ParentItem.LocalizedName();
+            }
+
+            string lootValueText = "";
+            if (ConfigController.Config.DestroyLootDuringRaid.LootRanking.Enabled && ConfigController.LootRanking.Items.ContainsKey(item.TemplateId))
+            {
+                lootValueText = " (Value=" + ConfigController.LootRanking.Items[item.TemplateId].Value + ")";
+            }
+
+            LoggingController.LogInfo("Destroyed " + lootInfo.LootTypeName + parentItemText + lootValueText + ": " + item.LocalizedName());
 
             lootInfo.PathData.Clear();
         }
