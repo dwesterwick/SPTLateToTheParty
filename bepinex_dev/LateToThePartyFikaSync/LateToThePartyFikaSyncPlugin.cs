@@ -5,22 +5,21 @@ using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Logging;
-using Comfort.Common;
 using EFT.Interactive;
-using EFT;
-using Fika.Core.Coop.Utils;
 using Fika.Core.Modding.Events;
 using Fika.Core.Modding;
 using Fika.Core.Networking;
 using LateToTheParty.Helpers;
+using LateToTheParty.Helpers.Loot;
+using EFT.InventoryLogic;
 
 namespace LateToThePartyFikaSync
 {
     // Huge thanks to Lacyway for creating this plugin!
 
     [BepInDependency("com.fika.core", "1.1.3")]
-    [BepInDependency("com.DanW.LateToTheParty", "2.7.1")]
-    [BepInPlugin("com.DanW.LateToThePartyFikaSync", "LateToThePartyFikaSyncPlugin", "1.0.0.0")]
+    [BepInDependency("com.DanW.LateToTheParty", "2.8.1")]
+    [BepInPlugin("com.DanW.LateToThePartyFikaSync", "LateToThePartyFikaSyncPlugin", "1.1.0.0")]
     internal class LateToThePartyFikaSyncPlugin : BaseUnityPlugin
     {
         internal static ManualLogSource PluginLogger;
@@ -34,6 +33,7 @@ namespace LateToThePartyFikaSync
 
             InteractiveObjectHelpers.OnExecuteInteraction += InteractiveObjectHelpers_OnExecuteInteraction;
             InteractiveObjectHelpers.OnForceDoorState += InteractiveObjectHelpers_OnForceDoorState;
+            LootDestructionHelpers.OnDestroyLoot += LootDestructionHelpers_OnLootDestructionRequested;
 
             FikaEventDispatcher.SubscribeEvent<FikaNetworkManagerCreatedEvent>(OnNetworkManagerCreated);
         }
@@ -44,94 +44,78 @@ namespace LateToThePartyFikaSync
             {
                 client.RegisterPacket<DoorSyncPacket>(OnDoorSyncPacketReceived);
                 client.RegisterPacket<InteractPacket>(OnInteractPacketReceived);
+                client.RegisterPacket<ItemPacket>(OnItemPacketReceived);
             }
         }
 
         private void OnDoorSyncPacketReceived(DoorSyncPacket packet)
         {
-#if DEBUG
-            Logger.LogWarning("Received packet for " + packet.Data.Id);
-#endif
-            if (Singleton<GameWorld>.Instance != null)
+            packet.WriteReceivedMessage();
+
+            if (PacketHelpers.TryGetWorldInteractiveObject(packet.Data.Id, out WorldInteractiveObject worldInteractiveObject))
             {
-                GameWorld gameWorld = Singleton<GameWorld>.Instance;
-                WorldInteractiveObject interactiveObject = gameWorld.FindDoor(packet.Data.Id);
-                if (interactiveObject != null)
-                {
-                    interactiveObject.SetInitialSyncState(packet.Data);
-                    return;
-                }
-                Logger.LogError("OnDoorSyncPacketReceived::Could not find door: " + packet.Data.Id);
+                worldInteractiveObject.SetInitialSyncState(packet.Data);
                 return;
             }
-            Logger.LogError("OnDoorSyncPacketReceived::GameWorld was null");
+
+            Logger.LogError("Could not set the sync state of door: " + packet.Data.Id);
         }
 
         private void OnInteractPacketReceived(InteractPacket packet)
         {
-#if DEBUG
-            Logger.LogWarning("Received interact packet for " + packet.Id);
-#endif
-            if (Singleton<GameWorld>.Instance != null)
+            packet.WriteReceivedMessage();
+
+            if (PacketHelpers.TryGetWorldInteractiveObject(packet.Id, out WorldInteractiveObject worldInteractiveObject))
             {
-                GameWorld gameWorld = Singleton<GameWorld>.Instance;
-                WorldInteractiveObject interactiveObject = gameWorld.FindDoor(packet.Id);
-                if (interactiveObject != null)
-                {
-                    interactiveObject.Interact(packet.InteractionType);
-                    return;
-                }
-                Logger.LogError("OnDoorSyncPacketReceived::Could not find door: " + packet.Id);
+                worldInteractiveObject.Interact(packet.InteractionType);
                 return;
             }
-            Logger.LogError("OnDoorSyncPacketReceived::GameWorld was null");
+
+            Logger.LogError("Could not interact with door: " + packet.Id);
+        }
+
+        private void OnItemPacketReceived(ItemPacket packet)
+        {
+            packet.WriteReceivedMessage();
+
+            if (PacketHelpers.TryGetItem(packet.Id, out Item item))
+            {
+                item.DestroyViaLTTP();
+                return;
+            }
+
+            Logger.LogError("Could not destroy loot with ID: " + packet.Id);
         }
 
         private void InteractiveObjectHelpers_OnForceDoorState(WorldInteractiveObject worldInteractiveObject, EDoorState doorState)
         {
-            if (FikaBackendUtils.IsClient) // safeguard
-            {
-                return;
-            }
-#if DEBUG
-            Logger.LogWarning("Sending packet for " + worldInteractiveObject.Id);
-#endif
             DoorSyncPacket packet = new DoorSyncPacket()
             {
                 Data = worldInteractiveObject.GetStatusInfo()
             };
 
-            if (Singleton<IFikaNetworkManager>.Instance is FikaServer server)
-            {
-                server.SendDataToAll(ref packet, LiteNetLib.DeliveryMethod.ReliableOrdered);
-                return;
-            }
-
-            Logger.LogError("InteractiveObjectHelpers_OnForceDoorState::NetworkManager was not a server?");
+            packet.SendToAllClients();
         }
 
         private void InteractiveObjectHelpers_OnExecuteInteraction(WorldInteractiveObject worldInteractiveObject, InteractionResult interactionResult)
         {
-            if (FikaBackendUtils.IsClient) // safeguard
-            {
-                return;
-            }
-#if DEBUG
-            Logger.LogWarning("Sending interact packet for " + worldInteractiveObject.Id);
-#endif
             InteractPacket packet = new InteractPacket()
             {
                 Id = worldInteractiveObject.Id,
                 InteractionType = interactionResult.InteractionType
             };
 
-            if (Singleton<IFikaNetworkManager>.Instance is FikaServer server)
-            {
-                server.SendDataToAll(ref packet, LiteNetLib.DeliveryMethod.ReliableOrdered);
-                return;
-            }
+            packet.SendToAllClients();
+        }
 
-            Logger.LogError("InteractiveObjectHelpers_OnExecuteInteraction::NetworkManager was not a server?");
+        private void LootDestructionHelpers_OnLootDestructionRequested(Item item)
+        {
+            ItemPacket packet = new ItemPacket()
+            {
+                Id = item.Id,
+            };
+
+            packet.SendToAllClients();
         }
     }
 }

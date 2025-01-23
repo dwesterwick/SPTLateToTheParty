@@ -4,11 +4,37 @@ using LiteNetLib.Utils;
 
 namespace LateToThePartyFikaSync
 {
-	public class DoorSyncPacket : INetSerializable
+	public interface IObjectPacket
 	{
+		string ObjectName { get; }
+	}
+
+    public class ItemPacket : INetSerializable, IObjectPacket
+    {
+        public string Id;
+
+		public string ObjectName => Id;
+
+        public void Deserialize(NetDataReader reader)
+        {
+            Id = reader.GetString();
+        }
+
+        public void Serialize(NetDataWriter writer)
+        {
+            writer.Put(Id);
+        }
+
+		public override string ToString() => Id;
+    }
+
+    public class DoorSyncPacket : INetSerializable, IObjectPacket
+    {
 		public WorldInteractiveObject.GStruct415 Data;
 
-		public void Deserialize(NetDataReader reader)
+        public string ObjectName => Data.Id;
+
+        public void Deserialize(NetDataReader reader)
 		{
 			Data = new WorldInteractiveObject.GStruct415()
 			{
@@ -30,14 +56,16 @@ namespace LateToThePartyFikaSync
 			writer.Put(Data.State);
 			writer.Put(Data.Updated);
 		}
-	}
+    }
 
-	public class InteractPacket : INetSerializable
-	{
+	public class InteractPacket : INetSerializable, IObjectPacket
+    {
 		public string Id;
 		public EInteractionType InteractionType;
 
-		public void Deserialize(NetDataReader reader)
+        public string ObjectName => Id;
+
+        public void Deserialize(NetDataReader reader)
 		{
 			Id = reader.GetString();
 			InteractionType = (EInteractionType)reader.GetByte();
@@ -48,5 +76,5 @@ namespace LateToThePartyFikaSync
 			writer.Put(Id);
 			writer.Put((byte)InteractionType);
 		}
-	}
+    }
 }

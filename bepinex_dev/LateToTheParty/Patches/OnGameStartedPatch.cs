@@ -34,10 +34,10 @@ namespace LateToTheParty.Patches
 
             GameObject gameWorld = Singleton<GameWorld>.Instance.gameObject;
 
+            Singleton<PlayerMonitor>.Create(gameWorld.GetOrAddComponent<PlayerMonitor>());
             Singleton<DoorTogglingComponent>.Create(gameWorld.GetOrAddComponent<DoorTogglingComponent>());
             Singleton<SwitchTogglingComponent>.Create(gameWorld.GetOrAddComponent<SwitchTogglingComponent>());
-            Singleton<PlayerMonitor>.Create(gameWorld.GetOrAddComponent<PlayerMonitor>());
-
+            
             if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
             {
                 Singleton<LootDestroyerComponent>.Create(gameWorld.GetOrAddComponent<LootDestroyerComponent>());

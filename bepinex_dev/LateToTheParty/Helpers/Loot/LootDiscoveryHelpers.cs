@@ -10,6 +10,7 @@ using EFT;
 using LateToTheParty.Controllers;
 using UnityEngine;
 using LateToTheParty.Components;
+using LateToTheParty.Models.LootInfo;
 
 namespace LateToTheParty.Helpers.Loot
 {

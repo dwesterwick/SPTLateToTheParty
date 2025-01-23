@@ -14,7 +14,7 @@ using SPT.Reflection.Patching;
 namespace LateToTheParty
 {
     [BepInDependency("xyz.drakia.waypoints", "1.6.2")]
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.8.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.8.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static string ModName { get; private set; } = "???";
@@ -31,7 +31,7 @@ namespace LateToTheParty
             Patches.TarkovInitPatch.MinSPTVersion = "3.10.0.0";
             Patches.TarkovInitPatch.MaxSPTVersion = "3.10.99.0";
 
-            Helpers.VersionCheckHelper.MinFikaSyncPluginVersion = "1.0.0.0";
+            Helpers.VersionCheckHelper.MinFikaSyncPluginVersion = "1.1.0.0";
 
             Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ConfigController.GetConfig();
@@ -94,6 +94,11 @@ namespace LateToTheParty
             new Patches.TarkovInitPatch().Enable();
             new Patches.ReadyToPlayPatch().Enable();
             new Patches.GameWorldOnDestroyPatch().Enable();
+
+            if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
+            {
+                new Patches.CanModifyItemPatch().Enable();
+            }
         }
 
         private static void enableHostOnlyPatches()

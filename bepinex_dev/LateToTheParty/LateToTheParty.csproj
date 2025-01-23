@@ -147,6 +147,7 @@
     <Compile Include="Controllers\LootManager.cs" />
     <Compile Include="CoroutineExtensions\MethodWithTimeLimit.cs" />
     <Compile Include="Models\PathVisualizationData.cs" />
+    <Compile Include="Patches\CanModifyItemPatch.cs" />
     <Compile Include="Patches\GameWorldOnDestroyPatch.cs" />
     <Compile Include="Patches\MenuShowPatch.cs" />
     <Compile Include="Patches\OnBoxLandPatch.cs" />

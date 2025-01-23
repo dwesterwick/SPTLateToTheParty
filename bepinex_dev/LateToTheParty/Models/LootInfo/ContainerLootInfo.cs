@@ -13,7 +13,7 @@ namespace LateToTheParty.Models.LootInfo
         private static string lootTypeName = "ContainerLoot";
         private LootableContainer lootableContainer;
 
-        public override TraderControllerClass TraderController => lootableContainer.ItemOwner;
+        public override TraderControllerClass ItemOwner => lootableContainer.ItemOwner;
         public override Transform Transform => lootableContainer.transform;
         public override string LootTypeName => lootTypeName;
 

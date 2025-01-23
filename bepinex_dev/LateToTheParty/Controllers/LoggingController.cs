@@ -18,6 +18,16 @@ namespace LateToTheParty.Controllers
             LoggingPath = path;
         }
 
+        public static void LogDebug(string message)
+        {
+            if (!ConfigController.Config.Debug.Enabled)
+            {
+                return;
+            }
+
+            Logger.LogDebug(message);
+        }
+
         public static void LogInfo(string message)
         {
             if (!ConfigController.Config.Debug.Enabled)

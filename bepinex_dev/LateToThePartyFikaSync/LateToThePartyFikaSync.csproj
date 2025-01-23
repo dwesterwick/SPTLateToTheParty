@@ -80,6 +80,7 @@
   <ItemGroup>
     <Compile Include="GameWorldInitLevelPatch.cs" />
     <Compile Include="LateToThePartyFikaSyncPlugin.cs" />
+    <Compile Include="PacketHelpers.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

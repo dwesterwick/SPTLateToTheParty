@@ -16,6 +16,98 @@ namespace LateToTheParty.Helpers.Loot
 {
     public static class LootDestructionHelpers
     {
+        public static event Action<Item> OnDestroyLoot;
+
+        public static void StartDestruction(this Item item)
+        {
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
+            if (lootInfo == null)
+            {
+                throw new InvalidOperationException("Cannot destroy loot that has not been found");
+            }
+
+            try
+            {
+                item.openNearbyDoorForLoot();
+
+                item.DestroyViaLTTP();
+
+                if (OnDestroyLoot != null)
+                {
+                    OnDestroyLoot(item);
+                }
+
+                Singleton<LootDestroyerComponent>.Instance.LootManager.ConfirmItemDestruction(item);
+            }
+            catch (Exception ex)
+            {
+                LoggingController.LogError("Could not destroy " + item.LocalizedName());
+                LoggingController.LogError(ex.ToString());
+                lootInfo.CannotBeDestroyed = true;
+            }
+        }
+
+        public static void DestroyViaLTTP(this Item item)
+        {
+            // This method no longer exists in SPT 3.10
+            //lootInfo.TraderController.DestroyItem(item);
+
+            ItemAddress address = item.CurrentAddress;
+            if (address == null)
+            {
+                throw new InvalidOperationException($"The address of {item.LocalizedName()} was null");
+            }
+
+            // Item in container
+            if (item.Owner == null || item.Owner.ID != item.Id)
+            {
+                address.RemoveWithoutRestrictions(item);
+                return;
+            }
+
+            // Item in world
+            item.Owner.RaiseRemoveEvent(new GEventArgs3(item, item.CurrentAddress, CommandStatus.Succeed, item.Owner));
+        }
+
+        private static void openNearbyDoorForLoot(this Item item)
+        {
+            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
+            if (lootInfo == null)
+            {
+                throw new InvalidOperationException("Cannot destroy loot that has not been found");
+            }
+
+            // Check if there is a door near the item
+            if (lootInfo.NearbyInteractiveObject == null)
+            {
+                return;
+            }
+
+            if (lootInfo.NearbyInteractiveObject.DoorState == EDoorState.Locked)
+            {
+                throw new InvalidOperationException("Cannot destroy loot behind a locked interactive object");
+            }
+
+            // This should be checked after ensuring the door is not locked as a sanity check
+            if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
+            {
+                return;
+            }
+
+            if (lootInfo.NearbyInteractiveObject.DoorState == EDoorState.Open)
+            {
+                return;
+            }
+
+            if (lootInfo.NearbyInteractiveObject.DoorState != EDoorState.Shut)
+            {
+                LoggingController.LogError("Cannot open door " + lootInfo.NearbyInteractiveObject.Id + " because its state is " + lootInfo.NearbyInteractiveObject.DoorState);
+                return;
+            }
+
+            lootInfo.NearbyInteractiveObject.StartExecuteInteraction(new InteractionResult(EInteractionType.Open));
+        }
+
         public static void UpdateLootEligibility(Item item, IEnumerable<Vector3> playerPositions, double raidET)
         {
             AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
@@ -213,97 +305,6 @@ namespace LateToTheParty.Helpers.Loot
             }
 
             return true;
-        }
-
-        public static void DestroyLoot(Item item)
-        {
-            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
-            if (lootInfo == null)
-            {
-                throw new InvalidOperationException("Cannot destroy loot that has not been found");
-            }
-
-            try
-            {
-                item.openNearbyDoorForLoot();
-                item.runNetworkTransactionToDestroy();
-            }
-            catch (Exception ex)
-            {
-                LoggingController.LogError("Could not destroy " + item.LocalizedName());
-                LoggingController.LogError(ex.ToString());
-                lootInfo.CannotBeDestroyed = true;
-            }
-        }
-
-        private static void openNearbyDoorForLoot(this Item item)
-        {
-            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
-            if (lootInfo == null)
-            {
-                throw new InvalidOperationException("Cannot destroy loot that has not been found");
-            }
-
-            // Check if there is a door near the item
-            if (lootInfo.NearbyInteractiveObject == null)
-            {
-                return;
-            }
-
-            if (lootInfo.NearbyInteractiveObject.DoorState == EDoorState.Locked)
-            {
-                throw new InvalidOperationException("Cannot destroy loot behind a locked interactive object");
-            }
-
-            // This should be checked after ensuring the door is not locked as a sanity check
-            if (!ConfigController.Config.OpenDoorsDuringRaid.Enabled)
-            {
-                return;
-            }
-
-            if (lootInfo.NearbyInteractiveObject.DoorState == EDoorState.Open)
-            {
-                return;
-            }
-
-            if (lootInfo.NearbyInteractiveObject.DoorState != EDoorState.Shut)
-            {
-                LoggingController.LogWarning("Cannot open door " + lootInfo.NearbyInteractiveObject.Id + " because its state is " + lootInfo.NearbyInteractiveObject.DoorState);
-                return;
-            }
-
-            lootInfo.NearbyInteractiveObject.StartExecuteInteraction(new InteractionResult(EInteractionType.Open));
-        }
-
-        private static void runNetworkTransactionToDestroy(this Item item)
-        {
-            AbstractLootInfo lootInfo = Singleton<LootDestroyerComponent>.Instance.LootManager.FindLootInfo(item);
-            if (lootInfo == null)
-            {
-                throw new InvalidOperationException(item.LocalizedName() + " cannot be destroyed because it has not yet been discovered");
-            }
-
-            // This method no longer exists in SPT 3.10
-            //lootInfo.TraderController.DestroyItem(item);
-
-            var discardTransaction = InteractionsHandlerClass.Discard(item, lootInfo.TraderController, true);
-            if (discardTransaction.Failed)
-            {
-                string message = "Could not discard " + item.LocalizedName() + ": " + discardTransaction.Error.ToString();
-                throw new InvalidOperationException(message);
-            }
-
-            lootInfo.TraderController.TryRunNetworkTransaction(discardTransaction, networkTransactionCallback);
-
-            Singleton<LootDestroyerComponent>.Instance.LootManager.ConfirmItemDestruction(item);
-        }
-
-        private static void networkTransactionCallback(IResult result)
-        {
-            if (result.Failed)
-            {
-                LoggingController.LogError("Received error during network transaction: " + result.Error);
-            }
         }
     }
 }

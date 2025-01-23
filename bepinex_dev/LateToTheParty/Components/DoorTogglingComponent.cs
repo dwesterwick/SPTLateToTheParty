@@ -330,7 +330,7 @@ namespace LateToTheParty.Components
                     continue;
                 }
 
-                LoggingController.LogInfo("Found NoPowerTip " + noPowerTip.name + " for door " + interactiveObject.Id);
+                LoggingController.LogDebug("Found NoPowerTip " + noPowerTip.name + " for door " + interactiveObject.Id);
                 noPowerTipsForInteractiveObjects.Add(interactiveObject, noPowerTip);
                 
                 break;
@@ -447,14 +447,14 @@ namespace LateToTheParty.Components
             {
                 if (allItems.ContainsKey(interactiveObject.KeyId) && !ConfigController.Config.OpenDoorsDuringRaid.CanOpenLockedDoors)
                 {
-                    if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is locked and not allowed to be opened.");
+                    if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is locked and not allowed to be opened.");
                     return false;
                 }
 
                 Door door = interactiveObject as Door;
                 if ((door?.CanBeBreached == true) && !ConfigController.Config.OpenDoorsDuringRaid.CanBreachDoors)
                 {
-                    if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...door " + door.Id + " is not allowed to be breached.");
+                    if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...door " + door.Id + " is not allowed to be breached.");
                     return false;
                 }
             }
@@ -466,13 +466,13 @@ namespace LateToTheParty.Components
         {
             if (!interactiveObject.Operatable)
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is inoperable.");
+                if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is inoperable.");
                 return false;
             }
 
             if (interactiveObject.gameObject.layer != LayerMask.NameToLayer("Interactive"))
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is inoperable (wrong layer).");
+                if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is inoperable (wrong layer).");
                 return false;
             }
 
@@ -480,14 +480,14 @@ namespace LateToTheParty.Components
             ActionsReturnClass availableActions = GetActionsClass.GetAvailableActions(gamePlayerOwner, interactiveObject);
             if ((availableActions == null) || !availableActions.Actions.Any())
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has no interaction options.");
+                if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has no interaction options.");
                 return false;
             }
 
             // This is a sanity check but never seems to actually happen
             if (interactiveObject.DoorState != EDoorState.Open && interactiveObject.DoorState != EDoorState.Shut && interactiveObject.DoorState != EDoorState.Locked)
             {
-                if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has an invalid state: " + interactiveObject.DoorState);
+                if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " has an invalid state: " + interactiveObject.DoorState);
                 return false;
             }
 
@@ -499,7 +499,7 @@ namespace LateToTheParty.Components
                 Door door = interactiveObject as Door;
                 if ((door?.CanBeBreached == false) && !allItems.ContainsKey(door.KeyId))
                 {
-                    if (logResult) LoggingController.LogInfo("Searching for valid interactive objects...door " + door.Id + " is locked and has no valid key.");
+                    if (logResult) LoggingController.LogDebug("Searching for valid interactive objects...door " + door.Id + " is locked and has no valid key.");
                     return false;
                 }
             }

@@ -54,6 +54,16 @@ namespace LateToTheParty.Controllers
             return LootInfo[item];
         }
 
+        public Item FindItem(AbstractLootInfo abstractLootInfo)
+        {
+            if (!LootInfo.ContainsValue(abstractLootInfo))
+            {
+                return null;
+            }
+
+            return LootInfo.First(i => i.Value == abstractLootInfo).Key;
+        }
+
         public void AddLootInfo(Item item, AbstractLootInfo lootInfo)
         {
             if (LootInfo.ContainsKey(item))
@@ -263,7 +273,7 @@ namespace LateToTheParty.Controllers
 
                 // Destroy items
                 enumeratorWithTimeLimit.Reset();
-                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, LootDestructionHelpers.DestroyLoot);
+                yield return enumeratorWithTimeLimit.Run(itemsToDestroy, LootDestructionHelpers.StartDestruction);
 
                 itemsToDestroy.Clear();
             }

@@ -16,6 +16,11 @@ namespace LateToTheParty.Components
         private Dictionary<Player, Vector3> playerPositionsLast = new Dictionary<Player, Vector3>();
         private Stopwatch updateTimer = Stopwatch.StartNew();
 
+        protected void Awake()
+        {
+            updateForPlayer(Singleton<GameWorld>.Instance.MainPlayer);
+        }
+
         protected void Update()
         {
             if (updateTimer.ElapsedMilliseconds < 100)
@@ -26,18 +31,23 @@ namespace LateToTheParty.Components
             IEnumerable<Player> humanPlayers = Singleton<GameWorld>.Instance.AllAlivePlayersList.Where(p => !p.IsAI);
             foreach (Player player in humanPlayers)
             {
-                if (playerPositionsCurrent.ContainsKey(player))
-                {
-                    playerPositionsCurrent[player] = player.Position;
-                }
-                else
-                {
-                    playerPositionsCurrent.Add(player, player.Position);
-                    playerPositionsLast.Add(player, player.Position);
-                }
+                updateForPlayer(player);
             }
             
             updateTimer.Restart();
+        }
+
+        private void updateForPlayer(Player player)
+        {
+            if (playerPositionsCurrent.ContainsKey(player))
+            {
+                playerPositionsCurrent[player] = player.Position;
+            }
+            else
+            {
+                playerPositionsCurrent.Add(player, player.Position);
+                playerPositionsLast.Add(player, player.Position);
+            }
         }
 
         public IEnumerable<Vector3> GetPlayerPositions(bool onlyAlive = true)
