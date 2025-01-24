@@ -94,11 +94,6 @@ namespace LateToTheParty
             new Patches.TarkovInitPatch().Enable();
             new Patches.ReadyToPlayPatch().Enable();
             new Patches.GameWorldOnDestroyPatch().Enable();
-
-            if (ConfigController.Config.DestroyLootDuringRaid.Enabled)
-            {
-                new Patches.CanModifyItemPatch().Enable();
-            }
         }
 
         private static void enableHostOnlyPatches()
