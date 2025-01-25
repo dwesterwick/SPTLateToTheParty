@@ -10,7 +10,6 @@ using EFT.SynchronizableObjects;
 using SPT.Reflection.Patching;
 using LateToTheParty.Controllers;
 using LateToTheParty.Helpers;
-using EFT;
 using LateToTheParty.Components;
 
 namespace LateToTheParty.Patches
@@ -26,6 +25,12 @@ namespace LateToTheParty.Patches
         [PatchPostfix]
         protected static void PatchPostfix(AirdropSynchronizableObject ___airdropSynchronizableObject_0)
         {
+            // Do not run this on Fika client machines
+            if (!Helpers.RaidHelpers.IsHostRaid())
+            {
+                return;
+            }
+
             LootableContainer airdropContainer = ___airdropSynchronizableObject_0.gameObject.GetComponentInChildren<LootableContainer>();
 
             string airdropType = ___airdropSynchronizableObject_0.AirdropType.ToString();

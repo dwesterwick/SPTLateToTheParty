@@ -138,6 +138,7 @@
     <Compile Include="Helpers\Loot\LootFilteringHelpers.cs" />
     <Compile Include="Helpers\Loot\LootRankingHelpers.cs" />
     <Compile Include="Helpers\ObjectHelpers.cs" />
+    <Compile Include="Helpers\RaidHelpers.cs" />
     <Compile Include="Helpers\VersionCheckHelper.cs" />
     <Compile Include="Models\LootInfo\ContainerLootInfo.cs" />
     <Compile Include="Models\LootInfo\LooseLootInfo.cs" />
