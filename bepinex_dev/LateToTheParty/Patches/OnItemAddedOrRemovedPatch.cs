@@ -27,6 +27,11 @@ namespace LateToTheParty.Patches
                 return;
             }
 
+            if (Helpers.RaidHelpers.IsInHideout())
+            {
+                return;
+            }
+
             // If a player picked up an item, it needs to be tracked to prevent it from being randomly despawned while in the player's inventory
             if (added)
             {
