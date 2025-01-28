@@ -22,6 +22,11 @@ namespace LateToTheParty.Patches
         [PatchPrefix]
         protected static bool PatchPrefix(WorldInteractiveObject __instance)
         {
+            if (Helpers.RaidHelpers.IsInHideout())
+            {
+                return true;
+            }
+
             if (!Singleton<SwitchTogglingComponent>.Instance.HasToggledInitialSwitches)
             {
                 Controllers.LoggingController.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled");
