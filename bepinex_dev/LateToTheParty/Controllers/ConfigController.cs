@@ -45,12 +45,18 @@ namespace LateToTheParty.Controllers
             string errorMessage = "Cannot read loot ranking data from the server. Falling back to using random loot ranking.";
             string json = RequestHandler.GetJson("/LateToTheParty/GetLootRankingData");
 
-            TryDeserializeObject(json, errorMessage, out Configuration.LootRankingWeightingConfig _lootRanking);
+            bool rankingDataIsValid = TryDeserializeObject(json, errorMessage, out Configuration.LootRankingWeightingConfig _lootRanking);
             LootRanking = _lootRanking;
 
             if (LootRanking.Items.Any(i => !i.Value.Value.HasValue))
             {
+                rankingDataIsValid = false;
                 LoggingController.LogErrorToServerConsole("The loot ranking data is invalid. Loot ranking may not work correctly!");
+            }
+
+            if (!rankingDataIsValid)
+            {
+                LoggingController.WriteLogFile("json_invalidLootRankingData", "json", json);
             }
 
             return LootRanking;

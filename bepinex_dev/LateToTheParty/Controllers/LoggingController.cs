@@ -70,9 +70,38 @@ namespace LateToTheParty.Controllers
             ConfigController.ReportErrorToServer(message);
         }
 
+        public static void WriteLogFile(string filenamePrefix, string fileExtension, string content)
+        {
+            string filename = LoggingPath
+                + filenamePrefix
+                + "_"
+                + DateTime.Now.ToFileTimeUtc()
+                + "." + fileExtension;
+
+            try
+            {
+                if (!Directory.Exists(LoggingPath))
+                {
+                    Directory.CreateDirectory(LoggingPath);
+                }
+
+                File.WriteAllText(filename, content);
+
+                LogInfo("Writing " + filenamePrefix + " log file...done.");
+            }
+            catch (Exception e)
+            {
+                e.Data.Add("Filename", filename);
+                LogError("Writing " + filenamePrefix + " log file...failed!");
+                LogError(e.ToString());
+            }
+        }
+
         public static void WriteLootLogFile(Dictionary<Item, Models.LootInfo.AbstractLootInfo> lootInfo, string currentLocationName)
         {
-            LogInfo("Writing loot log file...");
+            string filenamePrefix = "loot_" + currentLocationName.Replace(" ", "");
+
+            LogInfo("Writing " + filenamePrefix + " log file...");
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Item,Template ID,Value,Raid ET When Found,Raid ET When Destroyed,Accessible");
@@ -86,30 +115,7 @@ namespace LateToTheParty.Controllers
                 sb.AppendLine("," + lootInfo[item].PathData.IsAccessible.ToString());
             }
 
-            string filename = LoggingPath
-                + "loot_"
-                + currentLocationName.Replace(" ", "")
-                + "_"
-                + DateTime.Now.ToFileTimeUtc()
-                + ".csv";
-
-            try
-            {
-                if (!Directory.Exists(LoggingPath))
-                {
-                    Directory.CreateDirectory(LoggingPath);
-                }
-
-                File.WriteAllText(filename, sb.ToString());
-
-                LogInfo("Writing loot log file...done.");
-            }
-            catch (Exception e)
-            {
-                e.Data.Add("Filename", filename);
-                LogError("Writing loot log file...failed!");
-                LogError(e.ToString());
-            }
+            WriteLogFile(filenamePrefix, "csv", sb.ToString());
         }
     }
 }
