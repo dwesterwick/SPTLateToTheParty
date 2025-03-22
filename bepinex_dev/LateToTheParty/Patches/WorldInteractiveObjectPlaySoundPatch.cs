@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT.Interactive;
-using EFT;
 using LateToTheParty.Components;
 using SPT.Reflection.Patching;
 
@@ -16,7 +15,7 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(WorldInteractiveObject).GetMethod("PlaySound", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(WorldInteractiveObject).GetMethod(nameof(WorldInteractiveObject.PlaySound), BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]

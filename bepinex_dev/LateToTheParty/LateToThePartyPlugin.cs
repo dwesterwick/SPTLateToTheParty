@@ -14,7 +14,7 @@ using SPT.Reflection.Patching;
 namespace LateToTheParty
 {
     [BepInDependency("xyz.drakia.waypoints", "1.6.2")]
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.8.4.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.9.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static string ModName { get; private set; } = "???";
@@ -28,10 +28,10 @@ namespace LateToTheParty
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
 
-            Patches.TarkovInitPatch.MinSPTVersion = "3.10.0.0";
-            Patches.TarkovInitPatch.MaxSPTVersion = "3.10.99.0";
+            Patches.TarkovInitPatch.MinSPTVersion = "3.11.0.0";
+            Patches.TarkovInitPatch.MaxSPTVersion = "3.11.99.0";
 
-            Helpers.VersionCheckHelper.MinFikaSyncPluginVersion = "1.1.0.0";
+            Helpers.VersionCheckHelper.MinFikaSyncPluginVersion = "1.1.1.0";
 
             Logger.LogInfo("Loading LateToThePartyPlugin...getting configuration data...");
             ConfigController.GetConfig();

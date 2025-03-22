@@ -14,10 +14,6 @@ namespace LateToTheParty.Patches
         protected override MethodBase GetTargetMethod()
         {
             return typeof(NonWavesSpawnScenario).GetMethod("smethod_0", BindingFlags.Public | BindingFlags.Static);
-
-            // NOTE: This is the previous method that was patched, but it is not compatible with Fika
-            //Type localGameType = SPT.Reflection.Utils.PatchConstants.LocalGameType;
-            //return localGameType.GetMethod("smethod_6", BindingFlags.Public | BindingFlags.Static);
         }
 
         [PatchPrefix]

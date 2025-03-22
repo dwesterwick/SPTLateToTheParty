@@ -78,7 +78,7 @@ namespace LateToTheParty.Helpers
 
         public static void DeactivateExfilForPlayer(this ExfiltrationPoint exfil, IPlayer player)
         {
-            exfil.method_5(player);
+            exfil.method_2(player);
             LoggingController.LogInfo("Extract " + exfil.Settings.Name + " deactivated for player " + player.Profile.Nickname);
         }
 

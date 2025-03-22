@@ -13,7 +13,7 @@ namespace LateToTheParty.Patches
         protected override MethodBase GetTargetMethod()
         {
             return typeof(MatchmakerTimeHasCome).GetMethod(
-                "Show",
+                nameof(MatchmakerTimeHasCome.Show),
                 BindingFlags.Public | BindingFlags.Instance,
                 null,
                 new Type[] { typeof(ISession), typeof(RaidSettings), typeof(MatchmakerPlayerControllerClass) },

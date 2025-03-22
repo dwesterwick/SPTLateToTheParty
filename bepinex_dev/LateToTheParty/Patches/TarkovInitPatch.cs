@@ -18,7 +18,7 @@ namespace LateToTheParty.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(TarkovApplication).GetMethod("Init", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(TarkovApplication).GetMethod(nameof(TarkovApplication.Init), BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPostfix]

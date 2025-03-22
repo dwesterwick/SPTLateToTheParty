@@ -30,13 +30,13 @@ namespace LateToThePartyFikaSync
 
     public class DoorSyncPacket : INetSerializable, IObjectPacket
     {
-		public WorldInteractiveObject.GStruct415 Data;
+		public WorldInteractiveObject.WorldInteractiveDataPacketStruct Data;
 
         public string ObjectName => Data.Id;
 
         public void Deserialize(NetDataReader reader)
 		{
-			Data = new WorldInteractiveObject.GStruct415()
+			Data = new WorldInteractiveObject.WorldInteractiveDataPacketStruct()
 			{
 				NetId = reader.GetInt(),
 				Id = reader.GetString(),

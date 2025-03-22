@@ -17,7 +17,7 @@ import type { IInRaidConfig } from "@spt/models/spt/config/IInRaidConfig";
 import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
 import type { DatabaseServer } from "@spt/servers/DatabaseServer";
 import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
-import type { VFS } from "@spt/utils/VFS";
+import type { FileSystemSync } from "@spt/utils/FileSystemSync";
 import type { LocaleService } from "@spt/services/LocaleService";
 import type { BotWeaponGenerator } from "@spt/generators/BotWeaponGenerator";
 import type { HashUtil } from "@spt/utils/HashUtil";
@@ -35,7 +35,7 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     private configServer: ConfigServer;
     private databaseServer: DatabaseServer;
     private databaseTables: IDatabaseTables;
-    private vfs: VFS;
+    private fileSystem: FileSystemSync;
     private localeService: LocaleService;
     private botWeaponGenerator: BotWeaponGenerator;
     private hashUtil: HashUtil;
@@ -122,7 +122,7 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     {
         this.configServer = container.resolve<ConfigServer>("ConfigServer");
         this.databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
-        this.vfs = container.resolve<VFS>("VFS");
+        this.fileSystem = container.resolve<FileSystemSync>("FileSystemSync");
         this.localeService = container.resolve<LocaleService>("LocaleService");
         this.botWeaponGenerator = container.resolve<BotWeaponGenerator>("BotWeaponGenerator");
         this.hashUtil = container.resolve<HashUtil>("HashUtil");
@@ -265,7 +265,7 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
 
     private generateLootRankingData(sessionId: string): void
     {
-        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.vfs, this.botWeaponGenerator, this.hashUtil);
+        this.lootRankingGenerator = new LootRankingGenerator(this.commonUtils, this.databaseTables, this.fileSystem, this.botWeaponGenerator, this.hashUtil);
         this.lootRankingGenerator.generateLootRankingData(sessionId);
     }
 
@@ -273,12 +273,12 @@ class LateToTheParty implements IPreSptLoadMod, IPostDBLoadMod, IPostSptLoadMod
     {
         const path = `${__dirname}/..`;
 
-        if (this.vfs.exists(`${path}/log/`))
+        if (this.fileSystem.exists(`${path}/log/`))
         {
             this.commonUtils.logWarning("Found obsolete log folder 'user\\mods\\DanW-LateToTheParty\\log'. Logs are now saved in 'BepInEx\\plugins\\DanW-LateToTheParty\\log'.");
         }
 
-        if (this.vfs.exists(`${path}/../../../BepInEx/plugins/LateToTheParty.dll`))
+        if (this.fileSystem.exists(`${path}/../../../BepInEx/plugins/LateToTheParty.dll`))
         {
             this.commonUtils.logError("Please remove BepInEx/plugins/LateToTheParty.dll from the previous version of this mod and restart the server, or it will NOT work correctly.");
         

@@ -2,7 +2,7 @@ import modConfig from "../config/config.json";
 import { CommonUtils } from "./CommonUtils";
 
 import type { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
-import type { VFS } from "@spt/utils/VFS";
+import type { FileSystemSync } from "@spt/utils/FileSystemSync";
 import type { BotWeaponGenerator } from "@spt/generators/BotWeaponGenerator";
 import type { ITemplateItem } from "@spt/models/eft/common/tables/ITemplateItem";
 import type { IItem } from "@spt/models/eft/common/tables/IItem";
@@ -54,7 +54,7 @@ export class LootRankingGenerator
     constructor(
         private commonUtils: CommonUtils,
         private databaseTables: IDatabaseTables,
-        private vfs: VFS,
+        private fileSystem: FileSystemSync,
         private botWeaponGenerator: BotWeaponGenerator,
         private hashUtil: HashUtil
     )
@@ -62,7 +62,7 @@ export class LootRankingGenerator
 
     public getLootRankingDataFromFile(): LootRankingContainer
     {
-        if (!this.vfs.exists(lootFilePath))
+        if (!this.fileSystem.exists(lootFilePath))
         {
             this.commonUtils.logWarning("Loot ranking data not found. Creating empty loot ranking file...");
 
@@ -79,10 +79,10 @@ export class LootRankingGenerator
             };
 
             const rankingDataStr = JSON.stringify(rankingData);
-            this.vfs.writeFile(lootFilePath, rankingDataStr);
+            this.fileSystem.write(lootFilePath, rankingDataStr);
         }
 
-        const rankingDataStr = this.vfs.readFile(lootFilePath);
+        const rankingDataStr = this.fileSystem.read(lootFilePath);
         return JSON.parse(rankingDataStr);
     }
 
@@ -132,7 +132,7 @@ export class LootRankingGenerator
         };
         const rankingDataStr = JSON.stringify(rankingData);
 
-        this.vfs.writeFile(lootFilePath, rankingDataStr);
+        this.fileSystem.write(lootFilePath, rankingDataStr);
         this.commonUtils.logInfo("Creating loot ranking data...done.", true);
     }
 
@@ -513,7 +513,7 @@ export class LootRankingGenerator
 
     private validLootRankingDataExists(): boolean
     {
-        if (!this.vfs.exists(lootFilePath))
+        if (!this.fileSystem.exists(lootFilePath))
         {
             this.commonUtils.logInfo("Loot ranking data not found.");
             return false;
@@ -522,7 +522,7 @@ export class LootRankingGenerator
         if (modConfig.destroy_loot_during_raid.loot_ranking.alwaysRegenerate)
         {
             this.commonUtils.logInfo("Loot ranking data forced to regenerate.");
-            this.vfs.removeFile(lootFilePath);
+            this.fileSystem.remove(lootFilePath);
             return false;
         }
 
@@ -558,7 +558,7 @@ export class LootRankingGenerator
         )
         {
             this.commonUtils.logInfo("Loot ranking parameters have changed; deleting cached data.");
-            this.vfs.removeFile(lootFilePath);
+            this.fileSystem.remove(lootFilePath);
             return false;
         }
 

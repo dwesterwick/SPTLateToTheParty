@@ -19,7 +19,7 @@ namespace LateToTheParty.Patches
         protected override MethodBase GetTargetMethod()
         {
             // Called when eairdropFallingStage_0=EAirdropFallingStage.Landed in ManualUpdate()
-            return typeof(AirdropLogicClass).GetMethod("method_13", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(AirdropLogicClass).GetMethod("method_15", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPostfix]

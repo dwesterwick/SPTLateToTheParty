@@ -55,14 +55,14 @@ namespace LateToTheParty.Helpers
                 return true;
             }
 
-            GClass3113 parentSlot = item.Parent as GClass3113;
+            GClass3184 parentSlot = item.Parent as GClass3184;
             if ((parentSlot != null) && parentSlot.Slot.Locked)
             {
                 //LoggingController.LogWarning(item.LocalizedName() + " is locked inside " + parentSlot.ContainerName.Localized(), true);
                 return true;
             }
 
-            GClass3114 parentStackSlot = item.Parent as GClass3114;
+            GClass3185 parentStackSlot = item.Parent as GClass3185;
             if (parentStackSlot != null)
             {
                 // Weird EFT edge case with ammo boxes

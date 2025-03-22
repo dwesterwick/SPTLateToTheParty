@@ -15,11 +15,11 @@ using EFT.InventoryLogic;
 
 namespace LateToThePartyFikaSync
 {
-    // Huge thanks to Lacyway for creating this plugin!
+    // Huge thanks to Lacyway for helping to create this plugin!
 
-    [BepInDependency("com.fika.core", "1.1.3")]
-    [BepInDependency("com.DanW.LateToTheParty", "2.8.1")]
-    [BepInPlugin("com.DanW.LateToThePartyFikaSync", "LateToThePartyFikaSyncPlugin", "1.1.0.0")]
+    [BepInDependency("com.fika.core", "1.2.0")]
+    [BepInDependency("com.DanW.LateToTheParty", "2.9.0")]
+    [BepInPlugin("com.DanW.LateToThePartyFikaSync", "LateToThePartyFikaSyncPlugin", "1.1.1.0")]
     internal class LateToThePartyFikaSyncPlugin : BaseUnityPlugin
     {
         internal static ManualLogSource PluginLogger;
