@@ -13,7 +13,7 @@ using SPT.Reflection.Patching;
 
 namespace LateToTheParty
 {
-    [BepInDependency("xyz.drakia.waypoints", "1.6.2")]
+    [BepInDependency("xyz.drakia.waypoints", "1.6.9")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.9.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {

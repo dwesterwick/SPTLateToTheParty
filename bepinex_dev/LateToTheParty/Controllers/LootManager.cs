@@ -182,6 +182,7 @@ namespace LateToTheParty.Controllers
                 // Ensure there is still loot on the map
                 if ((LootInfo.Count == 0) || LootInfo.All(l => l.Value.IsDestroyed || l.Value.IsInPlayerInventory))
                 {
+                    //setInitialLootDestroyed();
                     yield break;
                 }
 
@@ -207,12 +208,7 @@ namespace LateToTheParty.Controllers
                 }
                 if (lootItemsToDestroy == 0)
                 {
-                    if (!HasInitialLootBeenDestroyed)
-                    {
-                        LoggingController.LogInfo("Initial loot has been destroyed");
-                        HasInitialLootBeenDestroyed = true;
-                    }
-
+                    setInitialLootDestroyed();
                     yield break;
                 }
 
@@ -226,12 +222,7 @@ namespace LateToTheParty.Controllers
                 }
                 if (targetLootSlotsToDestroy <= 0)
                 {
-                    if (!HasInitialLootBeenDestroyed)
-                    {
-                        LoggingController.LogInfo("Initial loot has been destroyed");
-                        HasInitialLootBeenDestroyed = true;
-                    }
-
+                    setInitialLootDestroyed();
                     yield break;
                 }
 
@@ -270,6 +261,10 @@ namespace LateToTheParty.Controllers
                     string lootSlotsDestroyedText = GetTotalDestroyedSlots() + "/" + targetTotalLootSlotsDestroyed + " slots.";
                     LoggingController.LogInfo(percentAccessible + "% of " + remainingItems.Count() + " items are accessible. " + slotsDestroyedText + ". Loot remaining: " + lootFractionDestroyedText + ", " + lootSlotsDestroyedText);
                 }
+                else
+                {
+                    //setInitialLootDestroyed();
+                }
 
                 // Destroy items
                 enumeratorWithTimeLimit.Reset();
@@ -281,6 +276,18 @@ namespace LateToTheParty.Controllers
             {
                 IsFindingAndDestroyingLoot = false;
             }
+        }
+
+        private void setInitialLootDestroyed()
+        {
+            if (HasInitialLootBeenDestroyed)
+            {
+                return;
+            }
+
+            LoggingController.LogInfo("Initial loot has been destroyed");
+
+            HasInitialLootBeenDestroyed = true;
         }
 
         private int GetNumberOfLootItemsToDestroy(double targetLootRemainingFraction)

@@ -66,7 +66,7 @@ fs.copySync(__dirname, path.normalize(`${__dirname}/../dist/~${modName}/user/mod
     return !exclude.includes(filePath);
 }});
 fs.copySync(path.normalize(`${__dirname}/${csharpDevFolder}/${packageName}/bin/${csharpBuildFolder}/${packageName}.dll`), path.normalize(`${__dirname}/../dist/~${modName}/BepInEx/plugins/${modName}/${packageName}.dll`));
-fs.copySync(path.normalize(`${__dirname}/${lootRankingReaderFolder}`), path.normalize(`${__dirname}/../dist/~${modName}/user/mods/${modName}/db/LootRankingDataReader`));
+//fs.copySync(path.normalize(`${__dirname}/${lootRankingReaderFolder}`), path.normalize(`${__dirname}/../dist/~${modName}/user/mods/${modName}/db/LootRankingDataReader`));
 //fs.copySync(path.normalize(`${__dirname}/${configEditorFolder}`), path.normalize(`${__dirname}/../dist/~${modName}/user/mods/${modName}/ConfigEditor`));
 fs.moveSync(path.normalize(`${__dirname}/../dist/~${modName}`), path.normalize(`${__dirname}/dist/${modName}`), { overwrite: true });
 fs.copySync(path.normalize(`${__dirname}/dist/${modName}`), path.normalize(`${__dirname}/dist`));
