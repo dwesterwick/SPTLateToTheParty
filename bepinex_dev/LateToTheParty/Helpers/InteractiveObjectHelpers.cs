@@ -27,11 +27,17 @@ namespace LateToTheParty.Helpers
             }
         }
 
+        public static void PrepareInteraction(this WorldInteractiveObject interactiveObject)
+        {
+            interactiveObject.LockForInteraction();
+            interactiveObject.SetUser(null);
+        }
+
         public static void ExecuteInteraction(this WorldInteractiveObject interactiveObject, InteractionResult interactionResult)
         {
             LoggingController.LogInfo("Performing " + interactionResult.InteractionType.ToString() + " on " + interactiveObject.GetType().Name + ": " + interactiveObject.Id + "...");
 
-            interactiveObject.LockForInteraction();
+            interactiveObject.PrepareInteraction();
             interactiveObject.Interact(interactionResult);
         }
 

@@ -28,7 +28,7 @@ namespace LateToTheParty.Patches
 
             if (!Singleton<SwitchTogglingComponent>.Instance.HasToggledInitialSwitches)
             {
-                Controllers.LoggingController.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled");
+                Controllers.LoggingController.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled", true);
 
                 return false;
             }

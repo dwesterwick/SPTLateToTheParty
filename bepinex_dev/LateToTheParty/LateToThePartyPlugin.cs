@@ -13,7 +13,7 @@ using SPT.Reflection.Patching;
 
 namespace LateToTheParty
 {
-    [BepInDependency("xyz.drakia.waypoints", "1.6.9")]
+    [BepInDependency("xyz.drakia.waypoints", "1.7.0")]
     [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.9.0.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
@@ -28,7 +28,7 @@ namespace LateToTheParty
         {
             Logger.LogInfo("Loading LateToThePartyPlugin...");
 
-            Patches.TarkovInitPatch.MinSPTVersion = "3.11.0.0";
+            Patches.TarkovInitPatch.MinSPTVersion = "3.11.2.0";
             Patches.TarkovInitPatch.MaxSPTVersion = "3.11.99.0";
 
             Helpers.VersionCheckHelper.MinFikaSyncPluginVersion = "1.1.1.0";
@@ -94,6 +94,7 @@ namespace LateToTheParty
             new Patches.TarkovInitPatch().Enable();
             new Patches.ReadyToPlayPatch().Enable();
             new Patches.GameWorldOnDestroyPatch().Enable();
+            new Patches.WorldInteractiveObjectSkipEmitterPatch().Enable();
         }
 
         private static void enableHostOnlyPatches()

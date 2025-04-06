@@ -143,6 +143,7 @@
     <Compile Include="Helpers\Loot\LootRankingHelpers.cs" />
     <Compile Include="Helpers\ObjectHelpers.cs" />
     <Compile Include="Helpers\RaidHelpers.cs" />
+    <Compile Include="Helpers\TarkovTypeHelpers.cs" />
     <Compile Include="Helpers\VersionCheckHelper.cs" />
     <Compile Include="Models\LootInfo\ContainerLootInfo.cs" />
     <Compile Include="Models\LootInfo\LooseLootInfo.cs" />
@@ -162,6 +163,7 @@
     <Compile Include="Patches\StartLocalGamePatch.cs" />
     <Compile Include="Patches\TarkovInitPatch.cs" />
     <Compile Include="Patches\WorldInteractiveObjectPlaySoundPatch.cs" />
+    <Compile Include="Patches\WorldInteractiveObjectSkipEmitterPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="LateToThePartyPlugin.cs" />
   </ItemGroup>

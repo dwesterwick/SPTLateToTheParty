@@ -67,6 +67,7 @@ namespace LateToThePartyFikaSync
 
             if (PacketHelpers.TryGetWorldInteractiveObject(packet.Id, out WorldInteractiveObject worldInteractiveObject))
             {
+                worldInteractiveObject.PrepareInteraction();
                 worldInteractiveObject.Interact(packet.InteractionType);
                 return;
             }
