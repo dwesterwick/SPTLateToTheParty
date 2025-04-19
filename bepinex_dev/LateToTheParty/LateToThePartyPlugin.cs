@@ -14,7 +14,7 @@ using SPT.Reflection.Patching;
 namespace LateToTheParty
 {
     [BepInDependency("xyz.drakia.waypoints", "1.7.0")]
-    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.9.0.0")]
+    [BepInPlugin("com.DanW.LateToTheParty", "LateToThePartyPlugin", "2.9.1.0")]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {
         public static string ModName { get; private set; } = "???";

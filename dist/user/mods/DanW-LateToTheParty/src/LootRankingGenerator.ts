@@ -320,11 +320,12 @@ export class LootRankingGenerator
 
                 // Sort the array of items that can be attached to the slot in order of ascending price
                 const filters = itemTemplate._props.Slots[slot]._props.filters[0].Filter;
-                const filtersSorted = filters.sort(
+                const validFilters = filters.filter((f) => this.databaseTables.templates.items[f] !== undefined && this.databaseTables.templates.items[f]._id !== undefined);
+                const filtersSorted = validFilters.sort(
                     (f1, f2) => 
                     {
-                        const f1Price = this.commonUtils.getMaxItemPrice(this.databaseTables.templates.items[f1]._id);
-                        const f2Price = this.commonUtils.getMaxItemPrice(this.databaseTables.templates.items[f2]._id);
+                        const f1Price = this.databaseTables.templates.items[f1]._id;
+                        const f2Price = this.databaseTables.templates.items[f2]._id;
 
                         if (f1Price > f2Price) return -1;
                         if (f1Price < f2Price) return 1;
