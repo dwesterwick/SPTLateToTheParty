@@ -300,7 +300,18 @@ export class LootRankingGenerator
      */
     private fillItemSlots(item: IItem, initialBannedParts: string[]): IItem[]
     {
+        if (item._tpl === undefined)
+        {
+            this.commonUtils.logError("Found an item with an undefined template ID. Cannot fill item slots.");
+            return [];
+        }
+
         const itemTemplate = this.databaseTables.templates.items[item._tpl];
+        if (itemTemplate === undefined)
+        {
+            this.commonUtils.logError(`Could not find item with template ${item._tpl}. Cannot fill item slots.`);
+            return [];
+        }
 
         let isValid = false;
         let filledItem: IItem[];
