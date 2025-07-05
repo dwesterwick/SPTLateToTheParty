@@ -242,6 +242,12 @@ namespace LateToTheParty.Controllers
                 IEnumerable <KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> eligibleItems = LootInfo
                     .Where(l => !l.Value.CannotBeDestroyed && l.Value.EligibleForDestruction && l.Value.PathData.IsAccessible)
                     .RemoveItemsWithoutValidTemplates();
+
+                if (!eligibleItems.Any())
+                {
+                    LoggingController.LogError("Could not find any of " + LootInfo.Count + " loot items eligible for destruction.");
+                    yield break;
+                }
                 
                 Item[] sortedLoot = eligibleItems.Sort().Select(i => i.Key).ToArray();
 
