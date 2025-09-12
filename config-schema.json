@@ -1,0 +1,955 @@
+{
+  "title": "DanW - Late To The Party",
+  "description": "Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid.",
+  "configs": [
+    {
+      "path": "config/config.json",
+      "title": "Main Configuration",
+      "description": "Primary mod configuration settings",
+      "fields": [
+        {
+          "name": "enabled",
+          "label": "Enable Mod",
+          "description": "Master switch to enable or disable the entire mod",
+          "type": "boolean",
+          "default": true,
+          "required": true
+        },
+        {
+          "name": "debug",
+          "label": "Debug Settings",
+          "description": "Configuration for debugging features and visualizations",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Debug Mode",
+              "description": "Enable debug functionality",
+              "type": "boolean",
+              "default": false
+            },
+            {
+              "name": "loot_path_visualization",
+              "label": "Loot Path Visualization",
+              "description": "Settings for visualizing loot pathfinding",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "enabled",
+                  "label": "Enable Visualization",
+                  "type": "boolean",
+                  "default": false
+                },
+                {
+                  "name": "points_per_circle",
+                  "label": "Points Per Circle",
+                  "type": "slider",
+                  "default": 10,
+                  "min": 1,
+				  "max": 30,
+				  "step": 1
+                },
+                {
+                  "name": "outline_loot",
+                  "label": "Outline Loot",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "loot_outline_radius",
+                  "label": "Loot Outline Radius",
+                  "type": "slider",
+                  "default": 0.1,
+                  "min": 0,
+                  "step": 0.01,
+				  "max": 0.1
+                },
+                {
+                  "name": "only_outline_loot_with_pathing",
+                  "label": "Only Outline Loot With Pathing",
+                  "type": "boolean",
+                  "default": false
+                },
+                {
+                  "name": "draw_incomplete_paths",
+                  "label": "Draw Incomplete Paths",
+                  "type": "boolean",
+                  "default": false
+                },
+                {
+                  "name": "draw_complete_paths",
+                  "label": "Draw Complete Paths",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "outline_obstacles",
+                  "label": "Outline Obstacles",
+                  "type": "boolean",
+                  "default": false
+                },
+                {
+                  "name": "only_outline_filtered_obstacles",
+                  "label": "Only Outline Filtered Obstacles",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "show_obstacle_collision_points",
+                  "label": "Show Obstacle Collision Points",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "collision_point_radius",
+                  "label": "Collision Point Radius",
+                  "type": "slider",
+                  "default": 0.05,
+                  "min": 0,
+                  "step": 0.01,
+				  "max": 0.1
+                },
+                {
+                  "name": "show_door_obstacles",
+                  "label": "Show Door Obstacles",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "door_obstacle_min_radius",
+                  "label": "Door Obstacle Min Radius",
+                  "type": "slider",
+                  "default": 0.3,
+                  "min": 0,
+                  "step": 0.1,
+				  "max": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "scav_raid_adjustments",
+          "label": "Scav Raid Adjustments",
+          "description": "Settings for scav raid behavior modifications",
+          "type": "object",
+          "fields": [
+            {
+              "name": "always_spawn_late",
+              "label": "Always Spawn Late",
+              "description": "Forces you to always spawn late in nomad raids",
+              "type": "boolean",
+              "default": true
+            }
+          ]
+        },
+        {
+          "name": "car_extract_departures",
+          "label": "Car Extract Departures",
+          "description": "Configuration for car extraction departure mechanics",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Car Departures",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "countdown_time",
+              "label": "Countdown Time (seconds)",
+              "type": "number",
+              "default": 60,
+              "min": 15
+            },
+            {
+              "name": "delay_after_countdown_reset",
+              "label": "Delay After Countdown Reset",
+              "description": "Delay After Countdown Reset (seconds) if you come too close to the car",
+              "type": "slider",
+              "default": 120,
+              "min": 60,
+              "max": 300,
+              "step": 10
+            },
+            {
+              "name": "exclusion_radius",
+              "label": "Exclusion Radius",
+              "description": "The car extract will only be allowed to depart if you're more than this far away from it (meters)",
+              "type": "slider",
+              "default": 150,
+              "min": 50,
+              "max": 200,
+              "step": 10
+            },
+            {
+              "name": "exclusion_radius_hysteresis",
+              "label": "Exclusion Radius Hysteresis",
+              "description": "If the car extract has been activated, it will be deactivated if you come within this distance(fraction of Exclusion Radius)",
+              "type": "slider",
+              "default": 0.9,
+              "min": 0.2,
+              "max": 1,
+              "step": 0.1
+            },
+            {
+              "name": "chance_of_leaving",
+              "label": "Chance of Leaving (%)",
+              "type": "slider",
+              "default": 50,
+              "min": 0,
+              "max": 100,
+			  "step": 10
+            },
+            {
+              "name": "raid_fraction_when_leaving",
+              "label": "Raid Fraction When Leaving",
+              "description": "The fraction of the raid time in which the car is allowed to leave.",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "min",
+                  "label": "Minimum",
+                  "type": "slider",
+                  "default": 0.3,
+                  "min": 0,
+                  "max": 1,
+                  "step": 0.1
+                },
+                {
+                  "name": "max",
+                  "label": "Maximum",
+                  "type": "slider",
+                  "default": 0.8,
+                  "min": 0,
+                  "max": 1,
+                  "step": 0.1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "adjust_bot_spawn_chances",
+          "label": "Adjust Bot Spawn Chances",
+          "description": "Settings for modifying bot spawn probabilities",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Bot Spawn Adjustments",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "adjust_bosses",
+              "label": "Adjust Boss Spawns",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "excluded_bosses",
+              "label": "Excluded Bosses",
+              "description": "List of boss IDs to exclude from spawn adjustments",
+              "type": "array",
+			  "minItems": 2,
+              "arrayItemType": "dropdown",
+              "arrayItemValues": ["sptBear", "sptUsec"],
+              "default": ["sptBear", "sptUsec"]
+            }
+          ]
+        },
+        {
+          "name": "only_make_changes_just_after_spawning",
+          "label": "Time Based Restrictions",
+          "description": "Limit certain changes to just after player spawning (useful if you use Looting bots and/or Questing bots)",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Time Restrictions",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "time_limit",
+              "label": "Time Limit (seconds)",
+              "type": "slider",
+              "default": 5,
+              "min": 5,
+			  "max": 60,
+			  "step": 1
+            },
+            {
+              "name": "affected_systems",
+              "label": "Affected Systems",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "loot_destruction",
+                  "label": "Loot Destruction",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "opening_unlocked_doors",
+                  "label": "Opening Unlocked Doors",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "opening_locked_doors",
+                  "label": "Opening Locked Doors",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "closing_doors",
+                  "label": "Closing Doors",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "car_departures",
+                  "label": "Car Departures",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "toggling_switches",
+                  "label": "Toggling Switches",
+                  "type": "boolean",
+                  "default": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "destroy_loot_during_raid",
+          "label": "Loot Destruction System",
+          "description": "Advanced system for destroying loot during raids to improve performance",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Loot Destruction",
+              "type": "boolean",
+              "default": false
+            },
+            {
+              "name": "exclusion_radius",
+              "label": "Exclusion Radius",
+              "description": "Distance around players where loot won't be destroyed",
+              "type": "slider",
+              "default": 40,
+              "min": 40,
+			  "max": 300,
+			  "step": 10
+            },
+            {
+              "name": "exclusion_radius_bots",
+              "label": "Bot Exclusion Radius",
+              "type": "slider",
+              "default": 25,
+              "min": 25,
+			  "max": 150,
+			  "step": 10
+            },
+            {
+              "name": "nearby_interactive_object_search_distance",
+              "label": "Interactive Object Search Distance",
+              "type": "slider",
+              "default": 0.75,
+              "min": 0,
+			  "max": 1,
+              "step": 0.25
+            },
+            {
+              "name": "only_search_for_nearby_trunks",
+              "label": "Only Search for Nearby Trunks",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "avg_slots_per_player",
+              "label": "Average Slots Per Player",
+			  "description": "The typical number of total \"slots\" worth of loot with which a player will extract. This does not include the starting items for the player.",
+              "type": "slider",
+              "default": 60,
+              "min": 30,
+			  "max": 70,
+              "step": 1
+            },
+            {
+              "name": "players_with_loot_factor_for_maps_without_pscavs",
+			  "label": "Players Full Of Loot (In Maps No Player Scav Maps Like Labs)",
+              "description": "If the map does not allow player Scavs to spawn, this factor will be applied to fraction_of_players_full_of_loot to reduce the amount of loot that can be destroyed throughout the raid.",
+              "type": "slider",
+              "default": 0.3,
+              "min": 0,
+              "max": 0.8,
+              "step": 0.1
+            },
+            {
+              "name": "min_loot_age",
+              "label": "Minimum Loot Age (seconds)",
+			  "description": "Prevents despawning of dropped items and items on dead bodies (if the system is enabled) for x seconds",
+              "type": "slider",
+              "default": 120,
+              "min": 60,
+              "max": 300,
+              "step": 10
+            },
+            {
+              "name": "destruction_event_limits",
+              "label": "Destruction Event Limits",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "rate",
+                  "label": "Rate",
+                  "type": "number",
+                  "default": 1,
+                  "min": 0.1,
+                  "step": 0.1
+                },
+                {
+                  "name": "items",
+                  "label": "Items",
+                  "type": "slider",
+                  "default": 30,
+                  "min": 1,
+				  "max": 50,
+				  "step": 1
+                },
+                {
+                  "name": "slots",
+                  "label": "Slots",
+                  "type": "number",
+                  "default": 50,
+                  "min": 1,
+				  "max": 100,
+				  "step": 1
+                }
+              ]
+            },
+            {
+              "name": "map_traversal_speed_mps",
+              "label": "Map Traversal Speed (m/s)",
+			  "description": "The rate at which a typical player traverses the map.",
+              "type": "slider",
+              "default": 2,
+              "min": 0.1,
+              "step": 0.1,
+			  "max": 3
+            },
+            {
+              "name": "min_distance_traveled_for_update",
+              "label": "Min Distance for Update",
+              "type": "number",
+              "default": 1,
+              "min": 0.1,
+              "step": 0.1
+            },
+            {
+              "name": "min_time_before_update_ms",
+              "label": "Min Time Before Update (ms)",
+              "type": "number",
+              "default": 30,
+              "min": 1
+            },
+            {
+              "name": "max_time_before_update_ms",
+              "label": "Max Time Before Update (ms)",
+              "type": "number",
+              "default": 5000,
+              "min": 1
+            },
+            {
+              "name": "max_calc_time_per_frame_ms",
+              "label": "Max Calc Time Per Frame (ms)",
+              "type": "number",
+              "default": 5,
+              "min": 1
+            },
+            {
+              "name": "max_time_without_destroying_any_loot",
+              "label": "Max Time Without Destroying Loot (seconds)",
+              "type": "number",
+              "default": 60,
+              "min": 1
+            },
+            {
+              "name": "ignore_items_dropped_by_player",
+              "label": "Ignore Player-Dropped Items",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "enabled",
+                  "label": "Enable",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "only_items_brought_into_raid",
+                  "label": "Only Items Brought Into Raid",
+                  "type": "boolean",
+                  "default": false
+                }
+              ]
+            },
+            {
+              "name": "ignore_items_on_dead_bots",
+              "label": "Ignore Items on Dead Bots",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "enabled",
+                  "label": "Enable",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "only_if_you_killed_them",
+                  "label": "Only If You Killed Them",
+                  "type": "boolean",
+                  "default": true
+                }
+              ]
+            },
+            {
+              "name": "excluded_parents",
+              "label": "Excluded Parent IDs",
+              "description": "Item parent IDs to exclude from destruction (DO NOT MODIFY IF YOU DON'T KNOW WHAT YOU ARE DOING)",
+              "type": "array",
+              "arrayItemType": "text",
+			  "minItems": 3,
+              "default": ["55d7217a4bdc2d86028b456d", "557596e64bdc2dc2118b4571", "566965d44bdc2d814c8b4571"]
+            },
+            {
+              "name": "check_loot_accessibility",
+              "label": "Loot Accessibility Check",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "enabled",
+                  "label": "Enable",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "exclusion_radius",
+                  "label": "Exclusion Radius",
+                  "type": "slider",
+                  "default": 25,
+                  "min": 10,
+				  "max": 100,
+				  "step": 5
+                },
+                {
+                  "name": "max_path_search_distance",
+                  "label": "Max Path Search Distance",
+                  "type": "number",
+                  "default": 300,
+                  "min": 1
+                },
+                {
+                  "name": "navmesh_search_max_distance_player",
+                  "label": "Navmesh Search Max Distance (Player)",
+                  "type": "number",
+                  "default": 10,
+                  "min": 1
+                },
+                {
+                  "name": "navmesh_search_max_distance_loot",
+                  "label": "Navmesh Search Max Distance (Loot)",
+                  "type": "number",
+                  "default": 2,
+                  "min": 0.1,
+                  "step": 0.1
+                },
+                {
+                  "name": "navmesh_height_offset_complete",
+                  "label": "Navmesh Height Offset (Complete)",
+                  "type": "number",
+                  "default": 1.25,
+                  "min": 0,
+                  "step": 0.25
+                },
+                {
+                  "name": "navmesh_height_offset_incomplete",
+                  "label": "Navmesh Height Offset (Incomplete)",
+                  "type": "number",
+                  "default": 1,
+                  "min": 0,
+                  "step": 0.25
+                },
+                {
+                  "name": "navmesh_obstacle_min_height",
+                  "label": "Navmesh Obstacle Min Height",
+                  "type": "number",
+                  "default": 0.9,
+                  "min": 0,
+                  "step": 0.1
+                },
+                {
+                  "name": "navmesh_obstacle_min_volume",
+                  "label": "Navmesh Obstacle Min Volume",
+                  "type": "number",
+                  "default": 2,
+                  "min": 0,
+                  "step": 0.1
+                },
+                {
+                  "name": "max_calc_time_per_frame_ms",
+                  "label": "Max Calc Time Per Frame (ms)",
+                  "type": "number",
+                  "default": 4,
+                  "min": 1
+                },
+                {
+                  "name": "door_obstacle_update_time",
+                  "label": "Door Obstacle Update Time",
+                  "type": "number",
+                  "default": 2,
+                  "min": 1
+                }
+              ]
+            },
+            {
+              "name": "loot_ranking",
+              "label": "Loot Ranking System",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "enabled",
+                  "label": "Enable",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "randomness",
+                  "label": "Randomness",
+                  "type": "number",
+                  "default": 200,
+                  "min": 50
+                },
+                {
+                  "name": "top_value_retain_count",
+                  "label": "Top Value Retain Count",
+                  "type": "number",
+                  "default": 5,
+                  "min": 0
+                },
+                {
+                  "name": "alwaysRegenerate",
+                  "label": "Always Regenerate",
+                  "type": "boolean",
+                  "default": true
+                },
+                {
+                  "name": "child_item_limits",
+                  "label": "Child Item Limits",
+                  "type": "object",
+                  "fields": [
+                    {
+                      "name": "count",
+                      "label": "Count",
+                      "type": "number",
+                      "default": 5,
+                      "min": 0
+                    },
+                    {
+                      "name": "total_weight",
+                      "label": "Total Weight",
+                      "type": "number",
+                      "default": 8,
+                      "min": 0,
+                      "step": 0.1
+                    }
+                  ]
+                },
+                {
+                  "name": "weighting",
+                  "label": "Weighting System",
+                  "type": "object",
+                  "fields": [
+                    {
+                      "name": "default_inventory_id",
+                      "label": "Default Inventory ID (DO NOT EDIT)",
+                      "type": "text",
+                      "default": "55d7217a4bdc2d86028b456d"
+                    },
+                    {
+                      "name": "cost_per_slot",
+                      "label": "Cost Per Slot",
+                      "type": "number",
+                      "default": 0.001,
+                      "step": 0.001
+                    },
+                    {
+                      "name": "weight",
+                      "label": "Weight",
+                      "type": "number",
+                      "default": -0.5,
+                      "step": 0.1
+                    },
+                    {
+                      "name": "size",
+                      "label": "Size",
+                      "type": "number",
+                      "default": -1,
+                      "step": 0.1
+                    },
+                    {
+                      "name": "gridSize",
+                      "label": "Grid Size",
+                      "type": "number",
+                      "default": 1.3,
+                      "step": 0.1
+                    },
+                    {
+                      "name": "max_dim",
+                      "label": "Max Dimension",
+                      "type": "number",
+                      "default": -1,
+                      "step": 0.1
+                    },
+                    {
+                      "name": "armor_class",
+                      "label": "Armor Class",
+                      "type": "number",
+                      "default": 10,
+                      "min": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "open_doors_during_raid",
+          "label": "Door Operations",
+          "description": "System for opening and closing doors during raids",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Door Operations",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "can_open_locked_doors",
+              "label": "Can Open Locked Doors",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "can_breach_doors",
+              "label": "Can Breach Doors",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "exclusion_radius",
+              "label": "Exclusion Radius",
+              "type": "slider",
+              "default": 5,
+              "min": 5,
+			  "max": 150,
+			  "step": 5
+            },
+            {
+              "name": "min_raid_ET",
+              "label": "Min Raid Elapsed Time (seconds)",
+              "type": "slider",
+              "default": 60,
+              "min": 30,
+			  "max": 180,
+			  "step": 5
+            },
+            {
+              "name": "min_raid_time_remaining",
+              "label": "Min Raid Time Remaining (seconds)",
+              "type": "number",
+              "default": 300,
+              "min": 30,
+			  "max": 600,
+			  "step": 5
+            },
+            {
+              "name": "time_between_door_events",
+              "label": "Time Between Door Events (seconds)",
+              "type": "slider",
+              "default": 30,
+              "min": 10,
+			  "max": 60,
+			  "step": 5
+            },
+            {
+              "name": "percentage_of_doors_per_event",
+              "label": "Percentage of Doors Per Event (%)",
+              "type": "slider",
+              "default": 30,
+              "min": 5,
+              "max": 100,
+			  "step": 5
+            },
+            {
+              "name": "chance_of_unlocking_doors",
+              "label": "Chance of Unlocking Doors (%)",
+              "type": "slider",
+              "default": 55,
+              "min": 0,
+              "max": 100,
+			  "step": 5
+            },
+            {
+              "name": "chance_of_closing_doors",
+              "label": "Chance of Closing Doors (%)",
+              "type": "slider",
+              "default": 15,
+              "min": 0,
+              "max": 100,
+			  "step": 5
+            },
+            {
+              "name": "max_calc_time_per_frame_ms",
+              "label": "Max Calc Time Per Frame (ms)",
+              "type": "number",
+              "default": 5,
+              "min": 1
+            }
+          ]
+        },
+        {
+          "name": "toggle_switches_during_raid",
+          "label": "Switch Toggle System",
+          "description": "System for toggling switches during raids",
+          "type": "object",
+          "fields": [
+            {
+              "name": "enabled",
+              "label": "Enable Switch Toggling",
+              "type": "boolean",
+              "default": true
+            },
+            {
+              "name": "time_between_events_ms",
+              "label": "Time Between Events (ms)",
+              "type": "number",
+              "default": 3000,
+              "min": 2000
+            },
+            {
+              "name": "exclusion_radius",
+              "label": "Exclusion Radius",
+              "type": "number",
+              "default": 75,
+              "min": 0
+            },
+            {
+              "name": "min_raid_ET_for_exfil_switches",
+              "label": "Min Raid ET for Exfil Switches (seconds)",
+              "type": "number",
+              "default": 600,
+              "min": 0
+            },
+            {
+              "name": "delay_after_pressing_prereq_switch_s_per_m",
+              "label": "Delay After Prereq Switch (s/m)",
+              "type": "number",
+              "default": 1,
+              "min": 0,
+              "step": 0.1
+            },
+            {
+              "name": "raid_fraction_when_toggling",
+              "label": "Raid Fraction When Toggling",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "min",
+                  "label": "Minimum",
+                  "type": "slider",
+                  "default": 0.1,
+                  "min": 0.1,
+                  "max": 0.5,
+                  "step": 0.05
+                },
+                {
+                  "name": "max",
+                  "label": "Maximum",
+                  "type": "slider",
+                  "default": 0.95,
+                  "min": 0,
+                  "max": 0.5,
+                  "step": 0.05
+                }
+              ]
+            },
+            {
+              "name": "fraction_of_switches_to_toggle",
+              "label": "Fraction of Switches to Toggle",
+              "type": "object",
+              "fields": [
+                {
+                  "name": "min",
+                  "label": "Minimum",
+                  "type": "slider",
+                  "default": 0.2,
+                  "min": 0,
+                  "max": 1,
+                  "step": 0.1
+                },
+                {
+                  "name": "max",
+                  "label": "Maximum",
+                  "type": "slider",
+                  "default": 0.7,
+                  "min": 0,
+                  "max": 1,
+                  "step": 0.1
+                }
+              ]
+            },
+            {
+              "name": "max_calc_time_per_frame_ms",
+              "label": "Max Calc Time Per Frame (ms)",
+              "type": "number",
+              "default": 3,
+              "min": 1
+            }
+          ]
+        },
+        {
+          "name": "loot_multipliers",
+          "label": "Loot Multipliers",
+          "description": " [time_remaining_factor, reduction_factor] pairs for loot scaling; describing the fraction of the accessible loot pool that should be remaining on the map based on the fraction of time remaining in the raid",
+          "type": "array",
+          "arrayItemType": "array",
+          "default": [[0, 0.18], [0.1, 0.2], [0.3, 0.3], [0.5, 0.5], [0.85, 0.8], [0.95, 0.98], [1, 1]]
+        },
+        {
+          "name": "fraction_of_players_full_of_loot",
+          "label": "Fraction of Players Full of Loot",
+          "description": "[time_remaining_factor, players_full_of_loot_fraction] pairs; describing the fraction of the maximum players allowed on the map who will be full of loot based on the fraction of time remaining in the raid",
+          "type": "array",
+          "arrayItemType": "array",
+          "default": [[0, 1.8], [0.1, 1.6], [0.3, 1.3], [0.5, 0.7], [0.85, 0.4], [0.95, 0.2], [1, 0]]
+        },
+        {
+          "name": "boss_spawn_chance_multipliers",
+          "label": "Boss Spawn Chance Multipliers",
+          "description": "[time_remaining_factor, reduction_factor] pairs describing how the boss-spawn chances should change based on the fraction of time remaining in the raid",
+          "type": "array",
+          "arrayItemType": "array",
+          "default": [[0, 0.4], [0.6, 0.5], [0.75, 1], [1, 1]]
+        }
+      ]
+    }
+  ]
+}
