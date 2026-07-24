@@ -36,7 +36,7 @@
 	"adjust_bot_spawn_chances": {
 		"enabled": true,
 		"adjust_bosses": true,
-		"excluded_bosses": [ "sptBear", "sptUsec" ]
+		"excluded_bosses": [ ]
 	},
 	"only_make_changes_just_after_spawning": {
 		"enabled": false,
@@ -96,7 +96,7 @@
 			"enabled": true,
 			"randomness": 200,
 			"top_value_retain_count": 5,
-			"alwaysRegenerate": true,
+			"always_regenerate": true,
 			"child_item_limits": {
 				"count": 5,
 				"total_weight": 8

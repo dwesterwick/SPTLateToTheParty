@@ -12,7 +12,26 @@
     <Content Include="$(MSBuildThisFileDirectory)Config\config.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\AdjustBotSpawnChancesConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\AffectedSystemsConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\CarExtractDeparturesConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\CheckLootAccessibilityConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\ChildItemLimitsConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\DebugConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\DestroyLootDuringRaidConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\DestructionEventLimits.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\IgnoreItemsDroppedByPlayer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\IgnoreItemsOnDeadBots.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootPathVisualizationConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootRankingConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\MinMaxConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\ModConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\NameValueConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\OnlyMakeChangesJustAfterSpawningConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\ToggleSwitchesDuringRaidConfig.cs" />
+    <Compile Include="..\Shared\Configuration\OpenDoorsDuringRaidConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\ScavRaidAdjustmentsConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\WeightingConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\SharedConfigHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\SharedRouterHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ModInfo.cs" />
