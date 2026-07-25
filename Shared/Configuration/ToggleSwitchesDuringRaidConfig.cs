@@ -21,7 +21,7 @@ namespace LateToTheParty.Configuration
         public double MinRaidEtForExfilSwitches { get; set; } = 600;
 
         [DataMember(Name = "delay_after_pressing_prereq_switch_s_per_m", IsRequired = true)]
-        public double DelayAfterPressingPrereqSwitchSPerM { get; set; } = 1;
+        public float DelayAfterPressingPrereqSwitchSPerM { get; set; } = 1;
 
         [DataMember(Name = "raid_fraction_when_toggling", IsRequired = true)]
         public MinMaxConfig RaidFractionWhenToggling { get; set; } = new MinMaxConfig(0.1, 0.95);

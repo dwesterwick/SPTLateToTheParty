@@ -6,7 +6,7 @@ using System.Text;
 namespace LateToTheParty.Configuration
 {
     [DataContract]
-    public class WeightingConfig
+    public class LootRankingWeightingConfig
     {
         [DataMember(Name = "default_inventory_id", IsRequired = true)]
         public string DefaultInventoryId { get; set; } = "55d7217a4bdc2d86028b456d";
@@ -32,7 +32,7 @@ namespace LateToTheParty.Configuration
         [DataMember(Name = "parents", IsRequired = true)]
         public NameValueConfig[] Parents { get; set; } = Array.Empty<NameValueConfig>();
 
-        public WeightingConfig()
+        public LootRankingWeightingConfig()
         {
 
         }

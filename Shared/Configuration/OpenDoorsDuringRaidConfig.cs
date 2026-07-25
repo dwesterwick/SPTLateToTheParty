@@ -39,7 +39,7 @@ namespace LateToTheParty.Configuration
         public double ChanceOfClosingDoors { get; set; } = 15;
 
         [DataMember(Name = "max_calc_time_per_frame_ms", IsRequired = true)]
-        public double MaxCalcTimePerFrameMs { get; set; } = 3;
+        public float MaxCalcTimePerFrameMs { get; set; } = 3;
 
         public OpenDoorsDuringRaidConfig()
         {

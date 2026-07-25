@@ -18,7 +18,7 @@ namespace LateToTheParty.Configuration
         public double ExclusionRadiusBots { get; set; } = 25;
 
         [DataMember(Name = "nearby_interactive_object_search_distance", IsRequired = true)]
-        public double NearbyInteractiveObjectSearchDistance { get; set; } = 0.75;
+        public float NearbyInteractiveObjectSearchDistance { get; set; } = 0.75f;
 
         [DataMember(Name = "only_search_for_nearby_trunks", IsRequired = true)]
         public bool OnlySearchForNearbyTrunks { get; set; } = true;
@@ -39,7 +39,7 @@ namespace LateToTheParty.Configuration
         public double MapTraversalSpeedMps { get; set; } = 2;
 
         [DataMember(Name = "min_distance_traveled_for_update", IsRequired = true)]
-        public double MinDistanceTraveledForPpdate { get; set; } = 1;
+        public double MinDistanceTraveledForUpdate { get; set; } = 1;
 
         [DataMember(Name = "min_time_before_update_ms", IsRequired = true)]
         public double MinTimeBeforeUpdateMs { get; set; } = 30;

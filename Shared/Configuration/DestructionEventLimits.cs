@@ -12,10 +12,10 @@ namespace LateToTheParty.Configuration
         public double Rate { get; set; } = 1;
 
         [DataMember(Name = "items", IsRequired = true)]
-        public uint Items { get; set; } = 30;
+        public int Items { get; set; } = 30;
 
         [DataMember(Name = "slots", IsRequired = true)]
-        public uint Slots { get; set; } = 50;
+        public int Slots { get; set; } = 50;
 
         public DestructionEventLimits()
         {

@@ -24,14 +24,16 @@
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\IgnoreItemsOnDeadBots.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootPathVisualizationConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootRankingConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootRankingDataConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\MinMaxConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\ModConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\NameValueConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\OnlyMakeChangesJustAfterSpawningConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\ToggleSwitchesDuringRaidConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\SharedMathHelpers.cs" />
     <Compile Include="..\Shared\Configuration\OpenDoorsDuringRaidConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\ScavRaidAdjustmentsConfig.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Configuration\WeightingConfig.cs" />
+    <Compile Include="..\Shared\Configuration\LootRankingWeightingConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\SharedConfigHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\SharedRouterHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ModInfo.cs" />

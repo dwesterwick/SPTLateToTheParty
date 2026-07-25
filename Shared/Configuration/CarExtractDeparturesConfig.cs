@@ -12,7 +12,7 @@ namespace LateToTheParty.Configuration
         public bool Enabled { get; set; } = true;
 
         [DataMember(Name = "countdown_time", IsRequired = true)]
-        public double CountdownTime { get; set; } = 60;
+        public float CountdownTime { get; set; } = 60;
 
         [DataMember(Name = "delay_after_countdown_reset", IsRequired = true)]
         public double DelayAfterCountdownReset { get; set; } = 120;

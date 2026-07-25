@@ -18,22 +18,22 @@ namespace LateToTheParty.Configuration
         public double MaxPathSearchDistance { get; set; } = 300;
 
         [DataMember(Name = "navmesh_search_max_distance_player", IsRequired = true)]
-        public double NavmeshSearchMaxDistancePlayer { get; set; } = 10;
+        public float NavmeshSearchMaxDistancePlayer { get; set; } = 10;
 
         [DataMember(Name = "navmesh_search_max_distance_loot", IsRequired = true)]
-        public double NavmeshSearchMaxDistanceLoot { get; set; } = 2;
+        public float NavmeshSearchMaxDistanceLoot { get; set; } = 2;
 
         [DataMember(Name = "navmesh_height_offset_complete", IsRequired = true)]
-        public double NavmeshHeightOffsetComplete { get; set; } = 1.25;
+        public float NavmeshHeightOffsetComplete { get; set; } = 1.25f;
 
         [DataMember(Name = "navmesh_height_offset_incomplete", IsRequired = true)]
-        public double NavmeshHeightOffsetIncomplete { get; set; } = 1;
+        public float NavmeshHeightOffsetIncomplete { get; set; } = 1;
 
         [DataMember(Name = "navmesh_obstacle_min_height", IsRequired = true)]
-        public double NavmeshObstacleMinHeight { get; set; } = 0.9;
+        public float NavmeshObstacleMinHeight { get; set; } = 0.9f;
 
         [DataMember(Name = "navmesh_obstacle_min_volume", IsRequired = true)]
-        public double NavmeshObstacleMinVolume { get; set; } = 2;
+        public float NavmeshObstacleMinVolume { get; set; } = 2;
 
         [DataMember(Name = "max_calc_time_per_frame_ms", IsRequired = true)]
         public double MaxCalcTimePerFrameMs { get; set; } = 4;

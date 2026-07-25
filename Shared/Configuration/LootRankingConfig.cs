@@ -15,7 +15,7 @@ namespace LateToTheParty.Configuration
         public double Randomness { get; set; } = 200;
 
         [DataMember(Name = "top_value_retain_count", IsRequired = true)]
-        public double TopValueRetainCount { get; set; } = 5;
+        public int TopValueRetainCount { get; set; } = 5;
 
         [DataMember(Name = "always_regenerate", IsRequired = true)]
         public bool AlwaysRegenerate { get; set; } = true;
@@ -24,7 +24,7 @@ namespace LateToTheParty.Configuration
         public ChildItemLimitsConfig ChildItemLimits { get; set; } = new ChildItemLimitsConfig();
 
         [DataMember(Name = "weighting", IsRequired = true)]
-        public WeightingConfig Weighting { get; set; } = new WeightingConfig();
+        public LootRankingWeightingConfig Weighting { get; set; } = new LootRankingWeightingConfig();
 
         public LootRankingConfig()
         {

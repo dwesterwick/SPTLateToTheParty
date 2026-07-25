@@ -18,7 +18,7 @@ namespace LateToTheParty.Configuration
         public bool OutlineLoot { get; set; } = false;
 
         [DataMember(Name = "loot_outline_radius", IsRequired = true)]
-        public double LootOutlineRadius { get; set; } = 0.1;
+        public float LootOutlineRadius { get; set; } = 0.1f;
 
         [DataMember(Name = "only_outline_loot_with_pathing", IsRequired = true)]
         public bool OnlyOutlineLootWithPathing { get; set; } = false;
@@ -30,7 +30,7 @@ namespace LateToTheParty.Configuration
         public bool DrawCompletePaths { get; set; } = true;
 
         [DataMember(Name = "outline_obstacles", IsRequired = true)]
-        public bool OutlineCbstacles { get; set; } = false;
+        public bool OutlineObstacles { get; set; } = false;
 
         [DataMember(Name = "only_outline_filtered_obstacles", IsRequired = true)]
         public bool OnlyOutlineFilteredObstacles { get; set; } = true;
@@ -39,7 +39,7 @@ namespace LateToTheParty.Configuration
         public bool ShowObstacleCollisionPoints { get; set; } = true;
 
         [DataMember(Name = "collision_point_radius", IsRequired = true)]
-        public double CollisionPointRadius { get; set; } = 0.05;
+        public float CollisionPointRadius { get; set; } = 0.05f;
 
         [DataMember(Name = "show_door_obstacles", IsRequired = true)]
         public bool ShowDoorObstacles { get; set; } = true;

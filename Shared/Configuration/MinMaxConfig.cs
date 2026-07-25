@@ -27,6 +27,12 @@ namespace LateToTheParty.Configuration
             Max = max;
         }
 
+        public void Round()
+        {
+            Min = Math.Round(Min);
+            Max = Math.Round(Max);
+        }
+
         public static MinMaxConfig operator +(MinMaxConfig a, MinMaxConfig b)
         {
             return new MinMaxConfig(Math.Round(a.Min + b.Min), Math.Round(a.Max + b.Max));
