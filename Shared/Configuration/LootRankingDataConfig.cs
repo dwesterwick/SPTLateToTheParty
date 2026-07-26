@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LookRankingDataReader.Models
+namespace LateToTheParty.Models
 {
     [DataContract]
     public class LootRankingDataConfig

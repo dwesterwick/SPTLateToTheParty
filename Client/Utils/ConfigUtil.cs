@@ -68,8 +68,8 @@ namespace LateToTheParty.Utils
             _lootRanking = response;
         }
 
-        private string[]? _carExtractNames;
-        public string[] CarExtractNames
+        private HashSet<string>? _carExtractNames;
+        public HashSet<string> CarExtractNames
         {
             get
             {
@@ -87,19 +87,13 @@ namespace LateToTheParty.Utils
             string routeName = SharedRouterHelpers.GetRoutePath("GetLootRankingData");
 
             string json = RequestHandler.GetJson(routeName);
-            string[]? response = JsonConvert.DeserializeObject<string[]>(json);
+            HashSet<string>? response = JsonConvert.DeserializeObject<HashSet<string>>(json);
             if (response == null)
             {
                 throw new InvalidOperationException("Could not deserialize car extract names");
             }
 
             _carExtractNames = response;
-        }
-
-        public static void SetLootMultipliers(double factor)
-        {
-            string routeName = SharedRouterHelpers.GetRoutePath("SetLootMultiplier");
-            string json = RequestHandler.GetJson(routeName + "/" + factor);
         }
     }
 }
