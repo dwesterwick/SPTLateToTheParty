@@ -102,7 +102,7 @@ namespace LateToTheParty.Utils
                 throw new InvalidOperationException($"Could not serialize null object to {filename}");
             }
 
-            string fileText = ConfigHelpers.Serialize(obj);
+            string fileText = ConfigHelpers.SerializePretty(obj);
             File.WriteAllText(Path.Combine(ConfigFileDirectory, filename), fileText);
         }
     }

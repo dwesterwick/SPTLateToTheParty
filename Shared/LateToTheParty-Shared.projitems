@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\DestructionEventLimits.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\IgnoreItemsDroppedByPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\IgnoreItemsOnDeadBots.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Configuration\ItemPropertiesConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootPathVisualizationConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootRankingConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Configuration\LootRankingDataConfig.cs" />

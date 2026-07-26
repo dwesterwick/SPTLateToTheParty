@@ -30,7 +30,7 @@ namespace LateToTheParty.Configuration
         public double ArmorClass { get; set; } = 10;
 
         [DataMember(Name = "parents", IsRequired = true)]
-        public NameValueConfig[] Parents { get; set; } = Array.Empty<NameValueConfig>();
+        public Dictionary<string, NameValueConfig> Parents { get; set; } = new Dictionary<string, NameValueConfig>();
 
         public LootRankingWeightingConfig()
         {

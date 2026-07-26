@@ -1,7 +1,10 @@
-﻿using System.Reflection;
+﻿using System.IO;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
+using System.Text;
 using System.Text.Json;
+using System.Xml;
 
 namespace LateToTheParty.Helpers
 {
@@ -34,6 +37,20 @@ namespace LateToTheParty.Helpers
             {
                 DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(T), SerializerSettings);
                 serializer.WriteObject(memoryStream, obj);
+                memoryStream.Position = 0;
+                return reader.ReadToEnd();
+            }
+        }
+
+        public static string SerializePretty<T>(T obj)
+        {
+            using (MemoryStream memoryStream = new MemoryStream())
+            using (StreamReader reader = new StreamReader(memoryStream))
+            using (XmlDictionaryWriter writer = JsonReaderWriterFactory.CreateJsonWriter(memoryStream, Encoding.UTF8, true, true, " "))
+            {
+                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(T), SerializerSettings);
+                serializer.WriteObject(writer, obj);
+                writer.Flush();
                 memoryStream.Position = 0;
                 return reader.ReadToEnd();
             }

@@ -160,5 +160,29 @@ namespace LateToTheParty.Utils
             
             return fleaPrice;
         }
+
+        public TemplateItem? GetTemplate(Item item) => GetTemplate(item.Template);
+
+        public TemplateItem? GetTemplate(MongoId id)
+        {
+            if (_databaseService.GetTemplates().Items.TryGetValue(id, out TemplateItem? itemTemplate) && (itemTemplate != null))
+            {
+                return itemTemplate;
+            }
+
+            return null;
+        }
+
+        public Item CreateFromTemplate(TemplateItem template)
+        {
+            MongoId newItemId = new MongoId();
+            Item newItem = new Item()
+            {
+                Id = newItemId,
+                Template = template.Id
+            };
+
+            return newItem;
+        }
     }
 }

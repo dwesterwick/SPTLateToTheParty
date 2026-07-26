@@ -2,7 +2,7 @@
 using LateToTheParty.Models;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Extensions;
-using SPTarkov.Server.Core.Models.Common;
+using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Services;
 
@@ -15,7 +15,8 @@ namespace LateToTheParty.Utils
         private ConfigUtil _configUtil;
         private DatabaseService _databaseService;
         private ItemInfoUtil _itemInfoUtil;
-        private WeaponSearchUtil _weaponSearchUtil;
+        private WeaponPropertiesUtil _weaponPropertiesUtil;
+        private PresetGeneratorUtil _presetGeneratorUtil;
 
         public LootRankingUtil
         (
@@ -23,14 +24,16 @@ namespace LateToTheParty.Utils
             ConfigUtil configUtil,
             DatabaseService databaseService,
             ItemInfoUtil itemInfoUtil,
-            WeaponSearchUtil weaponSearchUtil
+            WeaponPropertiesUtil weaponPropertiesUtil,
+            PresetGeneratorUtil presetGeneratorUtil
         )
         {
             _loggingUtil = loggingUtil;
             _configUtil = configUtil;
             _databaseService = databaseService;
             _itemInfoUtil = itemInfoUtil;
-            _weaponSearchUtil = weaponSearchUtil;
+            _weaponPropertiesUtil = weaponPropertiesUtil;
+            _presetGeneratorUtil = presetGeneratorUtil;
         }
 
         public void GenerateLootRankingData()
@@ -78,7 +81,7 @@ namespace LateToTheParty.Utils
             Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
             foreach (TemplateItem item in _databaseService.GetItems().Values)
             {
-                if (item.Type == "Node")
+                if (string.Equals(item.Type, "Node", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -99,49 +102,51 @@ namespace LateToTheParty.Utils
 
         private LootRankingDataConfig GetLootRankingValue(TemplateItem item)
         {
+            string name = _itemInfoUtil.GetLocalizedName(item);
             double cost = _itemInfoUtil.GetMaxPrice(item);
+            int width = item.Properties?.Width ?? 0;
+            int height = item.Properties?.Height ?? 0;
             double weight = item.Properties?.Weight ?? 0;
-            int size = (item.Properties?.Width * item.Properties?.Height) ?? 0;
-            int maxDim = Math.Max(item.Properties?.Width ?? 0, item.Properties?.Height ?? 0);
             int gridSize = _itemInfoUtil.GetInternalGridArea(item);
             int armorClass = item.Properties?.ArmorClass ?? 0;
-
-            if (item.Properties?.WeapClass != null)
-            {
-                _weaponSearchUtil.FindBestWeaponMatchFromTraders(item);
-            }
-
-            double costPerSlot = cost;
-            if (!_itemInfoUtil.CanEquip(item))
-            {
-                costPerSlot /= size;
-            }
-
-            double parentWeighting = GetAdditionalParentWeighting(item);
-
-            LootRankingWeightingConfig lootRankingWeightingConfig = _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Weighting;
-            double value = 0;
-            value += costPerSlot * lootRankingWeightingConfig.CostPerSlot;
-            value += weight * lootRankingWeightingConfig.Weight;
-            value += size * lootRankingWeightingConfig.Size;
-            value += gridSize * lootRankingWeightingConfig.GridSize;
-            value += maxDim * lootRankingWeightingConfig.MaxDim;
-            value += armorClass * lootRankingWeightingConfig.ArmorClass;
-            value += parentWeighting;
 
             LootRankingDataConfig lootRanking = new LootRankingDataConfig()
             {
                 ID = item.Id,
-                Name = _itemInfoUtil.GetLocalizedName(item),
-                Value = value,
-                CostPerSlot = costPerSlot,
+                Name = name,
+                Width = width,
+                Height = height,
                 Weight = weight,
-                Size = size,
                 GridSize = gridSize,
-                MaxDim = maxDim,
-                ArmorClass = armorClass,
-                ParentWeighting = parentWeighting
+                ArmorClass = armorClass
             };
+
+            if (item.Properties?.WeapClass != null)
+            {
+                ItemCollectionWrapper bestWeapon = FindBestWeapon(item);
+                ItemPropertiesConfig bestWeaponProperties = _weaponPropertiesUtil.GetWeaponProperties(bestWeapon);
+                lootRanking.Width = bestWeaponProperties.Width;
+                lootRanking.Height = bestWeaponProperties.Height;
+                lootRanking.Weight = bestWeaponProperties.Weight;
+            }
+
+            lootRanking.CostPerSlot = cost;
+            if (!_itemInfoUtil.CanEquip(item))
+            {
+                lootRanking.CostPerSlot /= lootRanking.Size;
+            }
+
+            lootRanking.ParentWeighting = GetAdditionalParentWeighting(item);
+
+            LootRankingWeightingConfig lootRankingWeightingConfig = _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Weighting;
+            lootRanking.Value = 0;
+            lootRanking.Value += lootRanking.CostPerSlot * lootRankingWeightingConfig.CostPerSlot;
+            lootRanking.Value += weight * lootRankingWeightingConfig.Weight;
+            lootRanking.Value += lootRanking.Size * lootRankingWeightingConfig.Size;
+            lootRanking.Value += gridSize * lootRankingWeightingConfig.GridSize;
+            lootRanking.Value += lootRanking.MaxDim * lootRankingWeightingConfig.MaxDim;
+            lootRanking.Value += armorClass * lootRankingWeightingConfig.ArmorClass;
+            lootRanking.Value += lootRanking.ParentWeighting;
 
             return lootRanking;
         }
@@ -150,15 +155,63 @@ namespace LateToTheParty.Utils
         {
             double totalParentWeighting = 0;
 
-            foreach (NameValueConfig nameValueConfig in _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Weighting.Parents)
+            foreach ((string parentId, NameValueConfig nameValueConfig) in _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Weighting.Parents)
             {
-                if (_itemInfoUtil.IsOfBaseClass(item, nameValueConfig.Name))
+                if (_itemInfoUtil.IsOfBaseClass(item, parentId))
                 {
                     totalParentWeighting += nameValueConfig.Value;
                 }
             }
 
             return totalParentWeighting;
+        }
+
+        private ItemCollectionWrapper FindBestWeapon(TemplateItem item)
+        {
+            IEnumerable<ItemCollectionWrapper> matchingAssortWeapons = _weaponPropertiesUtil.FindMatchesInTraderAssorts(item);
+            ItemCollectionWrapper? bestWeapon = matchingAssortWeapons.OrderBy(GetWeaponValue).FirstOrDefault();
+            double? bestWeaponValue = bestWeapon == null ? null : GetWeaponValue(bestWeapon);
+
+            IEnumerable<Preset> matchingPresets = _weaponPropertiesUtil.FindMatchingPresets(item);
+            Preset? bestPreset = matchingPresets.OrderBy(GetWeaponValue).FirstOrDefault();
+            if (bestPreset != null)
+            {
+                double bestPresetValue = GetWeaponValue(bestPreset);
+                if ((bestWeaponValue == null) || (bestPresetValue > bestWeaponValue))
+                {
+                    bestWeapon = new ItemCollectionWrapper(bestPreset);
+                    bestWeaponValue = bestPresetValue;
+                }
+            }
+
+            if (bestWeapon == null)
+            {
+                Preset newPreset = _presetGeneratorUtil.GenerateBestPreset(item);
+                bestWeapon = new ItemCollectionWrapper(newPreset);
+            }
+
+            return bestWeapon;
+        }
+
+        private double GetWeaponValue(Preset preset)
+        {
+            ItemPropertiesConfig weaponProperties = _weaponPropertiesUtil.GetWeaponProperties(preset);
+            return GetWeaponValue(weaponProperties);
+        }
+
+        private double GetWeaponValue(ItemCollectionWrapper weapon)
+        {
+            ItemPropertiesConfig weaponProperties = _weaponPropertiesUtil.GetWeaponProperties(weapon);
+            return GetWeaponValue(weaponProperties);
+        }
+
+        private double GetWeaponValue(ItemPropertiesConfig weaponProperties)
+        {
+            double value = 0;
+            value += weaponProperties.Size * _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Weighting.Size;
+            value += weaponProperties.Weight * _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Weighting.Weight;
+
+            return value;
         }
     }
 }

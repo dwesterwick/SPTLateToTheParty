@@ -1,5 +1,5 @@
 ﻿using LateToTheParty.Helpers;
-using LookRankingDataReader.Models;
+using LateToTheParty.Models;
 using Newtonsoft.Json;
 using SPT.Common.Http;
 using System;
