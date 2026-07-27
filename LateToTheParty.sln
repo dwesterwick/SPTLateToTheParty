@@ -71,7 +71,6 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared\LateToTheParty-Shared.projitems*{17fbdd37-7c10-4306-b936-4b32dbfe74bc}*SharedItemsImports = 13
 		Shared\LateToTheParty-Shared.projitems*{340b90a2-d164-444f-9844-5d7e96582ed5}*SharedItemsImports = 5
-		Shared\LateToTheParty-Shared.projitems*{cb95683c-88b1-d110-ee9b-05cbe70f6b2a}*SharedItemsImports = 5
 		Shared\LateToTheParty-Shared.projitems*{ceb2aeed-e040-0cd6-8933-13718a1c35be}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

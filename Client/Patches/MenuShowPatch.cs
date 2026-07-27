@@ -16,7 +16,7 @@ namespace LateToTheParty.Patches
     {
         private static string _lockableDoorsGUID = "Jehree.LockableDoors";
         private static string _fikaGUID = "com.fika.core";
-        private static string _fikaSyncGUID = "com.DanW.LateToThePartyFikaSync";
+        private static string _fikaSyncGUID = ModInfo.GUID + "fikasync";
         private static bool _displayedLockableDoorsWarning = false;
         private static bool _displayedFikaWarning = false;
 

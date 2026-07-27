@@ -14,7 +14,7 @@ namespace LateToTheParty
 {
     [BepInDependency("xyz.drakia.waypoints", "1.8.2")]
     [BepInPlugin(ModInfo.GUID, ModInfo.MODNAME, ModInfo.MOD_VERSION)]
-    internal class LateToThePartyPlugin : BaseUnityPlugin
+    public class LateToThePartyPlugin : BaseUnityPlugin
     {
         private static List<ModulePatch> hostOnlyPatches = new List<ModulePatch>();
 

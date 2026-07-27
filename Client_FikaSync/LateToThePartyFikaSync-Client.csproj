@@ -32,6 +32,9 @@
 		<Reference Include="DissonanceVoip">
 			<HintPath>..\..\..\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll</HintPath>
 		</Reference>
+		<Reference Include="Fika.Core">
+		  <HintPath>..\Dependencies\Fika.Core.dll</HintPath>
+		</Reference>
 		<Reference Include="Newtonsoft.Json, Version=13.0.1.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
 			<SpecificVersion>False</SpecificVersion>
 			<HintPath>..\..\..\EscapeFromTarkov_Data\Managed\Newtonsoft.Json.dll</HintPath>
@@ -60,10 +63,8 @@
 	  </None>
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="Components\" />
-	  <Folder Include="Patches\" />
+	  <ProjectReference Include="..\Client\LateToTheParty-Client.csproj" />
 	</ItemGroup>
-	<Import Project="..\Shared\LateToTheParty-Shared.projitems" Label="Shared" />
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 	  <Exec Command="powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File &quot;$(ProjectDir)CopyFilesAfterBuild.ps1&quot; -modName &quot;$(AssemblyTitle)&quot; -configuration &quot;$(Configuration)&quot; -relPathToSptInstall &quot;$(RelativePathToRootSPTInstall)&quot;" />
 	</Target>
