@@ -31,6 +31,8 @@ namespace LateToTheParty.Helpers
         {
             foreach (ExfiltrationPoint exfil in allExfils)
             {
+                //Singleton<LoggingUtil>.Instance.LogInfo("Extract " + exfil.Settings.Name + " Status: " + exfil.Status.ToString());
+
                 if (exfil.Status == EExfiltrationStatus.NotPresent)
                 {
                     continue;
@@ -41,6 +43,8 @@ namespace LateToTheParty.Helpers
                     return exfil;
                 }
             }
+
+            //Singleton<LoggingUtil>.Instance.LogInfo("Known VEX Extracts: " + string.Join(", ", Singleton<ConfigUtil>.Instance.CarExtractNames));
 
             return null;
         }

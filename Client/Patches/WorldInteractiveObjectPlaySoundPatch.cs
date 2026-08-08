@@ -29,7 +29,7 @@ namespace LateToTheParty.Patches
 
             if (!Singleton<SwitchTogglingComponent>.Instance.HasToggledInitialSwitches)
             {
-                Singleton<LoggingUtil>.Instance.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled", true);
+                //Singleton<LoggingUtil>.Instance.LogWarning("Suppressing sound for " + __instance.Id + " until all initial switches have been toggled", true);
 
                 return false;
             }

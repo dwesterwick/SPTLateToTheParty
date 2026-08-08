@@ -6,17 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using EFT.UI;
 using SPT.Reflection.Patching;
-using BepInEx.Bootstrap;
 using LateToTheParty.Utils;
 using Comfort.Common;
+using LateToTheParty.Controllers;
 
 namespace LateToTheParty.Patches
 {
     public class MenuShowPatch : ModulePatch
     {
-        private static string _lockableDoorsGUID = "Jehree.LockableDoors";
-        private static string _fikaGUID = "com.fika.core";
-        private static string _fikaSyncGUID = ModInfo.GUID + "fikasync";
         private static bool _displayedLockableDoorsWarning = false;
         private static bool _displayedFikaWarning = false;
 
@@ -31,10 +28,10 @@ namespace LateToTheParty.Patches
         {
             if (!_displayedLockableDoorsWarning && couldLockableDoorsCauseIssues())
             {
-                string message = "Using " + _lockableDoorsGUID + " may result in loot being despawned behind locked doors even with loot-accessibility checks enabled!";
+                string message = "Using Lockable Doors may result in loot being despawned behind locked doors even with loot-accessibility checks enabled!";
                 Singleton<LoggingUtil>.Instance.LogWarningToServerConsole(message);
 
-                message = "Please see the console for known limitation with " + _lockableDoorsGUID;
+                message = "Please see the console for known limitation with Lockable Doors";
                 NotificationManagerClass.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
 
                 _displayedLockableDoorsWarning = true;
@@ -42,7 +39,7 @@ namespace LateToTheParty.Patches
 
             if (!_displayedFikaWarning && fikaInstalledWithoutSyncPlugin())
             {
-                string message = "You must use " + _fikaSyncGUID + " when using " + _fikaGUID + " or the states of doors and switches will not sync between clients!";
+                string message = "You must use " + ExternalModHandler.LTTPFikaSyncModInfo.Name + " when using Fika or the states of doors and switches will not sync between clients!";
                 Singleton<LoggingUtil>.Instance.LogErrorToServerConsole(message);
 
                 message = "Missing LateToTheParty Fika sync plugin";
@@ -59,7 +56,7 @@ namespace LateToTheParty.Patches
                 return false;
             }
 
-            if (!Chainloader.PluginInfos.Any(p => p.Value.Metadata.GUID == _lockableDoorsGUID))
+            if (!ExternalModHandler.LockableDoorsModInfo.IsInstalled)
             {
                 return false;
             }
@@ -69,12 +66,12 @@ namespace LateToTheParty.Patches
 
         private static bool fikaInstalledWithoutSyncPlugin()
         {
-            if (!Chainloader.PluginInfos.Any(p => p.Value.Metadata.GUID == _fikaGUID))
+            if (!ExternalModHandler.FikaModInfo.IsInstalled)
             {
                 return false;
             }
 
-            if (Chainloader.PluginInfos.Any(p => p.Value.Metadata.GUID == _fikaSyncGUID))
+            if (ExternalModHandler.LTTPFikaSyncModInfo.IsInstalled)
             {
                 return false;
             }
