@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToTheParty-Server", "Server\LateToTheParty-Server.csproj", "{340B90A2-D164-444F-9844-5D7E96582ED5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CEB2AEED-E040-0CD6-8933-13718A1C35BE} = {CEB2AEED-E040-0CD6-8933-13718A1C35BE}
+	EndProjectSection
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "LateToTheParty-Shared", "Shared\LateToTheParty-Shared.shproj", "{17FBDD37-7C10-4306-B936-4B32DBFE74BC}"
 EndProject
