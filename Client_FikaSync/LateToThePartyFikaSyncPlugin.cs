@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace LateToTheParty
 {
     [BepInDependency("com.fika.core", "2.1.1")]
-    [BepInDependency(ModInfo.MODNAME, ModInfo.MOD_VERSION)]
+    [BepInDependency(ModInfo.GUID, ModInfo.MOD_VERSION)]
     [BepInPlugin(ModInfo.GUID + "fikasync", ModInfo.MODNAME + "FikaSync", ModInfo.MOD_VERSION)]
     internal class LateToThePartyFikaSyncPlugin : BaseUnityPlugin
     {

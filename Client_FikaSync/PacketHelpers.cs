@@ -18,14 +18,14 @@ namespace LateToTheParty
         internal static void WriteReceivedMessage<T>(this T packet) where T : INetSerializable, IObjectPacket
         {
 #if DEBUG
-            LateToThePartyFikaSyncPlugin.PluginLogger.LogWarning($"Received {packet.GetType().Name} for {packet.ObjectName}");
+            LateToThePartyFikaSyncPlugin.PluginLogger.LogDebug($"Received {packet.GetType().Name} for {packet.ObjectName}");
 #endif
         }
 
         internal static void WriteSendingMessage<T>(this T packet) where T : INetSerializable, IObjectPacket
         {
 #if DEBUG
-            LateToThePartyFikaSyncPlugin.PluginLogger.LogWarning($"Sending {packet.GetType().Name} for {packet.ObjectName}");
+            LateToThePartyFikaSyncPlugin.PluginLogger.LogDebug($"Sending {packet.GetType().Name} for {packet.ObjectName}");
 #endif
         }
 
