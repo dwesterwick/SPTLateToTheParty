@@ -1,5 +1,5 @@
-﻿using LateToTheParty.Helpers;
-using LateToTheParty.Models;
+﻿using LateToTheParty.Configuration;
+using LateToTheParty.Helpers;
 using Newtonsoft.Json;
 using SPT.Common.Http;
 using System;

@@ -1,4 +1,4 @@
-using LookRankingDataReader.Models;
+using LateToTheParty.Configuration;
 using Newtonsoft.Json;
 using System.Data;
 
@@ -6,7 +6,7 @@ namespace LookRankingDataReader
 {
     public partial class LootRankingDataForm : Form
     {
-        private static LootRankingContainerConfig? lootRankingContainer;
+        private static Dictionary<string, LootRankingDataConfig>? lootRankingData;
 
         public LootRankingDataForm()
         {
@@ -18,7 +18,7 @@ namespace LookRankingDataReader
             if (openLootRankingDataDialog.ShowDialog() == DialogResult.OK)
             {
                 string json = File.ReadAllText(openLootRankingDataDialog.FileName);
-                lootRankingContainer = JsonConvert.DeserializeObject<LootRankingContainerConfig>(json);
+                lootRankingData = JsonConvert.DeserializeObject<Dictionary<string, LootRankingDataConfig>>(json);
                 updateLootRankingData();
             }
         }
@@ -37,7 +37,7 @@ namespace LookRankingDataReader
         {
             lootRankingDataGridView.DataSource = null;
 
-            if ((lootRankingContainer == null) || (lootRankingContainer.Items.Count == 0))
+            if ((lootRankingData == null) || (lootRankingData.Count == 0))
             {
                 return;
             }
@@ -57,7 +57,7 @@ namespace LookRankingDataReader
             dt.Columns.Add("Armor Class", typeof(double));
             dt.Columns.Add("Parent Weighting", typeof(double));
 
-            foreach (LootRankingDataConfig item in lootRankingContainer.Items.Values)
+            foreach (LootRankingDataConfig item in lootRankingData.Values)
             {
                 DataRow row = dt.NewRow();
                 row["ID"] = item.ID;

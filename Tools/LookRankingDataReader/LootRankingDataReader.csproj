@@ -13,4 +13,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <Import Project="..\..\Shared\LateToTheParty-Shared.projitems" Label="Shared" />
+
 </Project>

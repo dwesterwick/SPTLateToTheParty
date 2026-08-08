@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LateToTheParty.Models
+namespace LateToTheParty.Configuration
 {
     [DataContract]
     public class LootRankingDataConfig : ItemPropertiesConfig
