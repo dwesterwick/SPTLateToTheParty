@@ -161,5 +161,6 @@ If you're using this mod along with Kobrakon's [Immersive Raids](https://forge.s
 
 Known issues:
 * Any locked door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
+* Some doors and switches will be toggled in an illogical (or impossible) order, especially in the starting areas on Labyrinth.
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.
 * If you approach the car extract without taking it and this mod instructs it to leave later in the raid, you'll see the countdown timer when you check your extracts.
