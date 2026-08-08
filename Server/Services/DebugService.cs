@@ -23,7 +23,9 @@ namespace LateToTheParty.Services
                 return;
             }
 
+#if DEBUG
             ForceGenerateLootRankingData();
+#endif
         }
 
         private void ForceGenerateLootRankingData()

@@ -148,50 +148,58 @@ namespace LateToTheParty.Controllers
 
         public static void CacheLocationSettings(LocationSettingsClass.Location location)
         {
-            if (OriginalSettings.ContainsKey(location.Id))
+            try
             {
-                Singleton<LoggingUtil>.Instance.LogInfo("Recalling original raid settings for " + location.Name + "...");
+                if (OriginalSettings.ContainsKey(location.Id))
+                {
+                    Singleton<LoggingUtil>.Instance.LogInfo("Recalling original raid settings for " + location.Id + "...");
 
-                location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+                    location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
+
+                    foreach (LocationExitClass exit in location.exits)
+                    {
+                        if (CarExtractHelpers.IsCarExtract(exit.Name))
+                        {
+                            exit.Chance = OriginalSettings[location.Id].VExChance;
+                            Singleton<LoggingUtil>.Instance.LogInfo("Recalling original raid settings for " + location.Id + "...Restored VEX chance to " + exit.Chance);
+                        }
+                    }
+
+                    if (location.BossLocationSpawn.Length != OriginalSettings[location.Id].BossSpawnChances.Length)
+                    {
+                        throw new InvalidOperationException("Mismatch in length between boss location array and cached array.");
+                    }
+
+                    for (int i = 0; i < location.BossLocationSpawn.Length; i++)
+                    {
+                        location.BossLocationSpawn[i].BossChance = OriginalSettings[location.Id].BossSpawnChances[i];
+                        Singleton<LoggingUtil>.Instance.LogInfo("Recalling original raid settings for " + location.Id + "...Restored " + location.BossLocationSpawn[i].BossName + " spawn chance to " + location.BossLocationSpawn[i].BossChance);
+                    }
+
+                    return;
+                }
+
+                Singleton<LoggingUtil>.Instance.LogInfo("Storing original raid settings for " + location.Id + "... (Escape time: " + location.EscapeTimeLimit + ")");
+
+                Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
 
                 foreach (LocationExitClass exit in location.exits)
                 {
                     if (CarExtractHelpers.IsCarExtract(exit.Name))
                     {
-                        exit.Chance = OriginalSettings[location.Id].VExChance;
-                        Singleton<LoggingUtil>.Instance.LogInfo("Recalling original raid settings for " + location.Name + "...Restored VEX chance to " + exit.Chance);
+                        settings.VExChance = exit.Chance;
                     }
                 }
 
-                if (location.BossLocationSpawn.Length != OriginalSettings[location.Id].BossSpawnChances.Length)
-                {
-                    throw new InvalidOperationException("Mismatch in length between boss location array and cached array.");
-                }
+                settings.BossSpawnChances = location.BossLocationSpawn.Select(x => x.BossChance).ToArray();
 
-                for (int i = 0; i < location.BossLocationSpawn.Length; i++)
-                {
-                    location.BossLocationSpawn[i].BossChance = OriginalSettings[location.Id].BossSpawnChances[i];
-                    Singleton<LoggingUtil>.Instance.LogInfo("Recalling original raid settings for " + location.Name + "...Restored " + location.BossLocationSpawn[i].BossName + " spawn chance to " + location.BossLocationSpawn[i].BossChance);
-                }
-
-                return;
+                OriginalSettings.Add(location.Id, settings);
             }
-
-            Singleton<LoggingUtil>.Instance.LogInfo("Storing original raid settings for " + location.Name + "... (Escape time: " + location.EscapeTimeLimit + ")");
-
-            Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
-            
-            foreach (LocationExitClass exit in location.exits)
+            catch (Exception ex)
             {
-                if (CarExtractHelpers.IsCarExtract(exit.Name))
-                {
-                    settings.VExChance = exit.Chance;
-                }
+                Singleton<LoggingUtil>.Instance.LogErrorToServerConsole("Could not store original raid settings for " + location.Id + ": " + ex.Message);
+                Singleton<LoggingUtil>.Instance.LogError(ex.StackTrace);
             }
-
-            settings.BossSpawnChances = location.BossLocationSpawn.Select(x => x.BossChance).ToArray();
-
-            OriginalSettings.Add(location.Id, settings);
         }
 
         public static int GetOriginalEscapeTime(LocationSettingsClass.Location location)

@@ -23,7 +23,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPostfix]
-        protected static void PatchPostfix(AirdropSynchronizableObject ___airdropSynchronizableObject_0)
+        protected static void PatchPostfix(AirdropSynchronizableObject ___AirdropSynchronizableObject_0)
         {
             // Do not run this on Fika client machines
             if (!Helpers.RaidHelpers.IsHostRaid())
@@ -31,9 +31,9 @@ namespace LateToTheParty.Patches
                 return;
             }
 
-            LootableContainer airdropContainer = ___airdropSynchronizableObject_0.gameObject.GetComponentInChildren<LootableContainer>();
+            LootableContainer airdropContainer = ___AirdropSynchronizableObject_0.gameObject.GetComponentInChildren<LootableContainer>();
 
-            string airdropType = ___airdropSynchronizableObject_0.AirdropType.ToString();
+            string airdropType = ___AirdropSynchronizableObject_0.AirdropType.ToString();
             IEnumerable<EFT.InventoryLogic.Item> airdropItems = airdropContainer.ItemOwner.Items.FindAllItemsInContainers();
             Singleton<LoggingUtil>.Instance.LogInfo("Found " + airdropType + " airdrop with " + airdropItems.Count() + " items");
 

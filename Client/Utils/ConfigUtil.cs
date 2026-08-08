@@ -84,7 +84,7 @@ namespace LateToTheParty.Utils
 
         private void GetCarExtractNames()
         {
-            string routeName = SharedRouterHelpers.GetRoutePath("GetLootRankingData");
+            string routeName = SharedRouterHelpers.GetRoutePath("GetCarExtractNames");
 
             string json = RequestHandler.GetJson(routeName);
             HashSet<string>? response = JsonConvert.DeserializeObject<HashSet<string>>(json);
