@@ -174,7 +174,7 @@ namespace LateToTheParty.Components
                     }
                     else
                     {
-                        Singleton<LoggingUtil>.Instance.LogInfo("Cannot breach interactive object: " + interactiveObject.Id);
+                        Singleton<LoggingUtil>.Instance.LogInfo("Cannot breach " + interactiveObject.GetType().Name + ": " + interactiveObject.Id);
                         return false;
                     }
                 }
@@ -487,6 +487,18 @@ namespace LateToTheParty.Components
 
             if (interactiveObject.DoorState == EDoorState.Locked)
             {
+                Trunk? trunk = interactiveObject as Trunk;
+                if (trunk != null)
+                {
+                    if (!allItems.ContainsKey(trunk.KeyId))
+                    {
+                        if (logResult) Singleton<LoggingUtil>.Instance.LogDebug("Searching for valid interactive objects...trunk " + trunk.Id + " is locked and has no valid key.");
+                        return false;
+                    }
+
+                    return true;
+                }
+
                 Door? door = interactiveObject as Door;
                 if ((door?.CanBeBreached == false) && !allItems.ContainsKey(door.KeyId))
                 {
