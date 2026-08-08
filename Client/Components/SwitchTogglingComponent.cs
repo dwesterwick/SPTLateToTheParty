@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using LateToTheParty.Controllers;
 using LateToTheParty.CoroutineExtensions;
 using LateToTheParty.Helpers;
 using LateToTheParty.Utils;
+using RootMotion.FinalIK;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace LateToTheParty.Components
@@ -184,7 +185,13 @@ namespace LateToTheParty.Components
                 return;
             }
 
-            if ((sw.DoorState == EDoorState.Locked) || !sw.CanToggle())
+            if (!sw.CanToggle() && (sw.PreviousSwitch == null))
+            {
+                Singleton<LoggingUtil>.Instance.LogWarning("Cannot toggle switch " + sw.GetText());
+                return;
+            }
+
+            if (sw.DoorState == EDoorState.Locked)
             {
                 // Check if another switch needs to be toggled first before this one is available
                 if (sw.PreviousSwitch != null)
@@ -206,7 +213,14 @@ namespace LateToTheParty.Components
                 }
                 else
                 {
-                    Singleton<LoggingUtil>.Instance.LogWarning("Cannot toggle switch " + sw.GetText());
+                    if (sw.KeyId != null)
+                    {
+                        sw.StartForceDoorState(EDoorState.Shut);
+                    }
+                    else
+                    {
+                        Singleton<LoggingUtil>.Instance.LogWarning("Cannot toggle locked switch " + sw.GetText());
+                    }
                 }
             }
 
