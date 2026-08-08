@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
+using LateToTheParty.Helpers;
+using LateToTheParty.Utils;
 using UnityEngine;
 
 namespace LateToTheParty.Components
@@ -18,7 +20,14 @@ namespace LateToTheParty.Components
 
         protected void Awake()
         {
-            updateForPlayer(Singleton<GameWorld>.Instance.MainPlayer);
+            Player? mainPlayer = PlayerHelpers.GetMainPlayer();
+            if (mainPlayer == null)
+            {
+                Singleton<LoggingUtil>.Instance.LogError("Could not identify the main player");
+                return;
+            }
+
+            updateForPlayer(mainPlayer);
         }
 
         protected void Update()

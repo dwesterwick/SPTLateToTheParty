@@ -28,7 +28,7 @@ namespace LateToTheParty.Helpers
             }
 
             float closestDistance = float.MaxValue;
-            Player closestPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+            Player? closestPlayer = null;
 
             foreach (Player player in Singleton<GameWorld>.Instance.AllPlayersEverExisted)
             {

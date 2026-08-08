@@ -15,12 +15,14 @@ namespace LateToTheParty.Controllers
         public static FikaModInfo FikaModInfo { get; private set; } = new FikaModInfo();
         public static LTTPFikaSyncModInfo LTTPFikaSyncModInfo { get; private set; } = new LTTPFikaSyncModInfo();
         public static LockableDoorsModInfo LockableDoorsModInfo { get; private set; } = new LockableDoorsModInfo();
+        public static SainModInfo SainModInfo { get; private set; } = new SainModInfo();
 
         private static List<AbstractExternalModInfo> externalMods = new List<AbstractExternalModInfo>
         {
             FikaModInfo,
             LTTPFikaSyncModInfo,
-            LockableDoorsModInfo
+            LockableDoorsModInfo,
+            SainModInfo
         };
 
         public static void CheckForExternalMods()

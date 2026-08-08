@@ -6,7 +6,7 @@ Make your SPT experience closer to live Tarkov with loot disappearing, doors ope
 
 Partially compatible with: [Lockable Doors](https://forge.sp-tarkov.com/mod/1923/lockable-doors) (loot may despawn behind doors you lock during the raid)
 
-If you use both [Questing Bots](https://forge.sp-tarkov.com/mod/1109/questing-bots) and [Looting Bots](https://forge.sp-tarkov.com/mod/812/looting-bots), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended.
+If you use both [Questing Bots](https://forge.sp-tarkov.com/mod/1109/questing-bots) and [Looting Bots](https://forge.sp-tarkov.com/mod/812/looting-bots), setting **only_make_changes_just_after_spawning.enabled=true** in *config.json* is highly recommended. This change is also recommended if you use [ORBIT](https://forge.sp-tarkov.com/mod/2706/orbit).
 
 This mod makes the the following changes to your SPT experience:
 * Loot (including on dead bots) will be gradually removed throughout the raid to simulate other players taking it. 
@@ -110,7 +110,8 @@ This mod is highly customizable by modifying the *config.json* file. Here are th
 * **open_doors_during_raid.enabled**: If the mod can open/close doors throughout the raid. This is **true** by default. 
 * **open_doors_during_raid.can_open_locked_doors**: If the mod is allowed to open locked doors. This is **true** by default. 
 * **open_doors_during_raid.can_breach_doors**: If the mod is allowed to open doors that can only be breached. This is **true** by default. 
-* **open_doors_during_raid.exclusion_radius**: The radius (in meters) from you within which doors are not allowed to be opened/closed. By default, this is set to **40** meters. 
+* **open_doors_during_raid.exclusion_radius_humans**: The radius (in meters) from all human players within which doors are not allowed to be opened/closed. By default, this is set to **40** meters. 
+* **open_doors_during_raid.exclusion_radius_sain_bots**: The radius (in meters) from all bots that have SAIN enabled within which doors are not allowed to be opened/closed. This setting should be above SAIN's *"Door Open Sound Range"* setting or bots might investigate the sounds of doors being opened by this mod. By default, this is set to **45** meters. 
 * **open_doors_during_raid.min_raid_ET**: The minimum time (in seconds) that must elapse in the raid (not necessarily from the time you spawn into the raid, namely as a Scav) before the mod is allowed to begin opening/closing doors. By default, this is set to **180** seconds.
 * **open_doors_during_raid.min_raid_time_remaining**: The minimum time (in seconds) that must be remaining in the raid for the mod to be allowed to open/close doors. By default, this is **300** seconds. 
 * **open_doors_during_raid.time_between_door_events**: The time (in seconds) that must elapse after the mod opens/closes doors before it's allowed to open/close doors again. By default, this is **60** seconds. 
@@ -155,11 +156,10 @@ The loot-ranking system uses the following logic to determine the "value" of eac
 * If the item is a weapon, the mod first tries finding the most desirable version of it (in terms of size and weight) available from traders. If no traders sell it, the mod will then find the most desirable preset for the weapon. If there are no presets for the weapon (as may be the case for mod-generated weapons), one with the cheapest and fewest parts possible will be generated. 
 * When the mod determines the size of a weapon, it's folded if possible. 
 
-If you're using this mod along with Kobrakon's Immersive Raids mod, please change the following in *config.json*:
+If you're using this mod along with Kobrakon's [Immersive Raids](https://forge.sp-tarkov.com/mod/642/immersive-raids) or a similar mod that significantly lengthens raid times, please change the following in *config.json*:
 * **destroy_loot_during_raid.max_time_without_destroying_any_loot** to any value you want. This is the frequency (in seconds) at which an item is removed from the map. If this value is small and you stay in the raid for a long time, you'll eventually have no more loot on the map.
 
 Known issues:
 * Any locked door on the map is equally likely to be opened, including those locked with rare keys and those nobody ever really opens/closes in live Tarkov. 
-* Some items have no price defined in *handbook.json* or *prices.json*, which makes the mod rank them as being extremely undesirable (i.e. the AXMC .338 rifle). This will hopefully be fixed as the data dumps available to the SPT developers improve. 
 * If **destroy_loot_during_raid.check_loot_accessibility.enabled=false**, loot can be despawned behind locked doors. If **destroy_loot_during_raid.check_loot_accessibility.enabled=true**, some loot is falsely considered inaccessible and will never be despawned.
 * If you approach the car extract without taking it and this mod instructs it to leave later in the raid, you'll see the countdown timer when you check your extracts.

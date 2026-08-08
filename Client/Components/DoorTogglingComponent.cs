@@ -399,17 +399,18 @@ namespace LateToTheParty.Components
 
         private bool IsInteractiveObjectAllowedToBeToggled(WorldInteractiveObject interactiveObject)
         {
-            // Ensure you're still in the raid to avoid NRE's when it ends
-            if ((Camera.main == null) || (interactiveObject.transform == null))
+            Vector3 position = interactiveObject.transform.position;
+
+            if (position.AnyHumanPlayersWithinRange(Singleton<ConfigUtil>.Instance.CurrentConfig.OpenDoorsDuringRaid.ExclusionRadiusHumans))
             {
                 return false;
             }
 
-            // Ignore doors that are too close to you
-            Vector3 yourPosition = Camera.main.transform.position;
-            float doorDist = Vector3.Distance(yourPosition, interactiveObject.transform.position);
-            if (doorDist < Singleton<ConfigUtil>.Instance.CurrentConfig.OpenDoorsDuringRaid.ExclusionRadius)
+            if (ExternalModHandler.SainModInfo.AnySainBotsWithinRange(position, Singleton<ConfigUtil>.Instance.CurrentConfig.OpenDoorsDuringRaid.ExclusionRadiusSainBots))
             {
+                //BotOwner nearestSainBot = ExternalModHandler.SainModInfo.GetNearestSainBot(position)!;
+                //Singleton<LoggingUtil>.Instance.LogInfo("Nearest SAIN Bot: " + nearestSainBot.name + " (" + Vector3.Distance(position, nearestSainBot.Position) + "m)");
+
                 return false;
             }
 

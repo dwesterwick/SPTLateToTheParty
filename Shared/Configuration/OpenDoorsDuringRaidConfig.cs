@@ -17,8 +17,11 @@ namespace LateToTheParty.Configuration
         [DataMember(Name = "can_breach_doors", IsRequired = true)]
         public bool CanBreachDoors { get; set; } = true;
 
-        [DataMember(Name = "exclusion_radius", IsRequired = true)]
-        public double ExclusionRadius { get; set; } = 40;
+        [DataMember(Name = "exclusion_radius_humans", IsRequired = true)]
+        public double ExclusionRadiusHumans { get; set; } = 40;
+
+        [DataMember(Name = "exclusion_radius_sain_bots", IsRequired = true)]
+        public double ExclusionRadiusSainBots { get; set; } = 45;
 
         [DataMember(Name = "min_raid_ET", IsRequired = true)]
         public double MinRaidET { get; set; } = 180;

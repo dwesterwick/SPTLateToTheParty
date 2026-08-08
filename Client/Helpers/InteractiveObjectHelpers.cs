@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Comfort.Common;
+using EFT;
+using EFT.Interactive;
+using LateToTheParty.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Comfort.Common;
-using EFT.Interactive;
-using LateToTheParty.Utils;
 using UnityEngine;
 
 namespace LateToTheParty.Helpers
@@ -30,8 +31,16 @@ namespace LateToTheParty.Helpers
 
         public static void PrepareInteraction(this WorldInteractiveObject interactiveObject)
         {
+            Player? mainPlayer = PlayerHelpers.GetMainPlayer();
+            if (mainPlayer == null)
+            {
+                Singleton<LoggingUtil>.Instance.LogWarning("Could not identify the main player. This might cause SAIN errors when doors open, but they can be ignored.");
+            }
+
+            // Band-aid fix for SAIN errors in DoorSoundPatch if interactiveObject.InteractingPlayer is null
+            interactiveObject.SetUser(mainPlayer);
+
             interactiveObject.LockForInteraction();
-            interactiveObject.SetUser(null);
         }
 
         public static void ExecuteInteraction(this WorldInteractiveObject interactiveObject, InteractionResult interactionResult)
@@ -40,6 +49,9 @@ namespace LateToTheParty.Helpers
 
             interactiveObject.PrepareInteraction();
             interactiveObject.Interact(interactionResult);
+
+            // Only needed if PrepareInteraction sets this to a Player
+            interactiveObject.SetUser(null);
         }
 
         public static void StartForceDoorState(this WorldInteractiveObject interactiveObject, EDoorState doorState)

@@ -166,11 +166,12 @@
 			}
 		}
 	},
-	"open_doors_during_raid" : {
+	"open_doors_during_raid": {
 		"enabled": true,
 		"can_open_locked_doors": true,
 		"can_breach_doors": true,
-		"exclusion_radius": 40,
+		"exclusion_radius_humans": 40,
+		"exclusion_radius_sain_bots": 45,
 		"min_raid_ET": 180,
 		"min_raid_time_remaining": 300,
 		"time_between_door_events": 60,

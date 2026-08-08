@@ -111,14 +111,28 @@ namespace LateToTheParty.Components
 
         private void activateCarExfil()
         {
-            VEXExfil!.ActivateExfilForPlayer(Singleton<GameWorld>.Instance.MainPlayer);
+            Player? mainPlayer = PlayerHelpers.GetMainPlayer();
+            if (mainPlayer == null)
+            {
+                Singleton<LoggingUtil>.Instance.LogError("Could not identify the main player. Cannot instruct the car extract to leave.");
+                return;
+            }
+
+            VEXExfil!.ActivateExfilForPlayer(mainPlayer);
 
             carExtractPendingTimer.Restart();
         }
 
         private void deactivateCarExfil()
         {
-            VEXExfil!.DeactivateExfilForPlayer(Singleton<GameWorld>.Instance.MainPlayer);
+            Player? mainPlayer = PlayerHelpers.GetMainPlayer();
+            if (mainPlayer == null)
+            {
+                Singleton<LoggingUtil>.Instance.LogError("Could not identify the main player. Cannot instruct the car extract to leave.");
+                return;
+            }
+
+            VEXExfil!.DeactivateExfilForPlayer(mainPlayer);
             
             // Wait a while before the car is allowed to leave again so it's less obvious that this mod is faking it
             updateDelay = Singleton<ConfigUtil>.Instance.CurrentConfig.CarExtractDepartures.DelayAfterCountdownReset * 1000;

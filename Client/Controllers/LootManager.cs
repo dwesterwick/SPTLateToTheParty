@@ -28,7 +28,7 @@ namespace LateToTheParty.Controllers
         private object lootableContainerLock = new object();
 
         private Dictionary<Item, Models.LootInfo.AbstractLootInfo> LootInfo = new Dictionary<Item, Models.LootInfo.AbstractLootInfo>();
-        private List<Item> ItemsDroppedByMainPlayer = new List<Item>();
+        private List<Item> ItemsDroppedByHumanPlayers = new List<Item>();
         private Stopwatch lastLootDestroyedTimer = Stopwatch.StartNew();
         private EnumeratorWithTimeLimit enumeratorWithTimeLimit = new EnumeratorWithTimeLimit(Singleton<ConfigUtil>.Instance.CurrentConfig.DestroyLootDuringRaid.MaxCalcTimePerFrameMs);
         private int destroyedLootSlots = 0;
@@ -37,7 +37,7 @@ namespace LateToTheParty.Controllers
         public int TotalLootItemsCount => LootInfo.Count;
         public int RemainingLootItemsCount => LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count();
 
-        public bool WasDroppedByPlayer(Item item) => ItemsDroppedByMainPlayer.Contains(item);
+        public bool WasDroppedByPlayer(Item item) => ItemsDroppedByHumanPlayers.Contains(item);
         public void WriteLootLogFile(string locationName) => Singleton<LoggingUtil>.Instance.WriteLootLogFile(LootInfo, locationName);
 
         public LootManager()
@@ -117,10 +117,10 @@ namespace LateToTheParty.Controllers
                     LootInfo[relevantItem].NearbyInteractiveObject = null;
                 }
 
-                if (preventFromDespawning && !ItemsDroppedByMainPlayer.Contains(relevantItem))
+                if (preventFromDespawning && !ItemsDroppedByHumanPlayers.Contains(relevantItem))
                 {
                     Singleton<LoggingUtil>.Instance.LogInfo("Preventing dropped item from despawning: " + relevantItem.LocalizedName());
-                    ItemsDroppedByMainPlayer.Add(relevantItem);
+                    ItemsDroppedByHumanPlayers.Add(relevantItem);
                 }
             }
         }
@@ -317,7 +317,7 @@ namespace LateToTheParty.Controllers
             IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> remainingItems = accessibleItems
                 .Where(v => !v.Value.IsDestroyed)
                 .Where(v => !v.Value.IsInPlayerInventory)
-                .Where(v => !ItemsDroppedByMainPlayer.Contains(v.Key));
+                .Where(v => !ItemsDroppedByHumanPlayers.Contains(v.Key));
 
             return (double)remainingItems.Count() / accessibleItems.Count();
         }
@@ -327,7 +327,7 @@ namespace LateToTheParty.Controllers
             IEnumerable<Item> collectedItems = LootInfo
                 .Where(i => i.Value.IsInPlayerInventory)
                 .Select(i => i.Key)
-                .Concat(ItemsDroppedByMainPlayer);
+                .Concat(ItemsDroppedByHumanPlayers);
 
             return destroyedLootSlots + collectedItems.Select(i => i.GetItemSlots()).Count();
         }
