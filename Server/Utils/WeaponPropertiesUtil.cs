@@ -5,7 +5,6 @@ using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Services;
-using System.Net.Mail;
 
 namespace LateToTheParty.Utils
 {
@@ -129,7 +128,7 @@ namespace LateToTheParty.Utils
                 IEnumerable<Item> childItemsInSlot = weapon.ChildItems.Where(item => item.SlotId == slot.Id);
                 if (!childItemsInSlot.Any())
                 {
-                    _loggingUtil.Info($"Ignoring incomplete weapon build for {weaponName} with missing attachment in {slot.Name ?? "[NULL SLOT]"}");
+                    //_loggingUtil.Info($"Ignoring incomplete weapon build for {weaponName} with missing attachment in {slot.Name ?? "[NULL SLOT]"}");
                     return false;
                 }
             }

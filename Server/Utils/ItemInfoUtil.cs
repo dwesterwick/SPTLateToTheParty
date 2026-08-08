@@ -69,6 +69,32 @@ namespace LateToTheParty.Utils
             return inventory;
         }
 
+        private Dictionary<MongoId, double?>? _handbookPrices;
+        public Dictionary<MongoId, double?> HandbookPrices
+        {
+            get
+            {
+                if (_handbookPrices == null)
+                {
+                    _handbookPrices = GetHandbookPrices();
+                }
+
+                return _handbookPrices;
+            }
+        }
+
+        private Dictionary<MongoId, double?> GetHandbookPrices()
+        {
+            Dictionary<MongoId, double?> handbookPrices = new Dictionary<MongoId, double?>();
+
+            foreach (HandbookItem item in _databaseService.GetTemplates().Handbook.Items)
+            {
+                handbookPrices.Add(item.Id, item.Price);
+            }
+
+            return handbookPrices;
+        }
+
         public string GetLocalizedName(TemplateItem item) => _localizationUtil.GetLocalizedName(item);
 
         public int GetInternalGridArea(TemplateItem item)
@@ -131,13 +157,9 @@ namespace LateToTheParty.Utils
                 throw new ArgumentNullException(nameof(item));
             }
 
-            HandbookItem? handbookEntry = _databaseService.GetTemplates().Handbook.Items.Find(i => i.Id == item.Id);
-            double? handbookPrice = handbookEntry?.Price;
-
-            if ((handbookPrice == null) || double.IsNaN(handbookPrice.Value))
+            if (!HandbookPrices.TryGetValue(item.Id, out double? handbookPrice) || (handbookPrice == null) || double.IsNaN(handbookPrice.Value))
             {
-                _loggingUtil.Warning($"Invalid handbook price for {GetLocalizedName(item)} ({item.Id}). Defaulting to 0.");
-
+                //_loggingUtil.Warning($"Invalid handbook price for {GetLocalizedName(item)} ({item.Id}). Defaulting to 0.");
                 handbookPrice = 0;
             }
 
@@ -153,8 +175,7 @@ namespace LateToTheParty.Utils
 
             if (!_databaseService.GetTemplates().Prices.TryGetValue(item.Id, out double fleaPrice) || double.IsNaN(fleaPrice))
             {
-                _loggingUtil.Warning($"Invalid flea market price for {GetLocalizedName(item)} ({item.Id}). Defaulting to 0.");
-
+                //_loggingUtil.Warning($"Invalid flea market price for {GetLocalizedName(item)} ({item.Id}). Defaulting to 0.");
                 fleaPrice = 0;
             }
             

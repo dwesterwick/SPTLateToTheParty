@@ -5,6 +5,7 @@ using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Services;
+using System.Diagnostics;
 
 namespace LateToTheParty.Utils
 {
@@ -78,6 +79,8 @@ namespace LateToTheParty.Utils
         {
             _loggingUtil.Info("Creating loot ranking data...");
 
+            Stopwatch sw = Stopwatch.StartNew();
+
             Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
             foreach (TemplateItem item in _databaseService.GetItems().Values)
             {
@@ -93,15 +96,20 @@ namespace LateToTheParty.Utils
 
                 LootRankingDataConfig rankingData = GetLootRankingValue(item);
                 newLootRankingData.Add(item.Id, rankingData);
+
+                //double swTime = sw.ElapsedTicks / (double)Stopwatch.Frequency;
+                //_loggingUtil.Info($"Took {swTime}ms to calculate value of {_itemInfoUtil.GetLocalizedName(item)}: {rankingData.Value}");
             }
 
             _configUtil.LootRankingData = newLootRankingData;
 
-            _loggingUtil.Info("Creating loot ranking data...done.");
+            _loggingUtil.Info($"Creating loot ranking data...done ({sw.ElapsedMilliseconds}ms).");
         }
 
         private LootRankingDataConfig GetLootRankingValue(TemplateItem item)
         {
+            
+
             string name = _itemInfoUtil.GetLocalizedName(item);
             double cost = _itemInfoUtil.GetMaxPrice(item);
             int width = item.Properties?.Width ?? 0;
