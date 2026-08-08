@@ -1,0 +1,80 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToTheParty-Server", "Server\LateToTheParty-Server.csproj", "{340B90A2-D164-444F-9844-5D7E96582ED5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CEB2AEED-E040-0CD6-8933-13718A1C35BE} = {CEB2AEED-E040-0CD6-8933-13718A1C35BE}
+	EndProjectSection
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "LateToTheParty-Shared", "Shared\LateToTheParty-Shared.shproj", "{17FBDD37-7C10-4306-B936-4B32DBFE74BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToTheParty-Client", "Client\LateToTheParty-Client.csproj", "{CEB2AEED-E040-0CD6-8933-13718A1C35BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToTheParty-Tests", "Tests\LateToTheParty-Tests.csproj", "{5C264016-E28C-0280-716B-DAA2DE535658}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LateToThePartyFikaSync-Client", "Client_FikaSync\LateToThePartyFikaSync-Client.csproj", "{CB95683C-88B1-D110-EE9B-05CBE70F6B2A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LootRankingDataReader", "Tools\LookRankingDataReader\LootRankingDataReader.csproj", "{92B6DD58-48F2-A17B-C939-A7FF2D421DFF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SphereOverlapTest", "Tools\SphereOverlapTest\SphereOverlapTest.csproj", "{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{340B90A2-D164-444F-9844-5D7E96582ED5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{340B90A2-D164-444F-9844-5D7E96582ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{340B90A2-D164-444F-9844-5D7E96582ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{340B90A2-D164-444F-9844-5D7E96582ED5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEB2AEED-E040-0CD6-8933-13718A1C35BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEB2AEED-E040-0CD6-8933-13718A1C35BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEB2AEED-E040-0CD6-8933-13718A1C35BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEB2AEED-E040-0CD6-8933-13718A1C35BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C264016-E28C-0280-716B-DAA2DE535658}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C264016-E28C-0280-716B-DAA2DE535658}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C264016-E28C-0280-716B-DAA2DE535658}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C264016-E28C-0280-716B-DAA2DE535658}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB95683C-88B1-D110-EE9B-05CBE70F6B2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB95683C-88B1-D110-EE9B-05CBE70F6B2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB95683C-88B1-D110-EE9B-05CBE70F6B2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB95683C-88B1-D110-EE9B-05CBE70F6B2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92B6DD58-48F2-A17B-C939-A7FF2D421DFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92B6DD58-48F2-A17B-C939-A7FF2D421DFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92B6DD58-48F2-A17B-C939-A7FF2D421DFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92B6DD58-48F2-A17B-C939-A7FF2D421DFF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{92B6DD58-48F2-A17B-C939-A7FF2D421DFF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{2BC469D4-6F8B-4FD0-9347-3D0204A8C0AD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4AFC7064-86A0-410B-8A07-D1516283D3EB}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared\LateToTheParty-Shared.projitems*{17fbdd37-7c10-4306-b936-4b32dbfe74bc}*SharedItemsImports = 13
+		Shared\LateToTheParty-Shared.projitems*{340b90a2-d164-444f-9844-5d7e96582ed5}*SharedItemsImports = 5
+		Shared\LateToTheParty-Shared.projitems*{92b6dd58-48f2-a17b-c939-a7ff2d421dff}*SharedItemsImports = 5
+		Shared\LateToTheParty-Shared.projitems*{ceb2aeed-e040-0cd6-8933-13718a1c35be}*SharedItemsImports = 5
+	EndGlobalSection
+EndGlobal

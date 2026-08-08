@@ -1,0 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using EFT;
+using Fika.Core.Main.Utils;
+using SPT.Reflection.Patching;
+
+namespace LateToTheParty
+{
+    internal class GameWorldInitLevelPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(GameWorld).GetMethod(nameof(GameWorld.InitLevel), BindingFlags.Public | BindingFlags.Instance);
+        }
+
+        [PatchPrefix]
+        protected static void PatchPrefix()
+        {
+            if (FikaBackendUtils.IsServer)
+            {
+                Logger.LogWarning("Enabling LateToTheParty plugin for host machine...");
+                LateToThePartyPlugin.Enable();
+
+                return;
+            }
+
+            Logger.LogWarning("Disabling LateToTheParty plugin for client machine...");
+            LateToThePartyPlugin.Disable();
+        }
+    }
+}
