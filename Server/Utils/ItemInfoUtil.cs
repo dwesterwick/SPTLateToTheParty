@@ -95,6 +95,8 @@ namespace LateToTheParty.Utils
             return handbookPrices;
         }
 
+        public bool IsATemplateGroup(TemplateItem item) => string.Equals(item.Type, "Node", StringComparison.OrdinalIgnoreCase);
+
         public string GetLocalizedName(TemplateItem item) => _localizationUtil.GetLocalizedName(item);
 
         public int GetInternalGridArea(TemplateItem item)

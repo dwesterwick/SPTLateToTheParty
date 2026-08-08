@@ -35,7 +35,8 @@ namespace LateToTheParty.Utils
                     continue;
                 }
 
-                if (!_databaseService.GetTemplates().Items.TryGetValue(attachment.Template, out TemplateItem? attachmentTemplate) || (attachmentTemplate == null))
+                TemplateItem? attachmentTemplate = _itemInfoUtil.GetTemplate(attachment.Template);
+                if (attachmentTemplate == null)
                 {
                     continue;
                 }
@@ -58,7 +59,8 @@ namespace LateToTheParty.Utils
 
         public ItemPropertiesConfig GetWeaponProperties(ItemCollectionWrapper weapon)
         {
-            if (_databaseService.GetTemplates().Items.TryGetValue(weapon.ParentTemplateId, out TemplateItem? baseItemTemplate) && (baseItemTemplate != null))
+            TemplateItem? baseItemTemplate = _itemInfoUtil.GetTemplate(weapon.ParentTemplateId);
+            if (baseItemTemplate != null)
             {
                 return GetWeaponProperties(baseItemTemplate, weapon.ChildItems);
             }

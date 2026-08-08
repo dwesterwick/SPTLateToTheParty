@@ -2,6 +2,7 @@
 using LateToTheParty.Models;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Extensions;
+using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Services;
@@ -72,34 +73,61 @@ namespace LateToTheParty.Utils
                 return false;
             }
 
+            foreach ((MongoId id, TemplateItem item) in _databaseService.GetItems())
+            {
+                if (!ShouldHaveLootRankingValue(item))
+                {
+                    continue;
+                }
+
+                if (!_configUtil.LootRankingData.ContainsKey(id))
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
 
+        private bool ShouldHaveLootRankingValue(TemplateItem item)
+        {
+            if (_itemInfoUtil.IsATemplateGroup(item))
+            {
+                return false;
+            }
+
+            if (item.IsQuestItem())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static readonly object _lockObject = new object();
         private void UpdateLootRankingData()
         {
-            _loggingUtil.Info("Creating loot ranking data...");
+            _loggingUtil.Info("Creating loot ranking data... (this might take a while)");
 
             Stopwatch sw = Stopwatch.StartNew();
 
             Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
-            foreach (TemplateItem item in _databaseService.GetItems().Values)
-            {
-                if (string.Equals(item.Type, "Node", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
 
-                if (item.IsQuestItem())
+            var parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
+            Parallel.ForEach(_databaseService.GetItems().Values, parallelOptions, item =>
+            {
+                if (!ShouldHaveLootRankingValue(item))
                 {
-                    continue;
+                    return;
                 }
 
                 LootRankingDataConfig rankingData = GetLootRankingValue(item);
-                newLootRankingData.Add(item.Id, rankingData);
 
-                //double swTime = sw.ElapsedTicks / (double)Stopwatch.Frequency;
-                //_loggingUtil.Info($"Took {swTime}ms to calculate value of {_itemInfoUtil.GetLocalizedName(item)}: {rankingData.Value}");
-            }
+                lock (_lockObject)
+                {
+                    newLootRankingData.Add(item.Id, rankingData);
+                }
+            });
 
             _configUtil.LootRankingData = newLootRankingData;
 
@@ -108,8 +136,6 @@ namespace LateToTheParty.Utils
 
         private LootRankingDataConfig GetLootRankingValue(TemplateItem item)
         {
-            
-
             string name = _itemInfoUtil.GetLocalizedName(item);
             double cost = _itemInfoUtil.GetMaxPrice(item);
             int width = item.Properties?.Width ?? 0;

@@ -34,12 +34,12 @@ namespace LateToTheParty.Utils
             };
             bestWeaponPreset.Items.AddRange(attachments);
 
-            _loggingUtil.Info($"Created preset for {baseItemName}");
+            _loggingUtil.Debug($"Created preset for {baseItemName}");
             foreach (Item item in attachments)
             {
                 TemplateItem? template = _itemInfoUtil.GetTemplate(item);
                 string attachmentName = _itemInfoUtil.GetLocalizedName(template!);
-                _loggingUtil.Info($"Created preset for {baseItemName}: Added {attachmentName}");
+                _loggingUtil.Debug($"Created preset for {baseItemName}: Added {attachmentName}");
             }
 
             return bestWeaponPreset;

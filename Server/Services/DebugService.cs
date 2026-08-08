@@ -23,6 +23,11 @@ namespace LateToTheParty.Services
                 return;
             }
 
+            ForceGenerateLootRankingData();
+        }
+
+        private void ForceGenerateLootRankingData()
+        {
             Logger.Warning("DEBUG: Generate loot ranking data...");
             _lootRankingUtil.GenerateLootRankingData();
         }
