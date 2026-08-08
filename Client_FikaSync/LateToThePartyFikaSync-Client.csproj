@@ -66,7 +66,7 @@
 	  <ProjectReference Include="..\Client\LateToTheParty-Client.csproj" />
 	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File &quot;$(ProjectDir)CopyFilesAfterBuild.ps1&quot; -modName &quot;$(AssemblyTitle)&quot; -configuration &quot;$(Configuration)&quot; -relPathToSptInstall &quot;$(RelativePathToRootSPTInstall)&quot;" />
+	  <Exec Command="powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File &quot;$(ProjectDir)CopyFilesAfterBuild.ps1&quot; -modName &quot;$(AssemblyTitle)&quot; -configuration &quot;$(Configuration)&quot; -relPathToSptInstall &quot;$(RelativePathToRootSPTInstall)&quot;&#xD;&#xA;powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File &quot;$(ProjectDir)\CreatePackageAfterBuild.ps1&quot; -modName &quot;$(AssemblyTitle)&quot; -modVersion &quot;$(Version)&quot; -configuration &quot;$(Configuration)&quot;" />
 	</Target>
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 	  <Exec Command="powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File &quot;$(ProjectDir)..\Shared\UpdateModInfoBeforeBuild.ps1&quot; -guid &quot;$(SPTGUID)&quot; -modName &quot;$(AssemblyTitle)&quot; -author &quot;$(Authors)&quot; -modVersion &quot;$(Version)&quot; -sptVersion &quot;$(SPTVersion)&quot; -relPathToSptInstall &quot;$(RelativePathToRootSPTInstall)&quot;" />

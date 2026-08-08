@@ -5,6 +5,8 @@
 
 # SPT-specific files
 Dist/
+Dist_FikaSync/
+Dist_LootRankingDataReader/
 Icon/
 
 # User-specific files
