@@ -40,6 +40,12 @@ namespace LateToTheParty.Utils
 
         public void GenerateLootRankingData()
         {
+            if (!_configUtil.CurrentConfig.DestroyLootDuringRaid.Enabled)
+            {
+                _loggingUtil.Info("Loot destruction is disabled in config.json");
+                return;
+            }
+
             if (!_configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.Enabled)
             {
                 _loggingUtil.Info("Loot ranking is disabled in config.json");
