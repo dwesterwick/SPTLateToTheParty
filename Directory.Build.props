@@ -3,7 +3,7 @@
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 		<AssemblyTitle>LateToTheParty</AssemblyTitle>
 		<Authors>DanW</Authors>
-		<Version>3.0.0</Version>
+		<Version>3.0.1</Version>
 		<SPTVersion>~4.0.0</SPTVersion>
 		<SPTGUID>com.danw.latetotheparty</SPTGUID>
 		<GithubRepoPath>https://github.com/dwesterwick/SPTLateToTheParty</GithubRepoPath>

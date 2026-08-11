@@ -1,5 +1,6 @@
 ﻿using System;
 using Comfort.Common;
+using LateToTheParty.Helpers;
 using LateToTheParty.Utils;
 
 namespace LateToTheParty.Controllers.LoadedModInfo
@@ -22,12 +23,12 @@ namespace LateToTheParty.Controllers.LoadedModInfo
             }
         }
 
-        public override Version MinCompatibleVersion => CurrentBuildVersion;
-        public override Version MaxCompatibleVersion => CurrentBuildVersion;
+        public override Version MinCompatibleVersion => CurrentBuildVersion.MinBuild();
+        public override Version MaxCompatibleVersion => CurrentBuildVersion.MaxBuild();
 
         public string Name => ModInfo.MODNAME + "FikaSync";
 
-        public override string IncompatibilityMessage => $"Please install version {CurrentBuildVersion} of {Name} (Current version = {PluginInfo.Metadata.Version}) or synchronization of doors with Fika clients may not work correctly.";
+        public override string IncompatibilityMessage => $"Current version {PluginInfo.Metadata.Version} of {Name} is not compatible with Late to the Party. Please install a version between {MinCompatibleVersion} and {MaxCompatibleVersion} or synchronization of doors with Fika clients may not work correctly.";
 
         public override bool IsCompatible()
         {

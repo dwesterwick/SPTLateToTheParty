@@ -66,9 +66,12 @@ namespace LateToTheParty.Utils
 
             while (true)
             {
+                attachments.Clear();
+
+                Item? bestAttachment = null;
                 foreach (Slot slot in baseItemTemplate.Properties.Slots)
                 {
-                    Item? bestAttachment = GetBestAttachment(slot, incompatibleAttachmentIds);
+                    bestAttachment = GetBestAttachment(slot, incompatibleAttachmentIds);
                     if (bestAttachment == null)
                     {
                         continue;
@@ -78,7 +81,7 @@ namespace LateToTheParty.Utils
                     attachments.Add(bestAttachment);
                 }
 
-                if (attachments.Count == 0)
+                if ((bestAttachment == null) || (attachments.Count == 0))
                 {
                     break;
                 }
