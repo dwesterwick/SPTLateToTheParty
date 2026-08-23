@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
+using JsonType;
 using LateToTheParty.Utils;
 using SPT.Reflection.Patching;
 
@@ -19,7 +20,7 @@ namespace LateToTheParty.Patches
         }
 
         [PatchPrefix]
-        protected static void PatchPrefix(ref LocationSettingsClass.Location location)
+        protected static void PatchPrefix(ref LocationSettings.Location location)
         {
             Controllers.LocationSettingsController.SetCurrentLocation(location);
 

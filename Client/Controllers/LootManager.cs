@@ -134,7 +134,7 @@ namespace LateToTheParty.Controllers
             }
 
             // If the item is a container (i.e. a backpack), all of the items it contains also need to be added to the ignore list
-            foreach (Item relevantItem in item.ToEnumerable().FindAllRelatedItems())
+            foreach (Item relevantItem in item.SingleItemAsEnumerable().FindAllRelatedItems())
             {
                 //Singleton<LoggingUtil>.Instance.LogInfo("Checking for picked-up item in eligible loot: " + relevantItem.LocalizedName());
                 if (LootInfo.Any(i => i.Key.Id == relevantItem.Id))

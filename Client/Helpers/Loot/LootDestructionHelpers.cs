@@ -11,6 +11,7 @@ using LateToTheParty.Models.LootInfo;
 using UnityEngine;
 using LateToTheParty.Components;
 using LateToTheParty.Utils;
+using Diz.Utils;
 
 namespace LateToTheParty.Helpers.Loot
 {
@@ -66,7 +67,7 @@ namespace LateToTheParty.Helpers.Loot
             }
 
             // Item in world
-            item.Owner.RaiseRemoveEvent(new GEventArgs3(item, item.CurrentAddress, CommandStatus.Succeed, item.Owner));
+            item.Owner.RaiseRemoveEvent(new RemoveItemEventArgs(item, item.CurrentAddress, CommandStatus.Succeed, item.Owner));
         }
 
         private static void openNearbyDoorForLoot(this Item item)

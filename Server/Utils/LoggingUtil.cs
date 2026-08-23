@@ -1,5 +1,5 @@
-﻿using SPTarkov.DI.Annotations;
-using SPTarkov.Server.Core.Models.Utils;
+﻿using SPTarkov.Common.Models.Logging;
+using SPTarkov.DI.Annotations;
 
 namespace LateToTheParty.Utils
 {

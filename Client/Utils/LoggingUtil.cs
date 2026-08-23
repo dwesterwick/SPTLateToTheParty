@@ -1,4 +1,5 @@
 ﻿using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
 using LateToTheParty.Helpers;
 using System;

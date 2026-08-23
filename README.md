@@ -1,6 +1,6 @@
 Make your SPT experience closer to live Tarkov with loot disappearing, doors opening, switches being turned on, and car extracts leaving throughout the raid. Bosses will also be less likely to spawn during Scav raids. 
 
-**REQUIRES: [Waypoints](https://forge.sp-tarkov.com/mod/827/waypoints-expanded-navmesh) (1.8.2 or later)**
+**REQUIRES: [Waypoints](https://forge.sp-tarkov.com/mod/827/waypoints-expanded-navmesh) (1.9.0 or later)**
 
 **If you use Fika, you must also install the LateToThePartyFikaSync plugin (available on the LateToTheParty mod page) for door and switch states to sync between clients.**
 

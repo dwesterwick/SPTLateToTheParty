@@ -1,5 +1,6 @@
 ﻿using BepInEx.Bootstrap;
 using EFT;
+using EFT.AssetsManager;
 using EFT.InputSystem;
 using LateToTheParty.Controllers;
 using LateToTheParty.Models;
@@ -30,8 +31,8 @@ namespace LateToTheParty.Patches
         private static void checkSPTVersion()
         {
             SemanticVersionRange sptValidRange = SemanticVersionRange.Parse(ModInfo.SPT_VERSION_COMPATIBILITY);
-            Version MinVersion = sptValidRange.MinVersion;
-            Version MaxVersion = sptValidRange.MaxVersion;
+            System.Version MinVersion = sptValidRange.MinVersion;
+            System.Version MaxVersion = sptValidRange.MaxVersion;
 
             if (Helpers.GameCompatibilityCheckHelper.IsSPTWithinVersionRange(MinVersion, MaxVersion, out string currentVersion))
             {

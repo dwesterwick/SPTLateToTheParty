@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
 using LateToTheParty.Components;
 using LateToTheParty.Utils;
@@ -34,7 +35,7 @@ namespace LateToTheParty.Helpers.Loot
 
         private static IEnumerable<string> getSecureContainerIDs()
         {
-            ItemFactoryClass itemFactory = Singleton<ItemFactoryClass>.Instance;
+            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
             if (itemFactory == null)
             {
                 return Enumerable.Empty<string>();

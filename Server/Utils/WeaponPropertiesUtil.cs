@@ -2,9 +2,8 @@
 using LateToTheParty.Helpers;
 using LateToTheParty.Models;
 using SPTarkov.DI.Annotations;
-using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace LateToTheParty.Utils
 {
@@ -12,13 +11,15 @@ namespace LateToTheParty.Utils
     public class WeaponPropertiesUtil
     {
         private LoggingUtil _loggingUtil;
-        private DatabaseService _databaseService;
+        private TradersTable _tradersTable;
+        private GlobalTable _globalTable;
         private ItemInfoUtil _itemInfoUtil;
 
-        public WeaponPropertiesUtil(LoggingUtil loggingUtil, DatabaseService databaseService, ItemInfoUtil itemInfoUtil)
+        public WeaponPropertiesUtil(LoggingUtil loggingUtil, TradersTable tradersTable, GlobalTable globalTable, ItemInfoUtil itemInfoUtil)
         {
             _loggingUtil = loggingUtil;
-            _databaseService = databaseService;
+            _tradersTable = tradersTable;
+            _globalTable = globalTable;
             _itemInfoUtil = itemInfoUtil;
         }
 
@@ -75,12 +76,12 @@ namespace LateToTheParty.Utils
 
         public IEnumerable<Preset> FindMatchingPresets(TemplateItem item)
         {
-            return _databaseService.GetGlobals().ItemPresets.Values.Where(preset => preset.Items[0].Template == item.Id);
+            return _globalTable.ItemPresets.Values.Where(preset => preset.Items[0].Template == item.Id);
         }
 
         public IEnumerable<ItemCollectionWrapper> FindMatchesInTraderAssorts(TemplateItem item)
         {
-            IEnumerable<Trader> traders = _databaseService.GetTraders().Values
+            IEnumerable<Trader> traders = _tradersTable.Values
                 .NotIncludingFence()
                 .WithOffers();
 
@@ -127,7 +128,7 @@ namespace LateToTheParty.Utils
                     continue;
                 }
 
-                IEnumerable<Item> childItemsInSlot = weapon.ChildItems.Where(item => item.SlotId == slot.Id);
+                IEnumerable<Item> childItemsInSlot = weapon.ChildItems.Where(item => (item.SlotId != null) && (item.SlotId == slot.Id));
                 if (!childItemsInSlot.Any())
                 {
                     //_loggingUtil.Info($"Ignoring incomplete weapon build for {weaponName} with missing attachment in {slot.Name ?? "[NULL SLOT]"}");

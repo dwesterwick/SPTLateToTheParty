@@ -16,12 +16,12 @@ namespace LateToTheParty.Patches
                 nameof(MatchmakerTimeHasCome.Show),
                 BindingFlags.Public | BindingFlags.Instance,
                 null,
-                new Type[] { typeof(ISession), typeof(RaidSettings), typeof(MatchmakerPlayerControllerClass) },
+                new Type[] { typeof(IEftSession), typeof(RaidSettings), typeof(MatchmakerPlayersController) },
                 null);
         }
 
         [PatchPostfix]
-        protected static void PatchPostfix(ISession session, RaidSettings raidSettings)
+        protected static void PatchPostfix(IEftSession session, RaidSettings raidSettings)
         {
             Controllers.LocationSettingsController.CacheLocationSettings(raidSettings.SelectedLocation);
         }

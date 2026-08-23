@@ -6,7 +6,7 @@ using SPTarkov.Server.Core.DI;
 
 namespace LateToTheParty.Services
 {
-    [Injectable(TypePriority = OnLoadOrder.PostSptModLoader + LateToTheParty_Server.LOAD_ORDER_OFFSET)]
+    [Injectable(TypePriority = OnLoadOrder.Preload + LateToTheParty_Server.LOAD_ORDER_OFFSET)]
     public class DebugService : AbstractService
     {
         private LootRankingUtil _lootRankingUtil;

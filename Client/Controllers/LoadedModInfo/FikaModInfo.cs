@@ -1,6 +1,7 @@
-﻿using System;
-using Comfort.Common;
+﻿using Comfort.Common;
+using EFT.Communications;
 using LateToTheParty.Utils;
+using System;
 
 namespace LateToTheParty.Controllers.LoadedModInfo
 {
@@ -20,7 +21,7 @@ namespace LateToTheParty.Controllers.LoadedModInfo
                 return true;
             }
 
-            NotificationManagerClass.DisplayWarningNotification(IncompatibilityMessage, EFT.Communications.ENotificationDurationType.Infinite);
+            NotificationManager.DisplayWarningNotification(IncompatibilityMessage, EFT.Communications.ENotificationDurationType.Infinite);
             Singleton<LoggingUtil>.Instance.LogErrorToServerConsole(IncompatibilityMessage);
             return false;
         }
