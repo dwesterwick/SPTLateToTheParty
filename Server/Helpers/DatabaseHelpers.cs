@@ -3,7 +3,6 @@ using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Spt.Tables;
-using SPTarkov.Server.Core.Services;
 
 namespace LateToTheParty.Helpers
 {
@@ -43,7 +42,7 @@ namespace LateToTheParty.Helpers
             Location? location = locationTable.GetLocation(locationId);
             if (location == null)
             {
-                throw new InvalidOperationException($"Cannot find location \"${locationId}\" in database.");
+                throw new InvalidOperationException($"Cannot find location \"{locationId}\" in database.");
             }
 
             return location;

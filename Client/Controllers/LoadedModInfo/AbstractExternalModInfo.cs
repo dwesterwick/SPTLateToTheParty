@@ -62,7 +62,7 @@ namespace LateToTheParty.Controllers.LoadedModInfo
                 return true;
             }
 
-            return actualVersion.IsCompatible(MinCompatibleVersion, MaxCompatibleVersion);
+            return actualVersion.IncludeRevision().IsCompatible(MinCompatibleVersion, MaxCompatibleVersion);
         }
 
         public Version GetVersion()
