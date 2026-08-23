@@ -128,7 +128,8 @@ namespace LateToTheParty.Utils
                     continue;
                 }
 
-                IEnumerable<Item> childItemsInSlot = weapon.ChildItems.Where(item => (item.SlotId != null) && (item.SlotId == slot.Id));
+                string? slotId = slot.Id?.ToString();
+                IEnumerable<Item> childItemsInSlot = weapon.ChildItems.Where(item => item.SlotId == slotId);
                 if (!childItemsInSlot.Any())
                 {
                     //_loggingUtil.Info($"Ignoring incomplete weapon build for {weaponName} with missing attachment in {slot.Name ?? "[NULL SLOT]"}");

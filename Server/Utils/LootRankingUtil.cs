@@ -109,13 +109,41 @@ namespace LateToTheParty.Utils
             return true;
         }
 
-        private static readonly object _lockObject = new object();
         private void UpdateLootRankingData()
         {
             _loggingUtil.Info("Creating loot ranking data... (this might take a while)");
 
             Stopwatch sw = Stopwatch.StartNew();
 
+            bool useParallelProcessing = _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.UseParallelProcessing;
+            Dictionary<string, LootRankingDataConfig> newLootRankingData = useParallelProcessing ? GetLootRankingValuesParallel() : GetLootRankingValues();
+
+            _configUtil.LootRankingData = newLootRankingData;
+
+            _loggingUtil.Info($"Creating loot ranking data...done ({sw.ElapsedMilliseconds}ms).");
+        }
+
+        private Dictionary<string, LootRankingDataConfig> GetLootRankingValues()
+        {
+            Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
+
+            foreach(TemplateItem item in _templateTable.Items.Values)
+            {
+                if (!ShouldHaveLootRankingValue(item))
+                {
+                    continue;
+                }
+
+                LootRankingDataConfig rankingData = GetLootRankingValue(item);
+                newLootRankingData.Add(item.Id, rankingData);
+            }
+
+            return newLootRankingData;
+        }
+
+        private static readonly object _lockObject = new object();
+        private Dictionary<string, LootRankingDataConfig> GetLootRankingValuesParallel()
+        {
             Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
 
             var parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
@@ -134,9 +162,7 @@ namespace LateToTheParty.Utils
                 }
             });
 
-            _configUtil.LootRankingData = newLootRankingData;
-
-            _loggingUtil.Info($"Creating loot ranking data...done ({sw.ElapsedMilliseconds}ms).");
+            return newLootRankingData;
         }
 
         private LootRankingDataConfig GetLootRankingValue(TemplateItem item)
