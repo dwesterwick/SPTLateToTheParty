@@ -9,7 +9,7 @@ namespace LateToTheParty.Controllers.LoadedModInfo
     {
         public override string GUID { get; } = "com.fika.core";
 
-        public override Version MinCompatibleVersion => new Version("2.1.1");
+        public override Version MinCompatibleVersion => new Version("2.4.0");
         public override Version MaxCompatibleVersion => new Version("2.99.99");
 
         public override string IncompatibilityMessage => $"Installed Fika ({PluginInfo.Metadata.Version}) is not compatible with Late to the Party. Please upgrade Fika to a version between {MinCompatibleVersion} and {MaxCompatibleVersion}.";

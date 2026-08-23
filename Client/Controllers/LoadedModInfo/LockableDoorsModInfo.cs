@@ -9,8 +9,8 @@ namespace LateToTheParty.Controllers.LoadedModInfo
     {
         public override string GUID { get; } = "Jehree.LockableDoors";
 
-        public override Version MinCompatibleVersion => new Version("2.0.0");
-        public override Version MaxCompatibleVersion => new Version("2.0.99");
+        public override Version MinCompatibleVersion => new Version("2.1.0");
+        public override Version MaxCompatibleVersion => new Version("2.99.99");
 
         public override string IncompatibilityMessage => $"Installed version of Lockable Doors ({PluginInfo.Metadata.Version}) is not compatible with Late to the Party. Please upgrade Lockable Doors to a version between {MinCompatibleVersion} and {MaxCompatibleVersion}.";
 

@@ -18,12 +18,18 @@ namespace LateToTheParty.Services
 
         protected override void OnLoadIfModIsEnabled()
         {
-            if (!Config.CurrentConfig.ScavRaidAdjustments.AlwaysSpawnLate && !Config.CurrentConfig.DestroyLootDuringRaid.Enabled)
+            ForceLateScavSpawns();
+            DisableSptLootReductionForScavRaids();
+        }
+
+        public void ForceLateScavSpawns()
+        {
+            if (!Config.CurrentConfig.ScavRaidAdjustments.AlwaysSpawnLate)
             {
                 return;
             }
 
-            Logger.Info("Adjusting SPT Scav raid changes...");
+            Logger.Info("Forcing Scav raids to never start at the beginnning of the raid...");
 
             foreach (ScavRaidTimeLocationSettings? settings in _locationConfig.ScavRaidTimeSettings.Maps.Values)
             {
@@ -32,15 +38,27 @@ namespace LateToTheParty.Services
                     continue;
                 }
 
-                if (Config.CurrentConfig.ScavRaidAdjustments.AlwaysSpawnLate)
+                settings.ReducedChancePercent = 100;
+            }
+        }
+
+        private void DisableSptLootReductionForScavRaids()
+        {
+            if (!Config.CurrentConfig.DestroyLootDuringRaid.Enabled)
+            {
+                return;
+            }
+
+            Logger.Info("Disabling SPT's loot reduction for Scav raids...");
+
+            foreach (ScavRaidTimeLocationSettings? settings in _locationConfig.ScavRaidTimeSettings.Maps.Values)
+            {
+                if (settings == null)
                 {
-                    settings.ReducedChancePercent = 100;
+                    continue;
                 }
 
-                if (Config.CurrentConfig.DestroyLootDuringRaid.Enabled)
-                {
-                    settings.ReduceLootByPercent = false;
-                }
+                settings.ReduceLootByPercent = false;
             }
         }
     }

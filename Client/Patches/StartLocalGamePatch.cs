@@ -16,7 +16,7 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(NonWavesSpawnScenario).GetMethod("smethod_0", BindingFlags.Public | BindingFlags.Static);
+            return typeof(NonWavesSpawnScenario).GetMethod(nameof(NonWavesSpawnScenario.Create), BindingFlags.Public | BindingFlags.Static);
         }
 
         [PatchPrefix]

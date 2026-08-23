@@ -14,8 +14,8 @@ namespace LateToTheParty.Controllers.LoadedModInfo
     {
         public override string GUID { get; } = "me.sol.sain";
 
-        public override System.Version MinCompatibleVersion => new System.Version("4.3.0");
-        public override System.Version MaxCompatibleVersion => new System.Version("4.4.3");
+        public override System.Version MinCompatibleVersion => new System.Version("4.5.0");
+        public override System.Version MaxCompatibleVersion => new System.Version("4.99.99");
 
         public override string IncompatibilityMessage => $"Installed SAIN ({PluginInfo.Metadata.Version}) is not compatible with Late to the Party. Please upgrade SAIN to a version between {MinCompatibleVersion} and {MaxCompatibleVersion}.";
 
