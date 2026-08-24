@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Interactive;
+using Koenigz.PerfectCulling.EFT;
 using LateToTheParty.Components;
 using LateToTheParty.Models;
 using LateToTheParty.Utils;
@@ -163,7 +164,7 @@ namespace LateToTheParty.Helpers
             // Check for obstacles between the last NavMesh point (determined above) and the actual target position
             float distToNavMesh = Vector3.Distance(targetPosition, pathPoints.Last());
             Vector3 direction = targetPosition - pathPoints.Last();
-            RaycastHit[] targetRaycastHits = Physics.RaycastAll(pathPoints.Last(), direction, distToNavMesh, LayerMaskClass.HighPolyWithTerrainMask);
+            RaycastHit[] targetRaycastHits = Physics.RaycastAll(pathPoints.Last(), direction, distToNavMesh, LayersMaskController.HighPolyWithTerrainMask);
 
             // Draw boxes enveloping the colliders for all obstacles between the two points
             if

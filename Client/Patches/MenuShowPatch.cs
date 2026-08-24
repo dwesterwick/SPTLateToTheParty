@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Comfort.Common;
+using EFT.Communications;
+using EFT.UI;
+using LateToTheParty.Controllers;
+using LateToTheParty.Utils;
+using SPT.Reflection.Patching;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using EFT.UI;
-using SPT.Reflection.Patching;
-using LateToTheParty.Utils;
-using Comfort.Common;
-using LateToTheParty.Controllers;
 
 namespace LateToTheParty.Patches
 {
@@ -32,7 +33,7 @@ namespace LateToTheParty.Patches
                 Singleton<LoggingUtil>.Instance.LogWarningToServerConsole(message);
 
                 message = "Please see the console for known limitation with Lockable Doors";
-                NotificationManagerClass.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
+                NotificationManager.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
 
                 _displayedLockableDoorsWarning = true;
             }
@@ -43,7 +44,7 @@ namespace LateToTheParty.Patches
                 Singleton<LoggingUtil>.Instance.LogErrorToServerConsole(message);
 
                 message = "Missing LateToTheParty Fika sync plugin";
-                NotificationManagerClass.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
+                NotificationManager.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
 
                 _displayedFikaWarning = true;
             }

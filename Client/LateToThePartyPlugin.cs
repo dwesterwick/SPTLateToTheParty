@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace LateToTheParty
 {
-    [BepInDependency("xyz.drakia.waypoints", "1.8.2")]
+    [BepInDependency("xyz.drakia.waypoints", "1.9.0")]
     [BepInPlugin(ModInfo.GUID, ModInfo.MODNAME, ModInfo.MOD_VERSION)]
     public class LateToThePartyPlugin : BaseUnityPlugin
     {

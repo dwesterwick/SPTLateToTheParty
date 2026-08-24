@@ -11,7 +11,7 @@ namespace LateToTheParty.Models.LootInfo
 {
     public abstract class AbstractLootInfo
     {
-        public abstract TraderControllerClass ItemOwner { get; }
+        public abstract ItemController ItemOwner { get; }
         public abstract Transform Transform { get; }
         public abstract string LootTypeName { get; }
 

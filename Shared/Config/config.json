@@ -97,6 +97,7 @@
 			"randomness": 200,
 			"top_value_retain_count": 5,
 			"always_regenerate": false,
+			"use_parallel_processing": true,
 			"child_item_limits": {
 				"count": 5,
 				"total_weight": 8
@@ -110,7 +111,7 @@
 				"max_dim": -1,
 				"armor_class": 10,
 				"parents": {
-					"543be6674bdc2df1348b4569":{
+					"543be6674bdc2df1348b4569": {
 						"name": "FoodDrink",
 						"value": 5
 					},
@@ -158,7 +159,7 @@
 						"name": "Headwear",
 						"value": 5
 					},
-					"543be5e94bdc2df1348b4568" : {
+					"543be5e94bdc2df1348b4568": {
 						"name": "Keys",
 						"value": 0
 					}

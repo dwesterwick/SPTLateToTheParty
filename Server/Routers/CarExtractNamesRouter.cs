@@ -3,7 +3,6 @@ using LateToTheParty.Routers.Internal;
 using LateToTheParty.Utils;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Models.Spt.Config;
-using SPTarkov.Server.Core.Servers;
 using SPTarkov.Server.Core.Utils;
 
 namespace LateToTheParty.Routers
@@ -15,9 +14,9 @@ namespace LateToTheParty.Routers
 
         private InRaidConfig _inRaidConfig;
 
-        public CarExtractNamesRouter(LoggingUtil logger, ConfigUtil config, JsonUtil jsonUtil, ConfigServer configServer) : base(_routeNames, logger, config, jsonUtil)
+        public CarExtractNamesRouter(LoggingUtil logger, ConfigUtil config, JsonUtil jsonUtil, InRaidConfig inRaidConfig) : base(_routeNames, logger, config, jsonUtil)
         {
-            _inRaidConfig = configServer.GetConfig<InRaidConfig>();
+            _inRaidConfig = inRaidConfig;
         }
 
         public override ValueTask<string?> HandleRoute(string routeName, RequestData routerData)

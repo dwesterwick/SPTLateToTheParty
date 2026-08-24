@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
+using GPUInstancer;
 using LateToTheParty.Utils;
 
 namespace LateToTheParty.Helpers.Loot

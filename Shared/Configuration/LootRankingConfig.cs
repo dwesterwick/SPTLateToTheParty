@@ -20,6 +20,9 @@ namespace LateToTheParty.Configuration
         [DataMember(Name = "always_regenerate", IsRequired = true)]
         public bool AlwaysRegenerate { get; set; } = false;
 
+        [DataMember(Name = "use_parallel_processing")]
+        public bool UseParallelProcessing { get; set; } = true;
+
         [DataMember(Name = "child_item_limits", IsRequired = true)]
         public ChildItemLimitsConfig ChildItemLimits { get; set; } = new ChildItemLimitsConfig();
 

@@ -1,8 +1,8 @@
 ﻿using SPTarkov.DI.Annotations;
-using SPTarkov.Server.Core.Helpers;
+using SPTarkov.Server.Core.Helpers.Items;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using System.Collections;
 
 namespace LateToTheParty.Utils
@@ -12,7 +12,7 @@ namespace LateToTheParty.Utils
     {
         private LoggingUtil _loggingUtil;
         private ConfigUtil _configUtil;
-        private DatabaseService _databaseService;
+        private TemplateTable _templateTable;
         private ItemHelper _itemHelper;
         private LocalizationUtil _localizationUtil;
 
@@ -20,13 +20,13 @@ namespace LateToTheParty.Utils
         (
             LoggingUtil loggingUtil,
             ConfigUtil configUtil,
-            DatabaseService databaseService,
+            TemplateTable templateTable,
             ItemHelper itemHelper,
             LocalizationUtil localizationUtil)
         {
             _loggingUtil = loggingUtil;
             _configUtil = configUtil;
-            _databaseService = databaseService;
+            _templateTable = templateTable;
             _itemHelper = itemHelper;
             _localizationUtil = localizationUtil;
         }
@@ -61,7 +61,7 @@ namespace LateToTheParty.Utils
 
         private TemplateItem GetDefaultInventory()
         {
-            if (!_databaseService.GetTemplates().Items.TryGetValue(DefaultInventoryId, out TemplateItem? inventory))
+            if (!_templateTable.Items.TryGetValue(DefaultInventoryId, out TemplateItem? inventory))
             {
                 throw new InvalidOperationException("Could not retrieve the default inventory template");
             }
@@ -87,7 +87,7 @@ namespace LateToTheParty.Utils
         {
             Dictionary<MongoId, double?> handbookPrices = new Dictionary<MongoId, double?>();
 
-            foreach (HandbookItem item in _databaseService.GetTemplates().Handbook.Items)
+            foreach (HandbookItem item in _templateTable.Handbook.Items)
             {
                 handbookPrices.Add(item.Id, item.Price);
             }
@@ -175,7 +175,7 @@ namespace LateToTheParty.Utils
                 throw new ArgumentNullException(nameof(item));
             }
 
-            if (!_databaseService.GetTemplates().Prices.TryGetValue(item.Id, out double fleaPrice) || double.IsNaN(fleaPrice))
+            if (!_templateTable.Prices.TryGetValue(item.Id, out double fleaPrice) || double.IsNaN(fleaPrice))
             {
                 //_loggingUtil.Warning($"Invalid flea market price for {GetLocalizedName(item)} ({item.Id}). Defaulting to 0.");
                 fleaPrice = 0;
@@ -188,7 +188,7 @@ namespace LateToTheParty.Utils
 
         public TemplateItem? GetTemplate(MongoId id)
         {
-            if (_databaseService.GetTemplates().Items.TryGetValue(id, out TemplateItem? itemTemplate) && (itemTemplate != null))
+            if (_templateTable.Items.TryGetValue(id, out TemplateItem? itemTemplate) && (itemTemplate != null))
             {
                 return itemTemplate;
             }

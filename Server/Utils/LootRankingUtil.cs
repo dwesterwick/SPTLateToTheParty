@@ -3,9 +3,8 @@ using LateToTheParty.Models;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Models.Common;
-using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using System.Diagnostics;
 
 namespace LateToTheParty.Utils
@@ -15,7 +14,7 @@ namespace LateToTheParty.Utils
     {
         private LoggingUtil _loggingUtil;
         private ConfigUtil _configUtil;
-        private DatabaseService _databaseService;
+        private TemplateTable _templateTable;
         private ItemInfoUtil _itemInfoUtil;
         private WeaponPropertiesUtil _weaponPropertiesUtil;
         private PresetGeneratorUtil _presetGeneratorUtil;
@@ -24,7 +23,7 @@ namespace LateToTheParty.Utils
         (
             LoggingUtil loggingUtil,
             ConfigUtil configUtil,
-            DatabaseService databaseService,
+            TemplateTable templateTable,
             ItemInfoUtil itemInfoUtil,
             WeaponPropertiesUtil weaponPropertiesUtil,
             PresetGeneratorUtil presetGeneratorUtil
@@ -32,7 +31,7 @@ namespace LateToTheParty.Utils
         {
             _loggingUtil = loggingUtil;
             _configUtil = configUtil;
-            _databaseService = databaseService;
+            _templateTable = templateTable;
             _itemInfoUtil = itemInfoUtil;
             _weaponPropertiesUtil = weaponPropertiesUtil;
             _presetGeneratorUtil = presetGeneratorUtil;
@@ -79,7 +78,7 @@ namespace LateToTheParty.Utils
                 return false;
             }
 
-            foreach ((MongoId id, TemplateItem item) in _databaseService.GetItems())
+            foreach ((MongoId id, TemplateItem item) in _templateTable.Items)
             {
                 if (!ShouldHaveLootRankingValue(item))
                 {
@@ -110,17 +109,45 @@ namespace LateToTheParty.Utils
             return true;
         }
 
-        private static readonly object _lockObject = new object();
         private void UpdateLootRankingData()
         {
             _loggingUtil.Info("Creating loot ranking data... (this might take a while)");
 
             Stopwatch sw = Stopwatch.StartNew();
 
+            bool useParallelProcessing = _configUtil.CurrentConfig.DestroyLootDuringRaid.LootRanking.UseParallelProcessing;
+            Dictionary<string, LootRankingDataConfig> newLootRankingData = useParallelProcessing ? GetLootRankingValuesParallel() : GetLootRankingValues();
+
+            _configUtil.LootRankingData = newLootRankingData;
+
+            _loggingUtil.Info($"Creating loot ranking data...done ({sw.ElapsedMilliseconds}ms).");
+        }
+
+        private Dictionary<string, LootRankingDataConfig> GetLootRankingValues()
+        {
+            Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
+
+            foreach(TemplateItem item in _templateTable.Items.Values)
+            {
+                if (!ShouldHaveLootRankingValue(item))
+                {
+                    continue;
+                }
+
+                LootRankingDataConfig rankingData = GetLootRankingValue(item);
+                newLootRankingData.Add(item.Id, rankingData);
+            }
+
+            return newLootRankingData;
+        }
+
+        private static readonly object _lockObject = new object();
+        private Dictionary<string, LootRankingDataConfig> GetLootRankingValuesParallel()
+        {
             Dictionary<string, LootRankingDataConfig> newLootRankingData = new Dictionary<string, LootRankingDataConfig>();
 
             var parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
-            Parallel.ForEach(_databaseService.GetItems().Values, parallelOptions, item =>
+            Parallel.ForEach(_templateTable.Items.Values, parallelOptions, item =>
             {
                 if (!ShouldHaveLootRankingValue(item))
                 {
@@ -135,9 +162,7 @@ namespace LateToTheParty.Utils
                 }
             });
 
-            _configUtil.LootRankingData = newLootRankingData;
-
-            _loggingUtil.Info($"Creating loot ranking data...done ({sw.ElapsedMilliseconds}ms).");
+            return newLootRankingData;
         }
 
         private LootRankingDataConfig GetLootRankingValue(TemplateItem item)

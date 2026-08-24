@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
+using JsonType;
 using LateToTheParty.Helpers;
 using LateToTheParty.Utils;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace LateToTheParty.Controllers
     public static class LocationSettingsController
     {
         public static bool HasRaidStarted { get; set; } = false;
-        public static LocationSettingsClass.Location CurrentLocation { get; private set; } = null!;
+        public static LocationSettings.Location CurrentLocation { get; private set; } = null!;
 
         private static Dictionary<string, Models.LocationSettings> OriginalSettings = new Dictionary<string, Models.LocationSettings>();
         private static Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>> nearestSpawnPointPositions = new Dictionary<EPlayerSideMask, Dictionary<Vector3, Vector3>>();
@@ -30,7 +31,7 @@ namespace LateToTheParty.Controllers
             HasRaidStarted = false;
         }
 
-        public static void SetCurrentLocation(LocationSettingsClass.Location location)
+        public static void SetCurrentLocation(LocationSettings.Location location)
         {
             CurrentLocation = location;
         }
@@ -112,9 +113,9 @@ namespace LateToTheParty.Controllers
             return (int)Math.Round(GetTargetPlayersFullOfLoot(timeRemainingFactor) * totalSlots);
         }
 
-        public static void AdjustVExChance(LocationSettingsClass.Location location, float chance)
+        public static void AdjustVExChance(LocationSettings.Location location, float chance)
         {
-            foreach (LocationExitClass exit in location.exits)
+            foreach (BackendExitTriggerSettings exit in location.exits)
             {
                 if (CarExtractHelpers.IsCarExtract(exit.Name))
                 {
@@ -124,7 +125,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static void AdjustBossSpawnChances(LocationSettingsClass.Location location, double timeReductionFactor)
+        public static void AdjustBossSpawnChances(LocationSettings.Location location, double timeReductionFactor)
         {
             if (!Singleton<ConfigUtil>.Instance.CurrentConfig.AdjustBotSpawnChances.Enabled || !Singleton<ConfigUtil>.Instance.CurrentConfig.AdjustBotSpawnChances.AdjustBosses)
             {
@@ -146,7 +147,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static void CacheLocationSettings(LocationSettingsClass.Location location)
+        public static void CacheLocationSettings(LocationSettings.Location location)
         {
             try
             {
@@ -156,7 +157,7 @@ namespace LateToTheParty.Controllers
 
                     location.EscapeTimeLimit = OriginalSettings[location.Id].EscapeTimeLimit;
 
-                    foreach (LocationExitClass exit in location.exits)
+                    foreach (BackendExitTriggerSettings exit in location.exits)
                     {
                         if (CarExtractHelpers.IsCarExtract(exit.Name))
                         {
@@ -183,7 +184,7 @@ namespace LateToTheParty.Controllers
 
                 Models.LocationSettings settings = new Models.LocationSettings(location.EscapeTimeLimit);
 
-                foreach (LocationExitClass exit in location.exits)
+                foreach (BackendExitTriggerSettings exit in location.exits)
                 {
                     if (CarExtractHelpers.IsCarExtract(exit.Name))
                     {
@@ -202,7 +203,7 @@ namespace LateToTheParty.Controllers
             }
         }
 
-        public static int GetOriginalEscapeTime(LocationSettingsClass.Location location)
+        public static int GetOriginalEscapeTime(LocationSettings.Location location)
         {
             if (OriginalSettings.ContainsKey(location.Id))
             {

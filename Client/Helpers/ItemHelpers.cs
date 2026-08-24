@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Comfort.Common;
+using EFT;
+using EFT.InventoryLogic;
+using LateToTheParty.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Comfort.Common;
-using EFT.InventoryLogic;
-using LateToTheParty.Utils;
 
 namespace LateToTheParty.Helpers
 {
@@ -55,18 +56,18 @@ namespace LateToTheParty.Helpers
                 return true;
             }
 
-            GClass3391? parentSlot = item.Parent as GClass3391;
+            SlotItemAddress? parentSlot = item.Parent as SlotItemAddress;
             if ((parentSlot != null) && parentSlot.Slot.Locked)
             {
                 //Singleton<LoggingUtil>.Instance.LogWarning(item.LocalizedName() + " is locked inside " + parentSlot.ContainerName.Localized(), true);
                 return true;
             }
 
-            GClass3392? parentStackSlot = item.Parent as GClass3392;
-            if (parentStackSlot != null)
+            StackSlotItemAddress? parentStackSlot = item.Parent as StackSlotItemAddress;
+            if ((parentStackSlot != null) && (parentStackSlot.StackSlot.Items.Count() > 0))
             {
                 // Weird EFT edge case with ammo boxes
-                if (parentStackSlot.StackSlot.Items.IndexOf(item) != parentStackSlot.StackSlot.Items.Count() - 1)
+                if (parentStackSlot.StackSlot.Items.Last() == item)
                 {
                     //Singleton<LoggingUtil>.Instance.LogWarning(item.LocalizedName() + " is locked inside stack " + parentStackSlot.ContainerName.Localized(), true);
                     return true;
@@ -137,7 +138,7 @@ namespace LateToTheParty.Helpers
                 return allItems;
             }
 
-            ItemFactoryClass itemFactory = Singleton<ItemFactoryClass>.Instance;
+            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
             if (itemFactory == null)
             {
                 return allItems;

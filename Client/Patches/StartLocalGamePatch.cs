@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
+using JsonType;
 using LateToTheParty.Utils;
 using SPT.Reflection.Patching;
 
@@ -15,11 +16,11 @@ namespace LateToTheParty.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(NonWavesSpawnScenario).GetMethod("smethod_0", BindingFlags.Public | BindingFlags.Static);
+            return typeof(NonWavesSpawnScenario).GetMethod(nameof(NonWavesSpawnScenario.Create), BindingFlags.Public | BindingFlags.Static);
         }
 
         [PatchPrefix]
-        protected static void PatchPrefix(ref LocationSettingsClass.Location location)
+        protected static void PatchPrefix(ref LocationSettings.Location location)
         {
             Controllers.LocationSettingsController.SetCurrentLocation(location);
 

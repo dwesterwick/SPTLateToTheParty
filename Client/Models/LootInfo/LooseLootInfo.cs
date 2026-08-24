@@ -1,9 +1,10 @@
-﻿using System;
+﻿using EFT.Interactive;
+using EFT.InventoryLogic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using EFT.Interactive;
 using UnityEngine;
 
 namespace LateToTheParty.Models.LootInfo
@@ -13,7 +14,7 @@ namespace LateToTheParty.Models.LootInfo
         private static string lootTypeName = "LooseLoot";
         private LootItem lootItem;
 
-        public override TraderControllerClass ItemOwner => lootItem.ItemOwner;
+        public override ItemController ItemOwner => lootItem.ItemOwner;
         public override Transform Transform => lootItem.transform;
         public override string LootTypeName => lootTypeName;
 
