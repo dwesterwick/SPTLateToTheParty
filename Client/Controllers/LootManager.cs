@@ -292,7 +292,7 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            Singleton<LoggingUtil>.Instance.LogInfo("Initial loot has been destroyed");
+            Singleton<LoggingUtil>.Instance.LogInfo("Initial loot has been destroyed", true);
 
             HasInitialLootBeenDestroyed = true;
         }
