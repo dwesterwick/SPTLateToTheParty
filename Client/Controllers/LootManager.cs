@@ -35,6 +35,8 @@ namespace LateToTheParty.Controllers
 
         public int LootableContainerCount => AllLootableContainers.Count;
         public int TotalLootItemsCount => LootInfo.Count;
+        public IEnumerable<Item> DestroyedLootItems => LootInfo.Where(l => l.Value.IsDestroyed).Select(l => l.Key);
+        public int DestroyedLootItemsCount => LootInfo.Where(l => l.Value.IsDestroyed).Count();
         public int RemainingLootItemsCount => LootInfo.Where(l => !l.Value.IsDestroyed && !l.Value.IsInPlayerInventory).Count();
 
         public bool WasDroppedByPlayer(Item item) => ItemsDroppedByHumanPlayers.Contains(item);
@@ -292,7 +294,8 @@ namespace LateToTheParty.Controllers
                 return;
             }
 
-            Singleton<LoggingUtil>.Instance.LogInfo("Initial loot has been destroyed", true);
+            int destroyedItemsCount = DestroyedLootItemsCount;
+            Singleton<LoggingUtil>.Instance.LogInfo("Initial loot has been destroyed (" + destroyedItemsCount + " items)", true);
 
             HasInitialLootBeenDestroyed = true;
         }
