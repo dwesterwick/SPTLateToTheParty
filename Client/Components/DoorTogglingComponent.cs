@@ -441,12 +441,9 @@ namespace LateToTheParty.Components
 
         private bool IsEligibleInteractiveObject(WorldInteractiveObject interactiveObject, bool logResult = false)
         {
-            // Get all items to search for key ID's
-            Dictionary<string, Item> allItems = Helpers.ItemHelpers.GetAllItems();
-
             if (interactiveObject.DoorState == EDoorState.Locked)
             {
-                if (allItems.ContainsKey(interactiveObject.KeyId) && !Singleton<ConfigUtil>.Instance.CurrentConfig.OpenDoorsDuringRaid.CanOpenLockedDoors)
+                if (Helpers.ItemHelpers.TemplateIdExists(interactiveObject.KeyId) && !Singleton<ConfigUtil>.Instance.CurrentConfig.OpenDoorsDuringRaid.CanOpenLockedDoors)
                 {
                     if (logResult) Singleton<LoggingUtil>.Instance.LogDebug("Searching for valid interactive objects...interactive object " + interactiveObject.Id + " is locked and not allowed to be opened.");
                     return false;
@@ -484,15 +481,12 @@ namespace LateToTheParty.Components
                 return false;
             }
 
-            // Get all items to search for key ID's
-            Dictionary<string, Item> allItems = Helpers.ItemHelpers.GetAllItems();
-
             if (interactiveObject.DoorState == EDoorState.Locked)
             {
                 Trunk? trunk = interactiveObject as Trunk;
                 if (trunk != null)
                 {
-                    if (!allItems.ContainsKey(trunk.KeyId))
+                    if (!Helpers.ItemHelpers.TemplateIdExists(trunk.KeyId))
                     {
                         if (logResult) Singleton<LoggingUtil>.Instance.LogDebug("Searching for valid interactive objects...trunk " + trunk.Id + " is locked and has no valid key.");
                         return false;
@@ -502,7 +496,7 @@ namespace LateToTheParty.Components
                 }
 
                 Door? door = interactiveObject as Door;
-                if ((door?.CanBeBreached == false) && !allItems.ContainsKey(door.KeyId))
+                if ((door?.CanBeBreached == false) && !Helpers.ItemHelpers.TemplateIdExists(door.KeyId))
                 {
                     if (logResult) Singleton<LoggingUtil>.Instance.LogDebug("Searching for valid interactive objects...door " + door.Id + " is locked and has no valid key.");
                     return false;

@@ -42,6 +42,8 @@ namespace LateToTheParty
                 createHostOnlyPatches();
                 enableAllClientPathes();
                 enableHostOnlyPatches();
+
+                enableDebugPatches();
             }
 
             Singleton<LoggingUtil>.Instance.LogInfo("Loading LateToTheParty...done.");
@@ -74,6 +76,17 @@ namespace LateToTheParty
             new Patches.ReadyToPlayPatch().Enable();
             new Patches.GameWorldOnDestroyPatch().Enable();
             new Patches.WorldInteractiveObjectSkipEmitterPatch().Enable();
+        }
+
+        private static void enableDebugPatches()
+        {
+#if DEBUG
+            if (Singleton<ConfigUtil>.Instance.CurrentConfig.IsDebugEnabled())
+            {
+                // Spams the console. Only use for debugging!
+                //new Patches.DebugPatches.CreateItemPatch().Enable();
+            }
+#endif
         }
 
         private static void enableHostOnlyPatches()

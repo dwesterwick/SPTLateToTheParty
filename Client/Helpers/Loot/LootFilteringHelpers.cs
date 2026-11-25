@@ -13,47 +13,32 @@ namespace LateToTheParty.Helpers.Loot
 {
     internal static class LootFilteringHelpers
     {
-        private static string[] secureContainerIDs = new string[0];
-
-        public static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items) => items.Where(i => !Singleton<LootDestroyerComponent>.Instance.LootManager.WasDroppedByPlayer(i));
+        public static IEnumerable<Item> RemoveItemsDroppedByPlayer(this IEnumerable<Item> items)
+        {
+            return items.Where(i => !Singleton<LootDestroyerComponent>.Instance.LootManager.WasDroppedByPlayer(i));
+        }
 
         public static IEnumerable<Item> RemoveExcludedItems(this IEnumerable<Item> items)
         {
-            // This should only be run once to generate the array of secure container ID's
-            if (secureContainerIDs.Length == 0)
+            foreach (Item item in items)
             {
-                secureContainerIDs = getSecureContainerIDs().ToArray();
-            }
-
-            IEnumerable<Item> filteredItems = items
-                .Where(i => i.Template.Parent == null || !Singleton<ConfigUtil>.Instance.CurrentConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => i.Template.IsChildOf(p)))
-                .Where(i => !Singleton<ConfigUtil>.Instance.CurrentConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => p == i.TemplateId))
-                .Where(i => !secureContainerIDs.Contains(i.TemplateId.ToString()));
-
-            return filteredItems;
-        }
-
-        private static IEnumerable<string> getSecureContainerIDs()
-        {
-            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
-            if (itemFactory == null)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            // Find all possible secure containers
-            List<string> secureContainerIDs = new List<string>();
-            foreach (Item item in itemFactory.CreateAllItemsEver())
-            {
-                if (!EFT.UI.DragAndDrop.ItemViewFactory.IsSecureContainer(item))
+                if (Singleton<ConfigUtil>.Instance.CurrentConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => p == item.TemplateId))
                 {
                     continue;
                 }
 
-                secureContainerIDs.Add(item.TemplateId);
-            }
+                if (item.Template.Parent != null && Singleton<ConfigUtil>.Instance.CurrentConfig.DestroyLootDuringRaid.ExcludedParents.Any(p => item.Template.IsChildOf(p)))
+                {
+                    continue;
+                }
 
-            return secureContainerIDs;
+                if (EFT.UI.DragAndDrop.ItemViewFactory.IsSecureContainer(item))
+                {
+                    continue;
+                }
+
+                yield return item;
+            }
         }
 
         public static IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> RemoveItemsWithoutValidTemplates(this IEnumerable<KeyValuePair<Item, Models.LootInfo.AbstractLootInfo>> lootInfo)

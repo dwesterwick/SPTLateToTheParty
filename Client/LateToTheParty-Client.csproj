@@ -70,7 +70,6 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="Components\" />
-	  <Folder Include="Patches\" />
 	</ItemGroup>
 	<Import Project="..\Shared\LateToTheParty-Shared.projitems" Label="Shared" />
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">

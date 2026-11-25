@@ -12,7 +12,35 @@ namespace LateToTheParty.Helpers
 {
     public static class ItemHelpers
     {
-        private static Dictionary<string, Item> allItems = new Dictionary<string, Item>();
+        private static Dictionary<string, ItemTemplate?> itemTemplates = new Dictionary<string, ItemTemplate?>();
+
+        public static bool TemplateIdExists(string templateId) => GetItemTemplate(templateId) != null;
+
+        public static ItemTemplate? GetItemTemplate(string templateId)
+        {
+            if (itemTemplates.ContainsKey(templateId))
+            {
+                return itemTemplates[templateId];
+            }
+
+            IEnumerable<ItemTemplate> matchingTemplates = Singleton<ItemFactory>.Instance.ItemTemplates.Values
+                .Where(template => template._id.ToString() == templateId);
+
+            int matches = matchingTemplates.Count();
+            if (matches > 1)
+            {
+                Singleton<LoggingUtil>.Instance.LogError("Multiple item templates exist with ID " + templateId);
+            }
+            if (matches == 0)
+            {
+                Singleton<LoggingUtil>.Instance.LogWarning("Could not find template ID " + templateId);
+            }
+
+            ItemTemplate? template = matches == 1 ? matchingTemplates.First() : null;
+            itemTemplates.Add(templateId, template);
+
+            return template;
+        }
 
         public static bool CanRemoveFrom(this Item item, Item parentItem)
         {
@@ -129,28 +157,6 @@ namespace LateToTheParty.Helpers
             }
 
             return itemSlots;
-        }
-
-        public static Dictionary<string, Item> GetAllItems()
-        {
-            if (allItems.Count > 0)
-            {
-                return allItems;
-            }
-
-            ItemFactory itemFactory = Singleton<ItemFactory>.Instance;
-            if (itemFactory == null)
-            {
-                return allItems;
-            }
-
-            foreach(Item item in itemFactory.CreateAllItemsEver())
-            {
-                allItems.Add(item.TemplateId, item);
-            }
-
-            Singleton<LoggingUtil>.Instance.LogInfo("Created dictionary of " + allItems.Count + " items");
-            return allItems;
         }
     }
 }
